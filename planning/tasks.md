@@ -3,10 +3,10 @@
 ## Sprint 1: Setup Project
 
 - [ ] register an app in Azure Active Directory
-- [ ] create a new .NET console app
-- [ ] create a new xUnit test project
+- [x] create a new .NET console app
+- [x] create a new xUnit test project
 - [ ] add the Microsoft Graph SDK
-- [ ] add the Onspring API SDK
+- [x] add the Onspring API SDK
   - need to use my forked version of the SDK until the PR is merged
   - [https://github.com/StevanFreeborn/onspring-api-sdk](https://github.com/StevanFreeborn/onspring-api-sdk)
 

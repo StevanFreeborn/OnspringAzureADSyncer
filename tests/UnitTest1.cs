@@ -1,4 +1,4 @@
-namespace OnspringAzureADSyncer;
+namespace OnspringAzureADSyncerTests;
 
 public class UnitTest1
 {
