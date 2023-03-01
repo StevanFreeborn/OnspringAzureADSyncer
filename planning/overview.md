@@ -12,6 +12,8 @@ However the existing SSO integration doesn't allow customers to centrally manage
 
 Build a .NET console application that can be run on a schedule or as a scheduled task that will synchronize users and groups between Azure Active Directory and Onspring making Azure Active Directory the system of record.
 
+![diagram](rough_draft.svg)
+
 ## Requirements
 
 - Keep groups, users, and group membership in sync between Azure Active Directory and Onspring using Azure Active Directory as the system of record.
@@ -42,6 +44,7 @@ Build a .NET console application that can be run on a schedule or as a scheduled
   - By default synchronize the group name.
 - Require the application to be configure with an Onspring API Key with proper permissions
 - Require the application to be configured with an Azure Active Directory Application client id and client secret and possibly a tenant id.
+- Will provide a log output of the synchronization process.
 
 ## Interface
 
