@@ -43,6 +43,26 @@ Build a .NET console application that can be run on a schedule or as a scheduled
 - Require the application to be configure with an Onspring API Key with proper permissions
 - Require the application to be configured with an Azure Active Directory Application client id and client secret and possibly a tenant id.
 
+## Interface
+
+The application will be a .NET console application that can be run on a schedule or as a scheduled task. The application will be configured using a configuration file that will be passed in as a command line argument. The configuration file will be a JSON file that will contain the following properties:
+
+- Onspring API Key
+- Azure Active Directory Application Client Id
+- Azure Active Directory Application Client Secret
+- Azure Active Directory Tenant Id
+  - Only required if the application is registered in Azure Active Directory to only support accessing
+- OnspringActive Groups
+  - An array of group names that identify groups that should be used to identify users that should be Active in Onspring.
+- User Properties
+  - An array of objects that define the properties of the user that should be synchronized with Onspring and into what field in Onspring.
+    - Property Name
+    - Onspring Field Id
+- Group Properties
+  - An array of objects that define the properties of the group that should be synchronized with Onspring and into what field in Onspring.
+    - Property Name
+    - Onspring Field Id
+
 ## Limitations
 
 - The application will not support deleting users or groups in Onspring.
