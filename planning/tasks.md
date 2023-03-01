@@ -23,7 +23,7 @@
 ## Sprint 4: Add Ability to Authenticate with Onspring
 
 - [ ] validate that the app can authenticate with the Onspring API
-- [] validate that the app can get data from the Onspring API
+- [ ] validate that the app can get data from the Onspring API
 
 ## Sprint 5: Sync Groups to Onspring with Default Properties
 
