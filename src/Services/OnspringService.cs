@@ -25,7 +25,12 @@ public class OnspringService : IOnspringService
 
   public async Task<bool> CanGetUsers()
   {
-    var res = await _onspringClient.GetAppAsync(_settings.Onspring.UsersAppId);
+    var res = await ExecuteRequest(
+      async () =>
+        await _onspringClient.GetAppAsync(
+          _settings.Onspring.UsersAppId
+        )
+    );
 
     if (res.IsSuccessful is false)
     {
@@ -40,7 +45,12 @@ public class OnspringService : IOnspringService
 
   public async Task<bool> CanGetGroups()
   {
-    var res = await _onspringClient.GetAppAsync(_settings.Onspring.GroupsAppId);
+    var res = await ExecuteRequest(
+      async () =>
+        await _onspringClient.GetAppAsync(
+          _settings.Onspring.GroupsAppId
+        )
+    );
 
     if (res.IsSuccessful is false)
     {
@@ -51,5 +61,61 @@ public class OnspringService : IOnspringService
     }
 
     return res.IsSuccessful;
+  }
+
+  [ExcludeFromCodeCoverage]
+  private async Task<ApiResponse<T>> ExecuteRequest<T>(Func<Task<ApiResponse<T>>> func, int retryLimit = 3)
+  {
+    ApiResponse<T> response;
+    var retry = 1;
+
+    do
+    {
+      response = await func();
+
+      if (response.IsSuccessful is true)
+      {
+        return response;
+      }
+
+      _logger.Error(
+        "Request to Onspring API was unsuccessful. {StatusCode} - {Message}. ({Attempt} of {AttemptLimit})",
+        response.StatusCode,
+        response.Message,
+        retry,
+        retryLimit
+      );
+
+      retry++;
+
+      if (retry > retryLimit)
+      {
+        break;
+      }
+
+      var wait = 1000 * retry;
+
+      _logger.Information(
+        "Waiting {Wait}s before retrying request.",
+        wait
+      );
+
+      await Task.Delay(wait);
+
+      _logger.Information(
+        "Retrying request. {Attempt} of {AttemptLimit}",
+        retry,
+        retryLimit
+      );
+    } while (retry <= retryLimit);
+
+    _logger.Error(
+      "Request failed after {RetryLimit} attempts. {StatusCode} - {Message}.",
+      retryLimit,
+      response.StatusCode,
+      response.Message
+    );
+
+    return response;
   }
 }
