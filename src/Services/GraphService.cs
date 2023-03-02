@@ -25,6 +25,46 @@ public class GraphService : IGraphService
     );
   }
 
+  public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> groups, int pageSize)
+  {
+    try
+    {
+      var initialGroups = await _graphServiceClient.Groups.GetAsync();
+
+      if (
+        initialGroups == null ||
+        initialGroups.Value == null
+      )
+      {
+        _logger.Debug("No groups found in Azure AD");
+        return null;
+      }
+
+
+      var groupsIterator = PageIterator<Group, GroupCollectionResponse>
+      .CreatePageIterator(
+        _graphServiceClient,
+        initialGroups,
+        (g) =>
+        {
+          groups.Add(g);
+          return groups.Count < pageSize;
+        }
+      );
+
+      return groupsIterator;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        "Unable to connect to Azure AD to get groups: {Exception}",
+        ex
+      );
+
+      return null;
+    }
+  }
+
   public async Task<bool> IsConnected()
   {
     return await CanGetUsers() && await CanGetGroups();
@@ -41,18 +81,6 @@ public class GraphService : IGraphService
           config.Headers.Add("ConsistencyLevel", "eventual");
         }
       );
-
-      if (groups == null)
-      {
-        _logger.Debug("No groups found in Azure AD");
-      }
-      else
-      {
-        _logger.Debug(
-          "Found {GroupsCount} groups in Azure AD",
-          groups.OdataCount
-        );
-      }
 
       return true;
     }
@@ -78,18 +106,6 @@ public class GraphService : IGraphService
           config.Headers.Add("ConsistencyLevel", "eventual");
         }
       );
-
-      if (users == null)
-      {
-        _logger.Debug("No users found in Azure AD");
-      }
-      else
-      {
-        _logger.Debug(
-          "Found {UsersCount} users in Azure AD",
-          users.OdataCount
-        );
-      }
 
       return true;
     }

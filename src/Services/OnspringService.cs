@@ -18,6 +18,31 @@ public class OnspringService : IOnspringService
     );
   }
 
+  public async Task<ResultRecord?> GetGroup(string? id)
+  {
+    var request = new QueryRecordsRequest
+    {
+      AppId = _settings.Onspring.GroupsAppId,
+      Filter = $"{_settings.Onspring.GroupsNameFieldId} eq '{id}'",
+    };
+
+    var res = await ExecuteRequest(
+      async () =>
+        await _onspringClient.QueryRecordsAsync(request)
+    );
+
+    if (res.IsSuccessful is false)
+    {
+      _logger.Error(
+        "Unable to get group from Onspring: {Response}",
+        res
+      );
+      return null;
+    }
+
+    return res.Value.Items.FirstOrDefault();
+  }
+
   public async Task<bool> IsConnected()
   {
     return await CanGetUsers() && await CanGetGroups();

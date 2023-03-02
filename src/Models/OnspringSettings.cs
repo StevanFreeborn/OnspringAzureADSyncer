@@ -6,4 +6,6 @@ public class OnspringSettings
   public string ApiKey { get; init; } = string.Empty;
   public int UsersAppId { get; init; }
   public int GroupsAppId { get; init; }
+  public int GroupsNameFieldId { get; init; }
+  public int GroupsDescriptionFieldId { get; init; }
 }
