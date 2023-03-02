@@ -1,79 +1,86 @@
-namespace OnspringAzureADSyncer.Models
+namespace OnspringAzureADSyncer.Models;
+
+public class Syncer
 {
-  public class Syncer
+  private readonly ILogger _logger;
+  private readonly IProcessor _processor;
+
+  public Syncer(ILogger logger, IProcessor processor)
   {
-    private readonly ILogger _logger;
+    _logger = logger;
+    _processor = processor;
+  }
 
-    private readonly Settings _settings;
+  public async Task<int> Run()
+  {
+    _logger.Information("Starting syncer");
 
-    public Syncer(ILogger logger, Settings settings)
+    if (await _processor.VerifyConnections() is false)
     {
-      _logger = logger;
-      _settings = settings;
+      _logger.Fatal("Unable to connect to Onspring and/or Azure AD");
+      return 2;
     }
 
-    public async Task<int> Run()
+    _logger.Information("Syncer finished");
+
+    await Log.CloseAndFlushAsync();
+
+    return 0;
+  }
+
+  public static async Task<int> StartUp(Options options)
+  {
+    try
     {
-      _logger.Information("Starting syncer");
-      _logger.Information("Settings: {@Settings}", _settings);
-      _logger.Information("Syncer finished");
-
-      await Log.CloseAndFlushAsync();
-
-      return 0;
+      return await Host
+      .CreateDefaultBuilder()
+      .UseSerilog(
+        (context, config) =>
+          config
+          .MinimumLevel.Debug()
+          .Enrich.FromLogContext()
+          .WriteTo.File(
+            new CompactJsonFormatter(),
+            Path.Combine(
+              AppContext.BaseDirectory,
+              $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
+              "log.json"
+            )
+          )
+          .WriteTo.Console(
+            restrictedToMinimumLevel: options.LogLevel,
+            theme: AnsiConsoleTheme.Code
+          )
+      )
+      .ConfigureAppConfiguration(
+        (context, config) =>
+          config
+          .AddJsonFile(
+            options.ConfigFile!,
+            optional: false,
+            reloadOnChange: true
+          )
+          .AddEnvironmentVariables()
+      )
+      .ConfigureServices(
+        (context, services) =>
+        {
+          services.AddSingleton<Settings>();
+          services.AddSingleton<IOnspringService, OnspringService>();
+          services.AddSingleton<IGraphService, GraphService>();
+          services.AddSingleton<IProcessor, Processor>();
+          services.AddSingleton<Syncer>();
+        }
+      )
+      .Build()
+      .Services
+      .GetRequiredService<Syncer>()
+      .Run();
     }
-
-    public static async Task<int> StartUp(Options options)
+    catch (Exception ex)
     {
-      try
-      {
-        return await Host
-        .CreateDefaultBuilder()
-        .UseSerilog(
-          (context, config) =>
-            config
-            .MinimumLevel.Debug()
-            .Enrich.FromLogContext()
-            .WriteTo.File(
-              new CompactJsonFormatter(),
-              Path.Combine(
-                AppContext.BaseDirectory,
-                $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
-                "log.json"
-              )
-            )
-            .WriteTo.Console(
-              restrictedToMinimumLevel: options.LogLevel,
-              theme: AnsiConsoleTheme.Code
-            )
-        )
-        .ConfigureAppConfiguration(
-          (context, config) =>
-            config
-            .AddJsonFile(
-              options.ConfigFile!,
-              optional: false,
-              reloadOnChange: true
-            )
-            .AddEnvironmentVariables()
-        )
-        .ConfigureServices(
-          (context, services) =>
-          {
-            services.AddSingleton<Settings>();
-            services.AddSingleton<Syncer>();
-          }
-        )
-        .Build()
-        .Services
-        .GetRequiredService<Syncer>()
-        .Run();
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"An error occurred: {ex.Message}");
-        return 1;
-      }
+      Console.WriteLine($"An error occurred: {ex.Message}");
+      return 1;
     }
   }
 }

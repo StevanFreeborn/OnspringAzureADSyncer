@@ -4,8 +4,8 @@ public class Settings
 {
   const string SettingsSection = "Settings";
 
-  public AzureSettings? Azure { get; set; }
-  public OnspringSettings? Onspring { get; set; }
+  public AzureSettings Azure { get; init; } = new AzureSettings();
+  public OnspringSettings Onspring { get; init; } = new OnspringSettings();
 
   public Settings(IConfiguration configuration)
   {
