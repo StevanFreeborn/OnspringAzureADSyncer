@@ -4,6 +4,9 @@ global using System.CommandLine.Binding;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
+global using Microsoft.Graph;
+
+global using Onspring.API.SDK;
 
 global using OnspringAzureADSyncer.Models;
 
