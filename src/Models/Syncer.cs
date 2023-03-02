@@ -34,7 +34,14 @@ namespace OnspringAzureADSyncer.Models
             config
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
-            .WriteTo.File(new CompactJsonFormatter(), "log.json")
+            .WriteTo.File(
+              new CompactJsonFormatter(),
+              Path.Combine(
+                AppContext.BaseDirectory,
+                $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
+                "log.json"
+              )
+            )
             .WriteTo.Console(
               restrictedToMinimumLevel: options.LogLevel,
               theme: AnsiConsoleTheme.Code
