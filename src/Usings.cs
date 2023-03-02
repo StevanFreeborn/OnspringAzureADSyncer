@@ -9,6 +9,7 @@ global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Graph;
+global using Microsoft.Graph.Models;
 
 global using Onspring.API.SDK;
 global using Onspring.API.SDK.Models;
