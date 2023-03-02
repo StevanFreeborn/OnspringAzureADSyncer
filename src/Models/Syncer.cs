@@ -25,40 +25,48 @@ namespace OnspringAzureADSyncer.Models
 
     public static async Task<int> StartUp(Options options)
     {
-      return await Host
-      .CreateDefaultBuilder()
-      .UseSerilog(
-        (context, config) =>
-          config
-          .MinimumLevel.Debug()
-          .Enrich.FromLogContext()
-          .WriteTo.File(new CompactJsonFormatter(), "log.json")
-          .WriteTo.Console(
-            restrictedToMinimumLevel: options.LogLevel,
-            theme: AnsiConsoleTheme.Code
-          )
-      )
-      .ConfigureAppConfiguration(
-        (context, config) =>
-          config
-          .AddJsonFile(
-            options.ConfigFile!,
-            optional: false,
-            reloadOnChange: true
-          )
-          .AddEnvironmentVariables()
-      )
-      .ConfigureServices(
-        (context, services) =>
-        {
-          services.AddSingleton<Settings>();
-          services.AddSingleton<Syncer>();
-        }
-      )
-      .Build()
-      .Services
-      .GetRequiredService<Syncer>()
-      .Run();
+      try
+      {
+        return await Host
+        .CreateDefaultBuilder()
+        .UseSerilog(
+          (context, config) =>
+            config
+            .MinimumLevel.Debug()
+            .Enrich.FromLogContext()
+            .WriteTo.File(new CompactJsonFormatter(), "log.json")
+            .WriteTo.Console(
+              restrictedToMinimumLevel: options.LogLevel,
+              theme: AnsiConsoleTheme.Code
+            )
+        )
+        .ConfigureAppConfiguration(
+          (context, config) =>
+            config
+            .AddJsonFile(
+              options.ConfigFile!,
+              optional: false,
+              reloadOnChange: true
+            )
+            .AddEnvironmentVariables()
+        )
+        .ConfigureServices(
+          (context, services) =>
+          {
+            services.AddSingleton<Settings>();
+            services.AddSingleton<Syncer>();
+          }
+        )
+        .Build()
+        .Services
+        .GetRequiredService<Syncer>()
+        .Run();
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"An error occurred: {ex.Message}");
+        return 1;
+      }
     }
   }
 }
