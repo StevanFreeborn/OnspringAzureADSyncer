@@ -3,6 +3,29 @@
 ## Sprint 1: Setup Project
 
 - [ ] register an app in Azure Active Directory
+  - [ ] go to azure active directory
+  - [ ] Add new app registration
+  - [ ] give it a name
+  - [ ] for supported account types, select "Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)"
+  - [ ] leave redirect URI blank
+  - [ ] click register
+  - [ ] go to "API Permissions" and remove the existing Delegated permission
+  - [ ] click "Add a permission"
+  - [ ] click "Microsoft Graph"
+  - [ ] click "Application permissions"
+  - [ ] Search for "Group"
+  - [ ] select "Group.Read.All"
+  - [ ] Search for "User"
+  - [ ] select "User.Read.All"
+  - [ ] click "Add permissions"
+  - [ ] click "Grant admin consent for [tenant name]"
+  - [ ] click "Certificates & secrets"
+  - [ ] click "New client secret"
+  - [ ] give it a description
+  - [ ] click "Add"
+  - [ ] copy the value of the secret
+  - [ ] click "Overview"
+  - [ ] copy the value of the Application (client) ID
 - [x] create a new .NET console app
 - [x] create a new xUnit test project
 - [ ] add the Microsoft Graph SDK
