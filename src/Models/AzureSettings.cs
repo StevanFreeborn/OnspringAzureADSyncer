@@ -2,6 +2,7 @@ namespace OnspringAzureADSyncer.Models;
 
 public class AzureSettings
 {
-  public string? ClientId { get; set; }
-  public string? ClientSecret { get; set; }
+  public string TenantId { get; init; } = string.Empty;
+  public string ClientId { get; init; } = string.Empty;
+  public string ClientSecret { get; init; } = string.Empty;
 }

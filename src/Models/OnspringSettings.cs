@@ -2,6 +2,8 @@ namespace OnspringAzureADSyncer.Models;
 
 public class OnspringSettings
 {
-  public string? BaseUrl { get; set; }
-  public string? ApiKey { get; set; }
+  public string BaseUrl { get; init; } = string.Empty;
+  public string ApiKey { get; init; } = string.Empty;
+  public int UsersAppId { get; init; }
+  public int GroupsAppId { get; init; }
 }
