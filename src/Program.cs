@@ -1,11 +1,9 @@
 ﻿internal class Program
 {
-  internal static void Main(string[] args)
+  internal async static Task<int> Main(string[] args)
   {
-    Syncer
-    .CreateOptions()
-    .CreateRootCommand()
-    .BuildCommandLine()
-    .UseHost(_ => Host.CreateDefaultBuilder())
+    return await Syncer
+    .BuildRootCommand()
+    .InvokeAsync(args);
   }
 }
