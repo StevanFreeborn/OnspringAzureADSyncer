@@ -61,7 +61,7 @@ public class GraphService : IGraphService
       }
 
       _logger.Debug(
-        "Found {Users} users and {Groups} groups in Azure AD",
+        "Found {UsersCount} users and {GroupsCount} groups in Azure AD",
         users.OdataCount,
         groups.OdataCount
       );
@@ -70,7 +70,11 @@ public class GraphService : IGraphService
     }
     catch (Exception ex)
     {
-      _logger.Error("Unable to connect to Azure AD to get users and/or groups: {Exception}", ex);
+      _logger.Error(
+        "Unable to connect to Azure AD to get users and/or groups: {Exception}",
+        ex
+      );
+
       return false;
     }
   }

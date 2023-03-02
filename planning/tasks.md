@@ -65,13 +65,13 @@
 
 ## Sprint 3: Add Ability to Authenticate with Azure Active Directory
 
-- [ ] validate that the app can authenticate with Azure Active Directory
-- [ ] validate the app can get data for users and groups in Azure Active Directory
+- [x] validate that the app can authenticate with Azure Active Directory
+- [x] validate the app can get data for users and groups in Azure Active Directory
 
 ## Sprint 4: Add Ability to Authenticate with Onspring
 
-- [ ] validate that the app can authenticate with the Onspring API
-- [ ] validate that the app can get data from the Onspring API
+- [x] validate that the app can authenticate with the Onspring API
+- [x] validate that the app can get data from the Onspring API
 
 ## Sprint 5: Sync Groups to Onspring with Default Properties
 
