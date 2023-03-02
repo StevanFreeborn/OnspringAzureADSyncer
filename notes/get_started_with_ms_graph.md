@@ -8,3 +8,4 @@
 
 - Developer tool that allows users to experiment and learn about graph apis
 - Provides code snippets in multiple languages
+- test out queries and see the results
