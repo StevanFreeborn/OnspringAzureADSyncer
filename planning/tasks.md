@@ -60,8 +60,8 @@
 
 ## Sprint 2: Add Ability to Configure the App
 
-- [ ] add ability to provide configuration via config file or environment variables
-- [ ] add ability to specify config file location via command line argument
+- [x] add ability to provide configuration via config file or environment variables
+- [x] add ability to specify config file location via command line argument
 
 ## Sprint 3: Add Ability to Authenticate with Azure Active Directory
 
