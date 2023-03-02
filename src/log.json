@@ -1,9 +1,0 @@
-{"@t":"2023-03-02T07:30:26.5167675Z","@mt":"Starting syncer"}
-{"@t":"2023-03-02T07:30:26.5291576Z","@mt":"Settings: {@Settings}"}
-{"@t":"2023-03-02T07:30:26.5298613Z","@mt":"Syncer finished"}
-{"@t":"2023-03-02T08:49:21.8964465Z","@mt":"Starting syncer"}
-{"@t":"2023-03-02T08:49:21.9148890Z","@mt":"Settings: {@Settings}","Settings":{"Azure":{"ClientId":"4e214ce5-8c60-4004-9d94-062040f41f23","ClientSecret":"SVk8Q~hMB9e--ZhpoxBVRE-lRwPFA1kPY4SeMbww","$type":"AzureSettings"},"Onspring":{"BaseUrl":"https://api.onspring.com","ApiKey":"5f4d205f66dd642274fa7e1c/12f67bf5-b0bb-4aa3-b317-01f9664d0b4f","$type":"OnspringSettings"},"$type":"Settings"}}
-{"@t":"2023-03-02T08:49:21.9240430Z","@mt":"Syncer finished"}
-{"@t":"2023-03-02T09:08:16.3284009Z","@mt":"Starting syncer"}
-{"@t":"2023-03-02T09:08:16.3466384Z","@mt":"Settings: {@Settings}","Settings":{"Azure":{"ClientId":"4e214ce5-8c60-4004-9d94-062040f41f23","ClientSecret":"SVk8Q~hMB9e--ZhpoxBVRE-lRwPFA1kPY4SeMbww","$type":"AzureSettings"},"Onspring":{"BaseUrl":"https://api.onspring.com","ApiKey":"5f4d205f66dd642274fa7e1c/12f67bf5-b0bb-4aa3-b317-01f9664d0b4f","$type":"OnspringSettings"},"$type":"Settings"}}
-{"@t":"2023-03-02T09:08:16.3540687Z","@mt":"Syncer finished"}
