@@ -1,5 +1,7 @@
 global using System.CommandLine;
 global using System.CommandLine.Binding;
+global using System.Diagnostics.CodeAnalysis;
+
 
 global using Azure.Identity;
 
@@ -9,6 +11,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Graph;
 
 global using Onspring.API.SDK;
+global using Onspring.API.SDK.Models;
 
 global using OnspringAzureADSyncer.Interfaces;
 global using OnspringAzureADSyncer.Models;
