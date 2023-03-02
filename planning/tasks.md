@@ -27,7 +27,7 @@
   - [x] click "Overview"
   - [x] copy the value of the Application (client) ID
 - [x] Create Api Key in Onspring
-  - [x] go to https://[your onspring instance].onspring.com/admin/security/role
+  - [x] go to [https://[your onspring instance].onspring.com/admin/security/role](https://[your onspring instance].onspring.com/admin/security/role)
   - [x] click "Create Role"
   - [x] give it a name
   - [x] set status to "Enabled"
@@ -43,7 +43,7 @@
     - [x] "Read" Content Records
     - [x] "Update" Content Records
   - [x] click "Save Record"
-  - [x] go to https://[your onspring instance].onspring.com/admin/security/apikey
+  - [x] go to [https://[your onspring instance].onspring.com/admin/security/apikey](https://[your onspring instance].onspring.com/admin/security/apikey)
   - [x] click "Create API Key"
   - [x] give it a Name
   - [x] set status to "Enabled"
