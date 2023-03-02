@@ -51,3 +51,4 @@ _**Graph Explorer**_ - [https://developer.microsoft.com/en-us/graph/graph-explor
 
 - [https://docs.microsoft.com/en-us/graph/overview](https://docs.microsoft.com/en-us/graph/overview)
 - [https://github.com/microsoft/hack-together](https://github.com/microsoft/hack-together)
+- [https://github.com/microsoftgraph/msgraph-sdk-dotnet](https://github.com/microsoftgraph/msgraph-sdk-dotnet)
