@@ -2,6 +2,10 @@
 {
   internal static void Main(string[] args)
   {
-    Console.WriteLine("Hello World!");
+    Syncer
+    .CreateOptions()
+    .CreateRootCommand()
+    .BuildCommandLine()
+    .UseHost(_ => Host.CreateDefaultBuilder())
   }
 }
