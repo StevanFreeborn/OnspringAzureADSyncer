@@ -11,4 +11,10 @@
     <ProjectReference Include="..\lib\onspring-api-sdk\Onspring.API.SDK\Onspring.API.SDK.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <None Update="config.development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
