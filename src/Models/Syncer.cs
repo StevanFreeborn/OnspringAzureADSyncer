@@ -61,7 +61,7 @@ namespace OnspringAzureADSyncer.Models
       .Run();
     }
 
-    public static RootCommand BuildRootCommand()
+    public static RootCommand BuildCommand()
     {
       var configFileOption = new Option<string>(
         aliases: new string[] { "--config", "-c" },

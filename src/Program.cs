@@ -3,7 +3,7 @@
   internal async static Task<int> Main(string[] args)
   {
     return await Syncer
-    .BuildRootCommand()
+    .BuildCommand()
     .InvokeAsync(args);
   }
 }
