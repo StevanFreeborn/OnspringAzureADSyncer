@@ -20,7 +20,8 @@ public class Processor : IProcessor
   public async Task SyncGroups()
   {
     var azureGroups = new List<Group>();
-    var groupIterator = await _graphService.GetGroupsIterator(azureGroups, 2);
+    var pageSize = 50;
+    var groupIterator = await _graphService.GetGroupsIterator(azureGroups, pageSize);
 
     if (groupIterator is null)
     {
