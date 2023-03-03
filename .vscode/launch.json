@@ -7,7 +7,7 @@
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/src/bin/Debug/net7.0/OnspringAzureADSyncer.dll",
-      "args": ["-c", "config.development.json", "-l", "debug"],
+      "args": ["-c", "config.development.json"],
       "cwd": "${workspaceFolder}/src",
       "console": "integratedTerminal",
       "stopAtEntry": false

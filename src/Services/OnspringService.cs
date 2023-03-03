@@ -33,6 +33,106 @@ public class OnspringService : IOnspringService
     );
   }
 
+  public async Task<SaveRecordResponse?> CreateGroup(Group group)
+  {
+    var newGroupRecord = new ResultRecord
+    {
+      AppId = _settings.Onspring.GroupsAppId
+    };
+
+    foreach (var kvp in _settings.GroupsFieldMappings)
+    {
+      var cultureInfo = Thread.CurrentThread.CurrentCulture;
+      var textInfo = cultureInfo.TextInfo;
+
+      var fieldValue = group
+      .GetType()
+      .GetProperty(kvp.Key.Capitalize())
+      ?.GetValue(group, null);
+
+      if (fieldValue is null)
+      {
+        _logger.Debug(
+          "Unable to find value for field {FieldId} for property {Property} on group: {GroupName} - {GroupId}",
+          kvp.Value,
+          kvp.Key,
+          group.DisplayName,
+          group.Id
+        );
+        continue;
+      }
+
+      RecordFieldValue recordFieldValue;
+
+      switch (fieldValue)
+      {
+        case string s:
+          recordFieldValue = new StringFieldValue(kvp.Value, s);
+          break;
+        case bool b:
+          recordFieldValue = new StringFieldValue(kvp.Value, b.ToString());
+          break;
+        case int i:
+          recordFieldValue = new IntegerFieldValue(kvp.Value, i);
+          break;
+        case DateTime dt:
+          var utcDateTime = dt.ToUniversalTime();
+          recordFieldValue = new DateFieldValue(kvp.Value, utcDateTime);
+          break;
+        case DateTimeOffset dto:
+          var dtoDateTime = dto.UtcDateTime;
+          recordFieldValue = new DateFieldValue(kvp.Value, dtoDateTime);
+          break;
+        case List<string> ls:
+          recordFieldValue = new StringListFieldValue(kvp.Value, ls);
+          break;
+        case List<int> li:
+          recordFieldValue = new IntegerListFieldValue(kvp.Value, li);
+          break;
+        default:
+          var jsonString = JsonConvert.SerializeObject(fieldValue);
+          recordFieldValue = new StringFieldValue(kvp.Value, jsonString);
+          break;
+      }
+
+      newGroupRecord.FieldData.Add(recordFieldValue);
+    }
+
+    if (newGroupRecord.FieldData.Count == 0)
+    {
+      _logger.Debug(
+        "Unable to find any values for fields for group: {GroupName} - {GroupId}",
+        group.DisplayName,
+        group.Id
+      );
+      return null;
+    }
+
+    var res = await ExecuteRequest(
+      async () => await _onspringClient.SaveRecordAsync(newGroupRecord)
+    );
+
+    if (res.IsSuccessful is false)
+    {
+      _logger.Debug(
+        "Unable to create group in Onspring: {Name} - {Id}. {Response}",
+        group.DisplayName,
+        group.Id,
+        res
+      );
+      return null;
+    }
+
+    _logger.Debug(
+      "Group {Name} - {Id} created in Onspring: {Response}",
+      group.DisplayName,
+      group.Id,
+      res
+    );
+
+    return res.Value;
+  }
+
   public async Task<ResultRecord?> GetGroup(string? id)
   {
     var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
