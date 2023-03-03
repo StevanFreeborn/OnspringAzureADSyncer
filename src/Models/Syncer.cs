@@ -21,6 +21,8 @@ public class Syncer
       return 2;
     }
 
+    await _processor.SetDefaultFieldMappings();
+
     await _processor.SyncGroups();
 
     _logger.Information("Syncer finished");

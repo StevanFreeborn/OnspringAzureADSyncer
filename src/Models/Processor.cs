@@ -3,16 +3,19 @@ namespace OnspringAzureADSyncer.Models;
 public class Processor : IProcessor
 {
   private readonly ILogger _logger;
+  private readonly Settings _settings;
   private readonly IOnspringService _onspringService;
   private readonly IGraphService _graphService;
 
   public Processor(
     ILogger logger,
+    Settings settings,
     IOnspringService onspringService,
     IGraphService graphService
   )
   {
     _logger = logger;
+    _settings = settings;
     _onspringService = onspringService;
     _graphService = graphService;
   }
@@ -72,6 +75,30 @@ public class Processor : IProcessor
     _logger.Information("Group found in Onspring: {Name} - {Id}", group.DisplayName, group.Id);
     _logger.Information("Updating Onspring Group: {Name} - {Id}", group.DisplayName, group.Id);
     // await _onspringService.UpdateGroup(group);
+  }
+
+  public async Task SetDefaultFieldMappings()
+  {
+    var onspringGroupFields = await _onspringService.GetGroupFields();
+
+    foreach (var kvp in Settings.DefaultGroupsFieldMappings)
+    {
+      var onspringField = onspringGroupFields.FirstOrDefault(f => f.Name == kvp.Value);
+
+      if (onspringField is null)
+      {
+        _logger.Fatal(
+          "Unable to find field {Name} in Group app in Onspring",
+          kvp.Value
+        );
+
+        throw new ApplicationException(
+          $"Unable to find field {kvp.Value} in Group app in Onspring"
+        );
+      }
+
+      _settings.GroupsFieldMappings.Add(kvp.Key, onspringField.Id);
+    }
   }
 
   public async Task<bool> VerifyConnections()
