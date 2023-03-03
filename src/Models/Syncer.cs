@@ -43,8 +43,13 @@ public class Syncer
       return await Host
       .CreateDefaultBuilder()
       .UseSerilog(
-        (context, config) =>
+        (context, services, config) =>
           config
+          .Destructure.With(new IDestructuringPolicy[]
+            {
+              services.GetRequiredService<AzureGroupDestructuringPolicy>(),
+            }
+          )
           .MinimumLevel.Debug()
           .Enrich.FromLogContext()
           .WriteTo.File(
@@ -74,6 +79,7 @@ public class Syncer
         (context, services) =>
         {
           services.AddSingleton<Settings>();
+          services.AddSingleton<AzureGroupDestructuringPolicy>();
           services.AddSingleton<IOnspringService, OnspringService>();
           services.AddSingleton<IGraphService, GraphService>();
           services.AddSingleton<IProcessor, Processor>();

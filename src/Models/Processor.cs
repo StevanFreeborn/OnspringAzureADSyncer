@@ -23,7 +23,7 @@ public class Processor : IProcessor
   public async Task SyncGroups()
   {
     var azureGroups = new List<Group>();
-    var pageSize = 1;
+    var pageSize = 50;
     var groupIterator = await _graphService.GetGroupsIterator(azureGroups, pageSize);
 
     if (groupIterator is null)
@@ -32,21 +32,26 @@ public class Processor : IProcessor
       return;
     }
 
-    var pageNumber = 0;
+    var pageNumberProcessing = 0;
 
     do
     {
       if (groupIterator.State == PagingState.Paused)
       {
         await groupIterator.ResumeAsync();
-        pageNumber++;
       }
 
       if (groupIterator.State == PagingState.NotStarted)
       {
         await groupIterator.IterateAsync();
-        pageNumber++;
       }
+
+      if (azureGroups.Count == 0)
+      {
+        continue;
+      }
+
+      pageNumberProcessing++;
 
       var options = new ProgressBarOptions
       {
@@ -58,21 +63,18 @@ public class Processor : IProcessor
       using (
         var progressBar = new ProgressBar(
           azureGroups.Count,
-          $"Starting processing groups: page {pageNumber}",
+          $"Starting processing Azure Groups: page {pageNumberProcessing}",
           options
         )
       )
       {
-        await Parallel.ForEachAsync(
-          azureGroups,
-          async (group, token) =>
-          {
-            progressBar.Tick($"Processing group: {group.Id}");
-            await SyncGroup(group);
-          }
-        );
+        foreach (var azureGroup in azureGroups)
+        {
+          await SyncGroup(azureGroup);
+          progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
+        }
 
-        progressBar.Message = $"Finished processing groups: page {pageNumber}";
+        progressBar.Message = $"Finished processing Azure Groups: page {pageNumberProcessing}";
       }
 
       // clear the list before
@@ -84,40 +86,40 @@ public class Processor : IProcessor
     } while (groupIterator.State != PagingState.Complete);
   }
 
-  private async Task SyncGroup(Group group)
+  private async Task SyncGroup(Group azureGroup)
   {
-    _logger.Debug("Processing Azure AD Group: {Id}", group.Id);
+    _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
-    var onspringGroup = await _onspringService.GetGroup(group.Id);
+    var onspringGroup = await _onspringService.GetGroup(azureGroup.Id);
 
     if (onspringGroup is null)
     {
-      _logger.Debug("Group not found in Onspring: {Id}", group.Id);
-      _logger.Debug("Attempting to create group in Onspring:{Id}", group.Id);
+      _logger.Debug("Azure Group not found in Onspring: {@AzureGroup}", azureGroup);
+      _logger.Debug("Attempting to create Azure Group in Onspring: {@AzureGroup}", azureGroup);
 
-      var res = await _onspringService.CreateGroup(group);
+      var res = await _onspringService.CreateGroup(azureGroup);
 
       if (res is null)
       {
         _logger.Warning(
-          "Unable to create group in Onspring: {Id}",
-          group.Id
+          "Unable to create Azure Group in Onspring: {@AzureGroup}",
+          azureGroup
         );
 
         return;
       }
 
       _logger.Debug(
-        "Group {Id} created in Onspring: {Response}",
-        group.Id,
+        "Azure Group {@AzureGroup} created in Onspring: {Response}",
+        azureGroup,
         res
       );
 
       return;
     }
 
-    _logger.Debug("Group found in Onspring: {Id}", group.Id);
-    _logger.Debug("Updating Onspring Group: {Id}", group.Id);
+    _logger.Debug("Azure Group found in Onspring: {@OnspringGroup}", onspringGroup);
+    _logger.Debug("Updating Onspring Group: {@OnspringGroup}", onspringGroup);
     // await _onspringService.UpdateGroup(group);
   }
 
@@ -144,7 +146,7 @@ public class Processor : IProcessor
       }
 
       _logger.Debug(
-        "Found field {Name} in Group app in Onspring with ID {Id}",
+        "Found field {Name} in Group app in Onspring with Id {Id}",
         kvp.Value,
         onspringField.Id
       );

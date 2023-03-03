@@ -13,6 +13,7 @@ global using Microsoft.Graph.Models;
 global using Newtonsoft.Json;
 
 global using Onspring.API.SDK;
+global using Onspring.API.SDK.Enums;
 global using Onspring.API.SDK.Models;
 
 global using OnspringAzureADSyncer.Extensions;
@@ -21,6 +22,7 @@ global using OnspringAzureADSyncer.Models;
 global using OnspringAzureADSyncer.Services;
 
 global using Serilog;
+global using Serilog.Core;
 global using Serilog.Events;
 global using Serilog.Formatting.Compact;
 global using Serilog.Sinks.SystemConsole.Themes;
