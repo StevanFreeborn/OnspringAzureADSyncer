@@ -53,10 +53,9 @@ public class OnspringService : IOnspringService
       if (fieldValue is null)
       {
         _logger.Debug(
-          "Unable to find value for field {FieldId} for property {Property} on group: {GroupName} - {GroupId}",
+          "Unable to find value for field {FieldId} for property {Property} on group: {GroupId}",
           kvp.Value,
           kvp.Key,
-          group.DisplayName,
           group.Id
         );
         continue;
@@ -101,8 +100,7 @@ public class OnspringService : IOnspringService
     if (newGroupRecord.FieldData.Count == 0)
     {
       _logger.Debug(
-        "Unable to find any values for fields for group: {GroupName} - {GroupId}",
-        group.DisplayName,
+        "Unable to find any values for fields for group: {GroupId}",
         group.Id
       );
       return null;
@@ -115,8 +113,7 @@ public class OnspringService : IOnspringService
     if (res.IsSuccessful is false)
     {
       _logger.Debug(
-        "Unable to create group in Onspring: {Name} - {Id}. {Response}",
-        group.DisplayName,
+        "Unable to create group in Onspring: {Id}. {Response}",
         group.Id,
         res
       );
@@ -124,8 +121,7 @@ public class OnspringService : IOnspringService
     }
 
     _logger.Debug(
-      "Group {Name} - {Id} created in Onspring: {Response}",
-      group.DisplayName,
+      "Group {Id} created in Onspring: {Response}",
       group.Id,
       res
     );
@@ -141,6 +137,7 @@ public class OnspringService : IOnspringService
     {
       AppId = _settings.Onspring.GroupsAppId,
       Filter = $"{groupNameFieldId} eq '{id}'",
+      FieldIds = _settings.GroupsFieldMappings.Values.ToList()
     };
 
     var res = await ExecuteRequest(

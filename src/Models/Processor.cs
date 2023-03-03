@@ -67,8 +67,8 @@ public class Processor : IProcessor
           azureGroups,
           async (group, token) =>
           {
+            progressBar.Tick($"Processing group: {group.Id}");
             await SyncGroup(group);
-            progressBar.Tick($"Processing group: {group.DisplayName} - {group.Id}");
           }
         );
 
@@ -86,22 +86,21 @@ public class Processor : IProcessor
 
   private async Task SyncGroup(Group group)
   {
-    _logger.Debug("Processing Azure AD Group: {Name} - {Id}", group.DisplayName, group.Id);
+    _logger.Debug("Processing Azure AD Group: {Id}", group.Id);
 
     var onspringGroup = await _onspringService.GetGroup(group.Id);
 
     if (onspringGroup is null)
     {
-      _logger.Debug("Group not found in Onspring: {Name} - {Id}", group.DisplayName, group.Id);
-      _logger.Debug("Attempting to create group in Onspring: {Name} - {Id}", group.DisplayName, group.Id);
+      _logger.Debug("Group not found in Onspring: {Id}", group.Id);
+      _logger.Debug("Attempting to create group in Onspring:{Id}", group.Id);
 
       var res = await _onspringService.CreateGroup(group);
 
       if (res is null)
       {
         _logger.Warning(
-          "Unable to create group in Onspring: {Name} - {Id}",
-          group.DisplayName,
+          "Unable to create group in Onspring: {Id}",
           group.Id
         );
 
@@ -109,8 +108,7 @@ public class Processor : IProcessor
       }
 
       _logger.Debug(
-        "Group {Name} - {Id} created in Onspring: {Response}",
-        group.DisplayName,
+        "Group {Id} created in Onspring: {Response}",
         group.Id,
         res
       );
@@ -118,8 +116,8 @@ public class Processor : IProcessor
       return;
     }
 
-    _logger.Debug("Group found in Onspring: {Name} - {Id}", group.DisplayName, group.Id);
-    _logger.Debug("Updating Onspring Group: {Name} - {Id}", group.DisplayName, group.Id);
+    _logger.Debug("Group found in Onspring: {Id}", group.Id);
+    _logger.Debug("Updating Onspring Group: {Id}", group.Id);
     // await _onspringService.UpdateGroup(group);
   }
 

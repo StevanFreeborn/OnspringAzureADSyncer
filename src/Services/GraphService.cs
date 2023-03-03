@@ -40,7 +40,14 @@ public class GraphService : IGraphService
   {
     try
     {
-      var initialGroups = await _graphServiceClient.Groups.GetAsync();
+      var initialGroups = await _graphServiceClient
+      .Groups
+      .GetAsync(
+        config =>
+        config
+        .QueryParameters
+        .Select = _settings.GroupsFieldMappings.Keys.ToArray()
+      );
 
       if (
         initialGroups == null ||
