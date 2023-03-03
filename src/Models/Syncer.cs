@@ -21,8 +21,12 @@ public class Syncer
       return 2;
     }
 
+    _logger.Information("Connected successfully to Onspring and Azure AD");
+
+    _logger.Information("Setting default field mappings");
     await _processor.SetDefaultFieldMappings();
 
+    _logger.Information("Syncing groups");
     await _processor.SyncGroups();
 
     _logger.Information("Syncer finished");
