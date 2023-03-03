@@ -11,18 +11,29 @@ public class GraphService : IGraphService
     _logger = logger;
     _settings = settings;
 
-    _graphServiceClient = new GraphServiceClient(
-      new ClientSecretCredential(
-        _settings.Azure.TenantId,
-        _settings.Azure.ClientId,
-        _settings.Azure.ClientSecret,
-        new TokenCredentialOptions
-        {
-          AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-        }
-      ),
-      new[] { "https://graph.microsoft.com/.default" }
-    );
+    try
+    {
+      _graphServiceClient = new GraphServiceClient(
+        new ClientSecretCredential(
+          _settings.Azure.TenantId,
+          _settings.Azure.ClientId,
+          _settings.Azure.ClientSecret,
+          new TokenCredentialOptions
+          {
+            AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+          }
+        ),
+        new[] { "https://graph.microsoft.com/.default" }
+      );
+    }
+    catch (Exception ex)
+    {
+      _logger.Fatal(
+        "Unable to create Graph client: {Exception}",
+        ex
+      );
+      throw;
+    }
   }
 
   public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> groups, int pageSize)

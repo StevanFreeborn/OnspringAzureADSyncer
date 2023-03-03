@@ -12,6 +12,21 @@ public class OnspringService : IOnspringService
     _logger = logger;
     _settings = settings;
 
+    try
+    {
+      _onspringClient = new OnspringClient(
+        _settings.Onspring.BaseUrl,
+        _settings.Onspring.ApiKey
+      );
+    }
+    catch (Exception ex)
+    {
+      _logger.Fatal(
+        "Unable to create Onspring client: {Exception}",
+        ex
+      );
+      throw;
+    }
     _onspringClient = new OnspringClient(
       _settings.Onspring.BaseUrl,
       _settings.Onspring.ApiKey
@@ -20,10 +35,12 @@ public class OnspringService : IOnspringService
 
   public async Task<ResultRecord?> GetGroup(string? id)
   {
+    var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
+
     var request = new QueryRecordsRequest
     {
       AppId = _settings.Onspring.GroupsAppId,
-      Filter = $"{_settings.Onspring.GroupsNameFieldId} eq '{id}'",
+      Filter = $"{groupNameFieldId} eq '{id}'",
     };
 
     var res = await ExecuteRequest(
@@ -41,6 +58,44 @@ public class OnspringService : IOnspringService
     }
 
     return res.Value.Items.FirstOrDefault();
+  }
+
+  public async Task<List<Field>> GetGroupFields()
+  {
+    var fields = new List<Field>();
+    var totalPages = 1;
+    var pagingRequest = new PagingRequest(1, 50);
+    var currentPage = pagingRequest.PageNumber;
+
+    do
+    {
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.GetFieldsForAppAsync(
+          _settings.Onspring.GroupsAppId,
+          pagingRequest
+        )
+      );
+
+      if (res.IsSuccessful is true)
+      {
+        fields.AddRange(res.Value.Items);
+        totalPages = res.Value.TotalPages;
+      }
+      else
+      {
+        _logger.Error(
+          "Unable to get fields: {Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+          res,
+          currentPage,
+          totalPages
+        );
+      }
+
+      pagingRequest.PageNumber++;
+      currentPage = pagingRequest.PageNumber;
+    } while (currentPage <= totalPages);
+
+    return fields;
   }
 
   public async Task<bool> IsConnected()
