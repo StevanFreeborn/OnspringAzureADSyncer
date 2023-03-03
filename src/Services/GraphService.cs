@@ -29,14 +29,15 @@ public class GraphService : IGraphService
     catch (Exception ex)
     {
       _logger.Fatal(
-        "Unable to create Graph client: {Exception}",
-        ex
+        ex,
+        "Unable to create Graph client: {Message}",
+        ex.Message
       );
       throw;
     }
   }
 
-  public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> groups, int pageSize)
+  public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)
   {
     try
     {
@@ -65,8 +66,8 @@ public class GraphService : IGraphService
         initialGroups,
         (g) =>
         {
-          groups.Add(g);
-          return groups.Count < pageSize;
+          azureGroups.Add(g);
+          return azureGroups.Count < pageSize;
         }
       );
 
@@ -75,8 +76,9 @@ public class GraphService : IGraphService
     catch (Exception ex)
     {
       _logger.Error(
-        "Unable to connect to Azure AD to get groups: {Exception}",
-        ex
+        ex,
+        "Unable to connect to Azure AD to get groups: {Message}",
+        ex.Message
       );
 
       return null;
@@ -105,8 +107,9 @@ public class GraphService : IGraphService
     catch (Exception ex)
     {
       _logger.Error(
-        "Unable to connect to Azure AD to get groups: {Exception}",
-        ex
+        ex,
+        "Unable to connect to Azure AD to get groups: {Message}",
+        ex.Message
       );
 
       return false;
@@ -130,8 +133,9 @@ public class GraphService : IGraphService
     catch (Exception ex)
     {
       _logger.Error(
-        "Unable to connect to Azure AD to get users: {Exception}",
-        ex
+        ex,
+        "Unable to connect to Azure AD to get users: {Message}",
+        ex.Message
       );
 
       return false;

@@ -22,8 +22,9 @@ public class OnspringService : IOnspringService
     catch (Exception ex)
     {
       _logger.Fatal(
-        "Unable to create Onspring client: {Exception}",
-        ex
+        ex,
+        "Unable to create Onspring client: {Message}",
+        ex.Message
       );
       throw;
     }
@@ -48,15 +49,15 @@ public class OnspringService : IOnspringService
       var fieldValue = group
       .GetType()
       .GetProperty(kvp.Key.Capitalize())
-      ?.GetValue(group, null);
+      ?.GetValue(group);
 
       if (fieldValue is null)
       {
         _logger.Debug(
-          "Unable to find value for field {FieldId} for property {Property} on group: {GroupId}",
+          "Unable to find value for field {FieldId} for property {Property} on group: {@Group}",
           kvp.Value,
           kvp.Key,
-          group.Id
+          group
         );
         continue;
       }
@@ -100,8 +101,8 @@ public class OnspringService : IOnspringService
     if (newGroupRecord.FieldData.Count == 0)
     {
       _logger.Debug(
-        "Unable to find any values for fields for group: {GroupId}",
-        group.Id
+        "Unable to find any values for fields for group: {@Group}",
+        group
       );
       return null;
     }
@@ -113,16 +114,16 @@ public class OnspringService : IOnspringService
     if (res.IsSuccessful is false)
     {
       _logger.Debug(
-        "Unable to create group in Onspring: {Id}. {Response}",
-        group.Id,
+        "Unable to create group in Onspring: {@Group}. {@Response}",
+        group,
         res
       );
       return null;
     }
 
     _logger.Debug(
-      "Group {Id} created in Onspring: {Response}",
-      group.Id,
+      "Group {@Group} created in Onspring: {@Response}",
+      group,
       res
     );
 
@@ -137,7 +138,8 @@ public class OnspringService : IOnspringService
     {
       AppId = _settings.Onspring.GroupsAppId,
       Filter = $"{groupNameFieldId} eq '{id}'",
-      FieldIds = _settings.GroupsFieldMappings.Values.ToList()
+      FieldIds = _settings.GroupsFieldMappings.Values.ToList(),
+      DataFormat = DataFormat.Formatted
     };
 
     var res = await ExecuteRequest(
@@ -148,7 +150,7 @@ public class OnspringService : IOnspringService
     if (res.IsSuccessful is false)
     {
       _logger.Error(
-        "Unable to get group from Onspring: {Response}",
+        "Unable to get group from Onspring: {@Response}",
         res
       );
       return null;
@@ -181,7 +183,7 @@ public class OnspringService : IOnspringService
       else
       {
         _logger.Error(
-          "Unable to get fields: {Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+          "Unable to get fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
           res,
           currentPage,
           totalPages
@@ -212,7 +214,7 @@ public class OnspringService : IOnspringService
     if (res.IsSuccessful is false)
     {
       _logger.Error(
-        "Unable to get users from Onspring: {Response}",
+        "Unable to get users from Onspring: {@Response}",
         res
       );
     }
@@ -232,7 +234,7 @@ public class OnspringService : IOnspringService
     if (res.IsSuccessful is false)
     {
       _logger.Error(
-        "Unable to get groups from Onspring: {Response}",
+        "Unable to get groups from Onspring: {@Response}",
         res
       );
     }
@@ -256,9 +258,8 @@ public class OnspringService : IOnspringService
       }
 
       _logger.Error(
-        "Request to Onspring API was unsuccessful. {StatusCode} - {Message}. ({Attempt} of {AttemptLimit})",
-        response.StatusCode,
-        response.Message,
+        "Request to Onspring API was unsuccessful: {@Response}. ({Attempt} of {AttemptLimit})",
+        response,
         retry,
         retryLimit
       );
@@ -287,10 +288,9 @@ public class OnspringService : IOnspringService
     } while (retry <= retryLimit);
 
     _logger.Error(
-      "Request failed after {RetryLimit} attempts. {StatusCode} - {Message}.",
+      "Request failed after {RetryLimit} attempts: {@Response}",
       retryLimit,
-      response.StatusCode,
-      response.Message
+      response
     );
 
     return response;
