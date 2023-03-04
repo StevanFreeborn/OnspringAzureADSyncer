@@ -97,9 +97,9 @@ public class Processor : IProcessor
       _logger.Debug("Azure Group not found in Onspring: {@AzureGroup}", azureGroup);
       _logger.Debug("Attempting to create Azure Group in Onspring: {@AzureGroup}", azureGroup);
 
-      var res = await _onspringService.CreateGroup(azureGroup);
+      var createResponse = await _onspringService.CreateGroup(azureGroup);
 
-      if (res is null)
+      if (createResponse is null)
       {
         _logger.Warning(
           "Unable to create Azure Group in Onspring: {@AzureGroup}",
@@ -110,9 +110,9 @@ public class Processor : IProcessor
       }
 
       _logger.Debug(
-        "Azure Group {@AzureGroup} created in Onspring: {Response}",
+        "Azure Group {@AzureGroup} created in Onspring: {@Response}",
         azureGroup,
-        res
+        createResponse
       );
 
       return;
@@ -120,7 +120,25 @@ public class Processor : IProcessor
 
     _logger.Debug("Azure Group found in Onspring: {@OnspringGroup}", onspringGroup);
     _logger.Debug("Updating Onspring Group: {@OnspringGroup}", onspringGroup);
-    // await _onspringService.UpdateGroup(group);
+    SaveRecordResponse? updateResponse = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+
+    if (updateResponse is null)
+    {
+      _logger.Debug(
+        "Onspring Group {@OnspringGroup} not updated",
+        onspringGroup
+      );
+
+      return;
+    }
+
+    _logger.Debug(
+      "Onspring Group {@OnspringGroup} updated: {@Response}",
+      onspringGroup,
+      updateResponse
+    );
+
+    _logger.Debug("Finished processing Azure AD Group: {@AzureGroup}", azureGroup);
   }
 
   public async Task SetDefaultFieldMappings()
