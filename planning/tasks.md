@@ -75,7 +75,7 @@
 
 ## Sprint 5: Sync Groups to Onspring with Default Properties
 
-- [ ] add ability to sync groups from Azure Active Directory to Onspring
+- [x] add ability to sync groups from Azure Active Directory to Onspring
 
 ## Sprint 6: Sync Users to Onspring with Default Properties
 
