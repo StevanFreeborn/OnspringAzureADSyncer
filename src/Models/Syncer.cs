@@ -21,6 +21,14 @@ public class Syncer
       return 2;
     }
 
+    _logger.Information("Connected successfully to Onspring and Azure AD");
+
+    _logger.Information("Setting default field mappings");
+    await _processor.SetDefaultFieldMappings();
+
+    _logger.Information("Syncing groups");
+    await _processor.SyncGroups();
+
     _logger.Information("Syncer finished");
 
     await Log.CloseAndFlushAsync();
@@ -35,8 +43,13 @@ public class Syncer
       return await Host
       .CreateDefaultBuilder()
       .UseSerilog(
-        (context, config) =>
+        (context, services, config) =>
           config
+          .Destructure.With(new IDestructuringPolicy[]
+            {
+              services.GetRequiredService<AzureGroupDestructuringPolicy>(),
+            }
+          )
           .MinimumLevel.Debug()
           .Enrich.FromLogContext()
           .WriteTo.File(
@@ -66,6 +79,7 @@ public class Syncer
         (context, services) =>
         {
           services.AddSingleton<Settings>();
+          services.AddSingleton<AzureGroupDestructuringPolicy>();
           services.AddSingleton<IOnspringService, OnspringService>();
           services.AddSingleton<IGraphService, GraphService>();
           services.AddSingleton<IProcessor, Processor>();
