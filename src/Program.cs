@@ -24,11 +24,31 @@
     root.AddOption(configFileOption);
     root.AddOption(logLevelOption);
 
+    var host = GetHostBuilder();
+
     root.SetHandler(
-      Syncer.StartUp,
-      optionsBinder
+      async (options) =>
+        await Syncer.StartUp(host, options),
+        optionsBinder
     );
 
     return await root.InvokeAsync(args);
+  }
+
+  private static IHostBuilder GetHostBuilder()
+  {
+    return Host
+    .CreateDefaultBuilder()
+    .ConfigureServices(
+      (context, services) =>
+      {
+        services.AddSingleton<Settings>();
+        services.AddSingleton<AzureGroupDestructuringPolicy>();
+        services.AddSingleton<IOnspringService, OnspringService>();
+        services.AddSingleton<IGraphService, GraphService>();
+        services.AddSingleton<IProcessor, Processor>();
+        services.AddSingleton<Syncer>();
+      }
+    );
   }
 }
