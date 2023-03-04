@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Services;
 
-public class GraphService : IGraphService
+class GraphService : IGraphService
 {
   private readonly ILogger _logger;
   private readonly Settings _settings;
