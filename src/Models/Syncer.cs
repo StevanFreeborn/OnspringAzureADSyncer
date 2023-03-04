@@ -36,12 +36,11 @@ public class Syncer
     return 0;
   }
 
-  public static async Task<int> StartUp(Options options)
+  public static async Task<int> StartUp(IHostBuilder builder, Options options)
   {
     try
     {
-      return await Host
-      .CreateDefaultBuilder()
+      return await builder
       .UseSerilog(
         (context, services, config) =>
           config
@@ -74,17 +73,6 @@ public class Syncer
             reloadOnChange: true
           )
           .AddEnvironmentVariables()
-      )
-      .ConfigureServices(
-        (context, services) =>
-        {
-          services.AddSingleton<Settings>();
-          services.AddSingleton<AzureGroupDestructuringPolicy>();
-          services.AddSingleton<IOnspringService, OnspringService>();
-          services.AddSingleton<IGraphService, GraphService>();
-          services.AddSingleton<IProcessor, Processor>();
-          services.AddSingleton<Syncer>();
-        }
       )
       .Build()
       .Services
