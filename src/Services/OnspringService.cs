@@ -34,7 +34,87 @@ public class OnspringService : IOnspringService
     );
   }
 
-  public async Task<SaveRecordResponse?> CreateGroup(Group group)
+  public async Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup)
+  {
+    var updateRecord = new ResultRecord
+    {
+      AppId = _settings.Onspring.GroupsAppId,
+      RecordId = onspringGroup.RecordId
+    };
+
+    foreach (var kvp in _settings.GroupsFieldMappings)
+    {
+      var azureGroupValue = azureGroup
+      .GetType()
+      .GetProperty(kvp.Key.Capitalize())
+      ?.GetValue(azureGroup);
+
+      var onspringGroupValue = onspringGroup
+      .FieldData
+      .FirstOrDefault(f => f.FieldId == kvp.Value)
+      ?.GetValue();
+
+      if (
+        onspringGroupValue is not null &&
+        onspringGroupValue.Equals(azureGroupValue)
+      )
+      {
+        _logger.Debug(
+          "Field {FieldId} does not need to be updated. Onspring Group: {@OnspringGroup}. Azure AD Group: {@AzureGroup}",
+          kvp.Value,
+          onspringGroup,
+          azureGroup
+        );
+
+        continue;
+      }
+
+      _logger.Debug(
+        "Field {FieldId} needs to be updated. Onspring value: {CurrentValue}. Azure AD value: {NewValue}",
+        kvp.Value,
+        onspringGroupValue,
+        azureGroupValue
+      );
+
+      var recordFieldValue = GetRecordFieldValue(kvp.Value, azureGroupValue);
+      updateRecord.FieldData.Add(recordFieldValue);
+    }
+
+    if (updateRecord.FieldData.Count == 0)
+    {
+      _logger.Debug(
+        "No fields for Onspring Group {@OnspringGroup} need to be updated with Azure AD Group {@AzureGroup} values",
+        onspringGroup,
+        azureGroup
+      );
+      return null;
+    }
+
+    var res = await ExecuteRequest(
+      async () => await _onspringClient.SaveRecordAsync(updateRecord)
+    );
+
+    if (res.IsSuccessful is false)
+    {
+      _logger.Debug(
+        "Unable to update group in Onspring: {@Group}. {@Response}",
+        azureGroup,
+        res
+      );
+      return null;
+    }
+
+    _logger.Debug(
+      "Onspring Group {@OnspringGroup} updated using {@AzureGroup}: {@Response}",
+      onspringGroup,
+      azureGroup,
+      res
+    );
+
+    return res.Value;
+  }
+
+  public async Task<SaveRecordResponse?> CreateGroup(Group azureGroup)
   {
     var newGroupRecord = new ResultRecord
     {
@@ -43,13 +123,10 @@ public class OnspringService : IOnspringService
 
     foreach (var kvp in _settings.GroupsFieldMappings)
     {
-      var cultureInfo = Thread.CurrentThread.CurrentCulture;
-      var textInfo = cultureInfo.TextInfo;
-
-      var fieldValue = group
+      var fieldValue = azureGroup
       .GetType()
       .GetProperty(kvp.Key.Capitalize())
-      ?.GetValue(group);
+      ?.GetValue(azureGroup);
 
       if (fieldValue is null)
       {
@@ -57,44 +134,12 @@ public class OnspringService : IOnspringService
           "Unable to find value for field {FieldId} for property {Property} on group: {@Group}",
           kvp.Value,
           kvp.Key,
-          group
+          azureGroup
         );
         continue;
       }
 
-      RecordFieldValue recordFieldValue;
-
-      switch (fieldValue)
-      {
-        case string s:
-          recordFieldValue = new StringFieldValue(kvp.Value, s);
-          break;
-        case bool b:
-          recordFieldValue = new StringFieldValue(kvp.Value, b.ToString());
-          break;
-        case int i:
-          recordFieldValue = new IntegerFieldValue(kvp.Value, i);
-          break;
-        case DateTime dt:
-          var utcDateTime = dt.ToUniversalTime();
-          recordFieldValue = new DateFieldValue(kvp.Value, utcDateTime);
-          break;
-        case DateTimeOffset dto:
-          var dtoDateTime = dto.UtcDateTime;
-          recordFieldValue = new DateFieldValue(kvp.Value, dtoDateTime);
-          break;
-        case List<string> ls:
-          recordFieldValue = new StringListFieldValue(kvp.Value, ls);
-          break;
-        case List<int> li:
-          recordFieldValue = new IntegerListFieldValue(kvp.Value, li);
-          break;
-        default:
-          var jsonString = JsonConvert.SerializeObject(fieldValue);
-          recordFieldValue = new StringFieldValue(kvp.Value, jsonString);
-          break;
-      }
-
+      var recordFieldValue = GetRecordFieldValue(kvp.Value, fieldValue);
       newGroupRecord.FieldData.Add(recordFieldValue);
     }
 
@@ -102,7 +147,7 @@ public class OnspringService : IOnspringService
     {
       _logger.Debug(
         "Unable to find any values for fields for group: {@Group}",
-        group
+        azureGroup
       );
       return null;
     }
@@ -115,7 +160,7 @@ public class OnspringService : IOnspringService
     {
       _logger.Debug(
         "Unable to create group in Onspring: {@Group}. {@Response}",
-        group,
+        azureGroup,
         res
       );
       return null;
@@ -123,7 +168,7 @@ public class OnspringService : IOnspringService
 
     _logger.Debug(
       "Group {@Group} created in Onspring: {@Response}",
-      group,
+      azureGroup,
       res
     );
 
@@ -240,6 +285,23 @@ public class OnspringService : IOnspringService
     }
 
     return res.IsSuccessful;
+  }
+
+  private static RecordFieldValue? GetRecordFieldValue(int fieldId, object? fieldValue)
+  {
+    return fieldValue is null
+    ? null
+    : fieldValue switch
+    {
+      string s => new StringFieldValue(fieldId, s),
+      bool b => new StringFieldValue(fieldId, b.ToString()),
+      int i => new IntegerFieldValue(fieldId, i),
+      DateTime dt => new DateFieldValue(fieldId, dt.ToUniversalTime()),
+      DateTimeOffset dto => new DateFieldValue(fieldId, dto.UtcDateTime),
+      List<string> ls => new StringListFieldValue(fieldId, ls),
+      List<int> li => new IntegerListFieldValue(fieldId, li),
+      _ => new StringFieldValue(fieldId, JsonConvert.SerializeObject(fieldValue))
+    };
   }
 
   [ExcludeFromCodeCoverage]
