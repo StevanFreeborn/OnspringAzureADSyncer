@@ -1,6 +1,6 @@
-﻿internal class Program
+﻿class Program
 {
-  internal async static Task<int> Main(string[] args)
+  async static Task<int> Main(string[] args)
   {
     var configFileOption = new Option<string>(
       aliases: new string[] { "--config", "-c" },

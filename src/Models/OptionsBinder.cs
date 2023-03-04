@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Models
 {
-  public class OptionsBinder : BinderBase<Options>
+  class OptionsBinder : BinderBase<Options>
   {
     private readonly Option<string> _configFileOption;
     private readonly Option<LogEventLevel> _logLevelOption;

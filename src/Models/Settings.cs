@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Models;
 
-public class Settings
+class Settings
 {
   const string SettingsSection = "Settings";
   public static Dictionary<string, string> DefaultGroupsFieldMappings => new()

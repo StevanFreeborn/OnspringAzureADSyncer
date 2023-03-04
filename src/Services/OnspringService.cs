@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Services;
 
-public class OnspringService : IOnspringService
+class OnspringService : IOnspringService
 {
   private readonly ILogger _logger;
   private readonly Settings _settings;
