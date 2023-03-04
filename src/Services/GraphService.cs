@@ -11,18 +11,78 @@ public class GraphService : IGraphService
     _logger = logger;
     _settings = settings;
 
-    _graphServiceClient = new GraphServiceClient(
-      new ClientSecretCredential(
-        _settings.Azure.TenantId,
-        _settings.Azure.ClientId,
-        _settings.Azure.ClientSecret,
-        new TokenCredentialOptions
+    try
+    {
+      _graphServiceClient = new GraphServiceClient(
+        new ClientSecretCredential(
+          _settings.Azure.TenantId,
+          _settings.Azure.ClientId,
+          _settings.Azure.ClientSecret,
+          new TokenCredentialOptions
+          {
+            AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+          }
+        ),
+        new[] { "https://graph.microsoft.com/.default" }
+      );
+    }
+    catch (Exception ex)
+    {
+      _logger.Fatal(
+        ex,
+        "Unable to create Graph client: {Message}",
+        ex.Message
+      );
+      throw;
+    }
+  }
+
+  public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)
+  {
+    try
+    {
+      var initialGroups = await _graphServiceClient
+      .Groups
+      .GetAsync(
+        config =>
+        config
+        .QueryParameters
+        .Select = _settings.GroupsFieldMappings.Keys.ToArray()
+      );
+
+      if (
+        initialGroups == null ||
+        initialGroups.Value == null
+      )
+      {
+        _logger.Debug("No groups found in Azure AD");
+        return null;
+      }
+
+
+      var groupsIterator = PageIterator<Group, GroupCollectionResponse>
+      .CreatePageIterator(
+        _graphServiceClient,
+        initialGroups,
+        (g) =>
         {
-          AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+          azureGroups.Add(g);
+          return azureGroups.Count < pageSize;
         }
-      ),
-      new[] { "https://graph.microsoft.com/.default" }
-    );
+      );
+
+      return groupsIterator;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to connect to Azure AD to get groups: {Message}",
+        ex.Message
+      );
+
+      return null;
+    }
   }
 
   public async Task<bool> IsConnected()
@@ -42,25 +102,14 @@ public class GraphService : IGraphService
         }
       );
 
-      if (groups == null)
-      {
-        _logger.Debug("No groups found in Azure AD");
-      }
-      else
-      {
-        _logger.Debug(
-          "Found {GroupsCount} groups in Azure AD",
-          groups.OdataCount
-        );
-      }
-
       return true;
     }
     catch (Exception ex)
     {
       _logger.Error(
-        "Unable to connect to Azure AD to get groups: {Exception}",
-        ex
+        ex,
+        "Unable to connect to Azure AD to get groups: {Message}",
+        ex.Message
       );
 
       return false;
@@ -79,25 +128,14 @@ public class GraphService : IGraphService
         }
       );
 
-      if (users == null)
-      {
-        _logger.Debug("No users found in Azure AD");
-      }
-      else
-      {
-        _logger.Debug(
-          "Found {UsersCount} users in Azure AD",
-          users.OdataCount
-        );
-      }
-
       return true;
     }
     catch (Exception ex)
     {
       _logger.Error(
-        "Unable to connect to Azure AD to get users: {Exception}",
-        ex
+        ex,
+        "Unable to connect to Azure AD to get users: {Message}",
+        ex.Message
       );
 
       return false;
