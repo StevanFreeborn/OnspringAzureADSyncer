@@ -72,14 +72,14 @@ public static class HostBuilderExtensions
     );
   }
 
-  public static IHostBuilder AddConfiguration(this IHostBuilder hostBuilder, Options options)
+  public static IHostBuilder AddConfiguration(this IHostBuilder hostBuilder, AppOptions options)
   {
     return hostBuilder
     .ConfigureAppConfiguration(
       (context, config) =>
         config
         .AddJsonFile(
-          options.ConfigFile!,
+          options.ConfigFileOption!.FullName,
           optional: false,
           reloadOnChange: true
         )
@@ -87,7 +87,7 @@ public static class HostBuilderExtensions
     );
   }
 
-  public static IHostBuilder AddSerilog(this IHostBuilder hostBuilder, Options options)
+  public static IHostBuilder AddSerilog(this IHostBuilder hostBuilder, AppOptions options)
   {
     return hostBuilder
     .UseSerilog(
@@ -109,7 +109,7 @@ public static class HostBuilderExtensions
           )
         )
         .WriteTo.Console(
-          restrictedToMinimumLevel: options.LogLevel,
+          restrictedToMinimumLevel: options.LogLevelOption,
           theme: AnsiConsoleTheme.Code
         )
     );

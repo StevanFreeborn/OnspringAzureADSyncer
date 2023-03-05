@@ -2,7 +2,6 @@ namespace OnspringAzureADSyncer.Models;
 
 public class Syncer : ISyncer
 {
-  internal static Func<IHostBuilder, Options, Task<int>> Start = StartUp;
   private readonly ILogger _logger;
   private readonly IProcessor _processor;
 
@@ -47,11 +46,14 @@ public class Syncer : ISyncer
     return 0;
   }
 
-  public static async Task<int> StartUp(IHostBuilder builder, Options options)
+  [ExcludeFromCodeCoverage]
+  public async static Task<int> StartUp(AppOptions options)
   {
     try
     {
-      return await builder
+      return await Host
+      .CreateDefaultBuilder()
+      .AddServices()
       .AddSerilog(options)
       .AddConfiguration(options)
       .AddOnspringClient()
