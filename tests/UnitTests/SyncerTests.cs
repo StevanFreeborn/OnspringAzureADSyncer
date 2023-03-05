@@ -17,10 +17,27 @@ public class SyncerTests
   {
     _loggerMock = new Mock<ILogger>();
     _settingsMock = new Mock<ISettings>();
+    _settingsMock.SetupGet(x => x.Onspring).Returns(
+      new OnspringSettings
+      {
+        BaseUrl = "https://api.onspring.com",
+        ApiKey = "testApiKey",
+      }
+    );
+
+    _settingsMock.SetupGet(x => x.Azure).Returns(
+      new AzureSettings
+      {
+        ClientId = "ClientId",
+        TenantId = "TenantId",
+        ClientSecret = "ClientSecret",
+      }
+    );
+
     _azureGroupDestructuringPolicyMock = new Mock<IAzureGroupDestructuringPolicy>();
     _onspringClientMock = new Mock<IOnspringClient>();
-    var mockAuthProvider = new Mock<IAuthenticationProvider>();
-    _graphServiceClientMock = new Mock<GraphServiceClient>(mockAuthProvider.Object);
+    var mockAuthProvider = new Mock<TokenCredential>();
+    _graphServiceClientMock = new Mock<GraphServiceClient>(mockAuthProvider.Object, null, null);
     _onspringServiceMock = new Mock<IOnspringService>();
     _graphServiceMock = new Mock<IGraphService>();
     _processorMock = new Mock<IProcessor>();
