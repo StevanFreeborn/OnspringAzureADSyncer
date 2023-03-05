@@ -3,13 +3,13 @@ namespace OnspringAzureADSyncer.Models;
 public class Processor : IProcessor
 {
   private readonly ILogger _logger;
-  private readonly Settings _settings;
+  private readonly ISettings _settings;
   private readonly IOnspringService _onspringService;
   private readonly IGraphService _graphService;
 
   public Processor(
     ILogger logger,
-    Settings settings,
+    ISettings settings,
     IOnspringService onspringService,
     IGraphService graphService
   )

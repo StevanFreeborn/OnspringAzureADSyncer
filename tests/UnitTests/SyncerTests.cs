@@ -5,6 +5,8 @@ public class SyncerTests
   private readonly Mock<ILogger> _loggerMock;
   private readonly Mock<ISettings> _settingsMock;
   private readonly Mock<IAzureGroupDestructuringPolicy> _azureGroupDestructuringPolicyMock;
+  private readonly Mock<IOnspringClient> _onspringClientMock;
+  private readonly Mock<GraphServiceClient> _graphServiceClientMock;
   private readonly Mock<IOnspringService> _onspringServiceMock;
   private readonly Mock<IGraphService> _graphServiceMock;
   private readonly Mock<IProcessor> _processorMock;
@@ -16,6 +18,9 @@ public class SyncerTests
     _loggerMock = new Mock<ILogger>();
     _settingsMock = new Mock<ISettings>();
     _azureGroupDestructuringPolicyMock = new Mock<IAzureGroupDestructuringPolicy>();
+    _onspringClientMock = new Mock<IOnspringClient>();
+    var mockAuthProvider = new Mock<IAuthenticationProvider>();
+    _graphServiceClientMock = new Mock<GraphServiceClient>(mockAuthProvider.Object);
     _onspringServiceMock = new Mock<IOnspringService>();
     _graphServiceMock = new Mock<IGraphService>();
     _processorMock = new Mock<IProcessor>();
@@ -28,6 +33,8 @@ public class SyncerTests
       {
         services.AddSingleton(_settingsMock.Object);
         services.AddSingleton(_azureGroupDestructuringPolicyMock.Object);
+        services.AddSingleton(_onspringClientMock.Object);
+        services.AddSingleton(_graphServiceClientMock.Object);
         services.AddSingleton(_onspringServiceMock);
         services.AddSingleton(_graphServiceMock.Object);
         services.AddSingleton(_processorMock.Object);

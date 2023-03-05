@@ -24,7 +24,9 @@
     root.AddOption(configFileOption);
     root.AddOption(logLevelOption);
 
-    var host = GetHostBuilder();
+    var host = Host
+    .CreateDefaultBuilder()
+    .AddServices();
 
     root.SetHandler(
       async (options) =>
@@ -33,23 +35,5 @@
     );
 
     return await root.InvokeAsync(args);
-  }
-
-  [ExcludeFromCodeCoverage]
-  private static IHostBuilder GetHostBuilder()
-  {
-    return Host
-    .CreateDefaultBuilder()
-    .ConfigureServices(
-      (context, services) =>
-      {
-        services.AddSingleton<Settings>();
-        services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
-        services.AddSingleton<IOnspringService, OnspringService>();
-        services.AddSingleton<IGraphService, GraphService>();
-        services.AddSingleton<IProcessor, Processor>();
-        services.AddSingleton<ISyncer, Syncer>();
-      }
-    );
   }
 }
