@@ -53,7 +53,7 @@ public class Syncer : ISyncer
     }
     catch (Exception ex)
     {
-      Console.WriteLine($"An error occurred: {ex.Message}");
+      Console.WriteLine($"An error occurred while starting the app: {ex.Message}");
       return 1;
     }
   }
