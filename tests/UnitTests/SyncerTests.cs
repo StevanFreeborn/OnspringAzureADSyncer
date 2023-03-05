@@ -36,8 +36,8 @@ public class SyncerTests
 
     _azureGroupDestructuringPolicyMock = new Mock<IAzureGroupDestructuringPolicy>();
     _onspringClientMock = new Mock<IOnspringClient>();
-    var mockAuthProvider = new Mock<TokenCredential>();
-    _graphServiceClientMock = new Mock<GraphServiceClient>(mockAuthProvider.Object, null, null);
+    var tokenCredentialMock = new Mock<TokenCredential>();
+    _graphServiceClientMock = new Mock<GraphServiceClient>(tokenCredentialMock.Object, null, null);
     _onspringServiceMock = new Mock<IOnspringService>();
     _graphServiceMock = new Mock<IGraphService>();
     _processorMock = new Mock<IProcessor>();
