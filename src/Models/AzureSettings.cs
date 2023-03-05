@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Models;
 
-class AzureSettings
+public class AzureSettings
 {
   public const string GroupsNameKey = "id";
   public const string GroupsDescriptionKey = "description";

@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Models;
 
-class OnspringSettings
+public class OnspringSettings
 {
   public const string GroupsNameField = "Name";
   public const string GroupsDescriptionField = "Description";

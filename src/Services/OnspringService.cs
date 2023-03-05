@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Services;
 
-class OnspringService : IOnspringService
+public class OnspringService : IOnspringService
 {
   private readonly ILogger _logger;
   private readonly Settings _settings;
@@ -287,6 +287,7 @@ class OnspringService : IOnspringService
     return res.IsSuccessful;
   }
 
+  [ExcludeFromCodeCoverage]
   private static RecordFieldValue? GetRecordFieldValue(int fieldId, object? fieldValue)
   {
     return fieldValue is null

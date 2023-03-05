@@ -1,11 +1,14 @@
-Remove-Item -Path TestResults -Recurse -Force
+$RootPath = Split-Path $PSScriptRoot -Parent
+
+Remove-Item -Path $RootPath\TestResults\* -Recurse -Force
 
 dotnet test --collect:"XPlat Code Coverage;Include=[OnspringAzureADSyncer]*"
 
-dotnet reportgenerator `
--reports:TestResults\*\coverage.cobertura.xml `
--targetdir:TestResults\coveragereport `
+reportgenerator `
+-reports:$RootPath\TestResults\*\coverage.cobertura.xml `
+-targetdir:$RootPath\TestResults\coveragereport `
 -reporttypes:Html_Dark;
 
-cd TestResults\coveragereport
-live-server
+$testPath = (Split-Path (Split-Path $PSScriptRoot -parent) -leaf)
+
+live-server --open=$testPath\TestResults\coveragereport\
