@@ -1,6 +1,6 @@
 ﻿class Program
 {
-  async static Task<int> Main(string[] args)
+  internal async static Task<int> Main(string[] args)
   {
     var configFileOption = new Option<string>(
       aliases: new string[] { "--config", "-c" },
@@ -28,13 +28,14 @@
 
     root.SetHandler(
       async (options) =>
-        await Syncer.StartUp(host, options),
+        await Syncer.Start(host, options),
         optionsBinder
     );
 
     return await root.InvokeAsync(args);
   }
 
+  [ExcludeFromCodeCoverage]
   private static IHostBuilder GetHostBuilder()
   {
     return Host
@@ -43,11 +44,11 @@
       (context, services) =>
       {
         services.AddSingleton<Settings>();
-        services.AddSingleton<AzureGroupDestructuringPolicy>();
+        services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
         services.AddSingleton<IOnspringService, OnspringService>();
         services.AddSingleton<IGraphService, GraphService>();
         services.AddSingleton<IProcessor, Processor>();
-        services.AddSingleton<Syncer>();
+        services.AddSingleton<ISyncer, Syncer>();
       }
     );
   }

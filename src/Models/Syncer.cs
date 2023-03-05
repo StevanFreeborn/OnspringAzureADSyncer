@@ -1,7 +1,9 @@
 namespace OnspringAzureADSyncer.Models;
 
-class Syncer
+public class Syncer : ISyncer
 {
+  public static Func<IHostBuilder, Options, Task<int>> Start = StartUp;
+
   private readonly ILogger _logger;
   private readonly IProcessor _processor;
 
@@ -46,7 +48,7 @@ class Syncer
           config
           .Destructure.With(new IDestructuringPolicy[]
             {
-              services.GetRequiredService<AzureGroupDestructuringPolicy>(),
+              services.GetRequiredService<IAzureGroupDestructuringPolicy>(),
             }
           )
           .MinimumLevel.Debug()
@@ -76,7 +78,7 @@ class Syncer
       )
       .Build()
       .Services
-      .GetRequiredService<Syncer>()
+      .GetRequiredService<ISyncer>()
       .Run();
     }
     catch (Exception ex)

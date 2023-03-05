@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Models;
 
-class Processor : IProcessor
+public class Processor : IProcessor
 {
   private readonly ILogger _logger;
   private readonly Settings _settings;
