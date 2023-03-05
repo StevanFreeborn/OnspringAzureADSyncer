@@ -22,6 +22,10 @@ public class Syncer : ISyncer
       return 2;
     }
 
+    // TODO: Validate field mappings
+    // TODO: Validate that mapped fields exist in Onspring
+    // TODO: Validate that mapped properties exist for Azure AD resource
+
     _logger.Information("Connected successfully to Onspring and Azure AD");
 
     _logger.Information("Setting default field mappings");
@@ -29,6 +33,12 @@ public class Syncer : ISyncer
 
     _logger.Information("Syncing groups");
     await _processor.SyncGroups();
+
+    // TODO: Sync users
+
+    // TODO: Sync group memberships
+
+    // TODO: Reconcile users status
 
     _logger.Information("Syncer finished");
 
