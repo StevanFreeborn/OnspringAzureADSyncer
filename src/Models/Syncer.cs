@@ -42,39 +42,10 @@ public class Syncer : ISyncer
     try
     {
       return await builder
-      .UseSerilog(
-        (context, services, config) =>
-          config
-          .Destructure.With(new IDestructuringPolicy[]
-            {
-              services.GetRequiredService<IAzureGroupDestructuringPolicy>(),
-            }
-          )
-          .MinimumLevel.Debug()
-          .Enrich.FromLogContext()
-          .WriteTo.File(
-            new CompactJsonFormatter(),
-            Path.Combine(
-              AppContext.BaseDirectory,
-              $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
-              "log.json"
-            )
-          )
-          .WriteTo.Console(
-            restrictedToMinimumLevel: options.LogLevel,
-            theme: AnsiConsoleTheme.Code
-          )
-      )
-      .ConfigureAppConfiguration(
-        (context, config) =>
-          config
-          .AddJsonFile(
-            options.ConfigFile!,
-            optional: false,
-            reloadOnChange: true
-          )
-          .AddEnvironmentVariables()
-      )
+      .AddSerilog(options)
+      .AddConfiguration(options)
+      .AddOnspringClient()
+      .AddGraphClient()
       .Build()
       .Services
       .GetRequiredService<ISyncer>()

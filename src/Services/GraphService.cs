@@ -3,38 +3,18 @@ namespace OnspringAzureADSyncer.Services;
 public class GraphService : IGraphService
 {
   private readonly ILogger _logger;
-  private readonly Settings _settings;
+  private readonly ISettings _settings;
   private readonly GraphServiceClient _graphServiceClient;
 
-  public GraphService(ILogger logger, Settings settings)
+  public GraphService(
+    ILogger logger,
+    ISettings settings,
+    GraphServiceClient graphServiceClient
+  )
   {
     _logger = logger;
     _settings = settings;
-
-    try
-    {
-      _graphServiceClient = new GraphServiceClient(
-        new ClientSecretCredential(
-          _settings.Azure.TenantId,
-          _settings.Azure.ClientId,
-          _settings.Azure.ClientSecret,
-          new TokenCredentialOptions
-          {
-            AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-          }
-        ),
-        new[] { "https://graph.microsoft.com/.default" }
-      );
-    }
-    catch (Exception ex)
-    {
-      _logger.Fatal(
-        ex,
-        "Unable to create Graph client: {Message}",
-        ex.Message
-      );
-      throw;
-    }
+    _graphServiceClient = graphServiceClient;
   }
 
   public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)

@@ -8,6 +8,7 @@ global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Graph;
+global using Microsoft.Graph.Identity;
 global using Microsoft.Graph.Models;
 
 global using Newtonsoft.Json;

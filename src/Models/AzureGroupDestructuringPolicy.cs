@@ -2,9 +2,9 @@ namespace OnspringAzureADSyncer.Models;
 
 public class AzureGroupDestructuringPolicy : IAzureGroupDestructuringPolicy
 {
-  private readonly Settings _settings;
+  private readonly ISettings _settings;
 
-  public AzureGroupDestructuringPolicy(Settings settings)
+  public AzureGroupDestructuringPolicy(ISettings settings)
   {
     _settings = settings;
   }
