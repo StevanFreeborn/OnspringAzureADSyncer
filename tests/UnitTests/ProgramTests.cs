@@ -5,6 +5,7 @@ public class ProgramTests : IDisposable
   public void Dispose()
   {
     Syncer.Start = Syncer.StartUp;
+    GC.SuppressFinalize(this);
   }
 
   [Fact]

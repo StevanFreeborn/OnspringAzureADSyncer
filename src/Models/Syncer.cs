@@ -2,8 +2,7 @@ namespace OnspringAzureADSyncer.Models;
 
 public class Syncer : ISyncer
 {
-  public static Func<IHostBuilder, Options, Task<int>> Start = StartUp;
-
+  internal static Func<IHostBuilder, Options, Task<int>> Start = StartUp;
   private readonly ILogger _logger;
   private readonly IProcessor _processor;
 

@@ -6,6 +6,7 @@ global using Microsoft.Extensions.Hosting;
 
 global using Moq;
 
+global using OnspringAzureADSyncer.Extensions;
 global using OnspringAzureADSyncer.Interfaces;
 global using OnspringAzureADSyncer.Models;
 global using OnspringAzureADSyncer.Services;
