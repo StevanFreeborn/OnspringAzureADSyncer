@@ -53,7 +53,8 @@ class Program
     modelBinder.BindMemberFromValue(opt => opt.LogLevel, logLevelOption);
 
     rootCommand.SetHandler(
-      async context => await Host
+      async context =>
+        await Host
         .CreateDefaultBuilder()
         .ConfigureServices(
           services =>
@@ -75,7 +76,8 @@ class Program
         .Build()
         .Services
         .GetRequiredService<ISyncer>()
-        .Run());
+        .Run()
+    );
 
     return new CommandLineBuilder(rootCommand);
   }
