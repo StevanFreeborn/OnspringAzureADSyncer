@@ -1,8 +1,6 @@
 global using System.CommandLine;
-global using System.CommandLine.Binding;
 global using System.CommandLine.Builder;
 global using System.CommandLine.Hosting;
-global using System.CommandLine.Invocation;
 global using System.CommandLine.NamingConventionBinder;
 global using System.CommandLine.Parsing;
 global using System.Diagnostics.CodeAnalysis;
