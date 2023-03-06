@@ -1,7 +1,15 @@
-﻿class Program
+﻿[ExcludeFromCodeCoverage]
+class Program
 {
-  [ExcludeFromCodeCoverage]
-  internal async static Task<int> Main(string[] args)
+  async static Task<int> Main(string[] args)
+  {
+    return await BuildCommandLine()
+    .UseDefaults()
+    .Build()
+    .InvokeAsync(args);
+  }
+
+  static CommandLineBuilder BuildCommandLine()
   {
     var configFileOption = new Option<FileInfo>(
       aliases: new string[] { "--config", "-c" },
@@ -32,8 +40,6 @@
       getDefaultValue: () => LogEventLevel.Information
     );
 
-    var optionsBinder = new AppOptionsBinder(configFileOption, logLevelOption);
-
     var rootCommand = new RootCommand(
       "An app to sync Azure AD groups and users with an Onspring instance."
     )
@@ -42,11 +48,35 @@
       logLevelOption,
     };
 
-    rootCommand.SetHandler(
-      Syncer.StartUp,
-      optionsBinder
-    );
+    var modelBinder = new ModelBinder<AppOptions>();
+    modelBinder.BindMemberFromValue(opt => opt.ConfigFile, configFileOption);
+    modelBinder.BindMemberFromValue(opt => opt.LogLevel, logLevelOption);
 
-    return await rootCommand.InvokeAsync(args);
+    rootCommand.SetHandler(
+      async context => await Host
+        .CreateDefaultBuilder()
+        .ConfigureServices(
+          services =>
+          {
+            services.AddSingleton(modelBinder);
+            services.AddSingleton(context.BindingContext);
+            services.AddOptions<AppOptions>().BindCommandLine();
+            services.AddSingleton<ISettings, Settings>();
+            services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
+            services.AddSingleton<IOnspringService, OnspringService>();
+            services.AddSingleton<IGraphService, GraphService>();
+            services.AddSingleton<IProcessor, Processor>();
+            services.AddSingleton<ISyncer, Syncer>();
+          }
+        )
+        .AddSerilog()
+        .AddOnspringClient()
+        .AddGraphClient()
+        .Build()
+        .Services
+        .GetRequiredService<ISyncer>()
+        .Run());
+
+    return new CommandLineBuilder(rootCommand);
   }
 }

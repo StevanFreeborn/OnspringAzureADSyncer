@@ -49,6 +49,7 @@ public static class HostBuilderExtensions
       {
         var settings = services.BuildServiceProvider().GetRequiredService<ISettings>();
         var logger = services.BuildServiceProvider().GetRequiredService<ILogger>();
+
         try
         {
           var onspringClient = new OnspringClient(
@@ -72,30 +73,19 @@ public static class HostBuilderExtensions
     );
   }
 
-  public static IHostBuilder AddConfiguration(this IHostBuilder hostBuilder, AppOptions options)
-  {
-    return hostBuilder
-    .ConfigureAppConfiguration(
-      (context, config) =>
-        config
-        .AddJsonFile(
-          options.ConfigFileOption!.FullName,
-          optional: false,
-          reloadOnChange: true
-        )
-        .AddEnvironmentVariables()
-    );
-  }
-
-  public static IHostBuilder AddSerilog(this IHostBuilder hostBuilder, AppOptions options)
+  public static IHostBuilder AddSerilog(this IHostBuilder hostBuilder)
   {
     return hostBuilder
     .UseSerilog(
       (context, services, config) =>
+      {
+        var options = services.GetRequiredService<IOptions<AppOptions>>().Value;
+        var azureGroupDestructPolicy = services.GetRequiredService<IAzureGroupDestructuringPolicy>();
+
         config
         .Destructure.With(new IDestructuringPolicy[]
           {
-            services.GetRequiredService<IAzureGroupDestructuringPolicy>(),
+            azureGroupDestructPolicy,
           }
         )
         .MinimumLevel.Debug()
@@ -109,24 +99,9 @@ public static class HostBuilderExtensions
           )
         )
         .WriteTo.Console(
-          restrictedToMinimumLevel: options.LogLevelOption,
+          restrictedToMinimumLevel: options.LogLevel,
           theme: AnsiConsoleTheme.Code
-        )
-    );
-  }
-
-  public static IHostBuilder AddServices(this IHostBuilder hostBuilder)
-  {
-    return hostBuilder
-    .ConfigureServices(
-      (context, services) =>
-      {
-        services.AddSingleton<ISettings, Settings>();
-        services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
-        services.AddSingleton<IOnspringService, OnspringService>();
-        services.AddSingleton<IGraphService, GraphService>();
-        services.AddSingleton<IProcessor, Processor>();
-        services.AddSingleton<ISyncer, Syncer>();
+        );
       }
     );
   }
