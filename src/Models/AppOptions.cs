@@ -2,6 +2,6 @@ namespace OnspringAzureADSyncer.Models;
 
 public class AppOptions
 {
-  public FileInfo? ConfigFileOption { get; init; }
-  public LogEventLevel LogLevelOption { get; init; }
+  public FileInfo? ConfigFile { get; init; }
+  public LogEventLevel LogLevel { get; init; }
 }

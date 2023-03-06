@@ -45,28 +45,4 @@ public class Syncer : ISyncer
 
     return 0;
   }
-
-  [ExcludeFromCodeCoverage]
-  public async static Task<int> StartUp(AppOptions options)
-  {
-    try
-    {
-      return await Host
-      .CreateDefaultBuilder()
-      .AddServices()
-      .AddSerilog(options)
-      .AddConfiguration(options)
-      .AddOnspringClient()
-      .AddGraphClient()
-      .Build()
-      .Services
-      .GetRequiredService<ISyncer>()
-      .Run();
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"An error occurred while starting the app: {ex.Message}");
-      return 1;
-    }
-  }
 }

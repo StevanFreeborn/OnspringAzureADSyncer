@@ -20,8 +20,16 @@ public class Settings : ISettings
   public Dictionary<string, int> GroupsFieldMappings { get; init; } = new Dictionary<string, int>();
   public Dictionary<string, int> UsersFieldMappings { get; init; } = new Dictionary<string, int>();
 
-  public Settings(IConfiguration configuration)
+  public Settings(IOptions<AppOptions> options)
   {
-    configuration.GetSection(SettingsSection).Bind(this);
+    new ConfigurationBuilder()
+    .AddJsonFile(
+      options.Value.ConfigFile!.FullName,
+      optional: false,
+      reloadOnChange: true
+    )
+    .Build()
+    .GetSection(SettingsSection)
+    .Bind(this);
   }
 }
