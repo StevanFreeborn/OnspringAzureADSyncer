@@ -130,23 +130,35 @@ public class OnspringService : IOnspringService
 
     do
     {
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.GetFieldsForAppAsync(
-          _settings.Onspring.GroupsAppId,
-          pagingRequest
-        )
-      );
-
-      if (res.IsSuccessful is true)
+      try
       {
-        fields.AddRange(res.Value.Items);
-        totalPages = res.Value.TotalPages;
+        var res = await ExecuteRequest(
+          async () => await _onspringClient.GetFieldsForAppAsync(
+            _settings.Onspring.GroupsAppId,
+            pagingRequest
+          )
+        );
+
+        if (res.IsSuccessful is true)
+        {
+          fields.AddRange(res.Value.Items);
+          totalPages = res.Value.TotalPages;
+        }
+        else
+        {
+          _logger.Error(
+            "Unable to get fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+            res,
+            currentPage,
+            totalPages
+          );
+        }
       }
-      else
+      catch (Exception ex)
       {
         _logger.Error(
-          "Unable to get fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
-          res,
+          ex,
+          "Unable to get fields. Current page: {CurrentPage}. Total pages: {TotalPages}.",
           currentPage,
           totalPages
         );
@@ -164,48 +176,67 @@ public class OnspringService : IOnspringService
     return await CanGetUsers() && await CanGetGroups();
   }
 
-  public async Task<bool> CanGetUsers()
+  internal async Task<bool> CanGetUsers()
   {
-    var res = await ExecuteRequest(
-      async () =>
-        await _onspringClient.GetAppAsync(
-          _settings.Onspring.UsersAppId
-        )
-    );
-
-    if (res.IsSuccessful is false)
+    try
     {
-      _logger.Error(
-        "Unable to get users from Onspring: {@Response}",
-        res
+      var res = await ExecuteRequest(
+        async () =>
+          await _onspringClient.GetAppAsync(
+            _settings.Onspring.UsersAppId
+          )
       );
-    }
 
-    return res.IsSuccessful;
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to get users from Onspring: {@Response}",
+          res
+        );
+      }
+
+      return res.IsSuccessful;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(ex, "Unable to get users from Onspring");
+      return false;
+    }
   }
 
-  public async Task<bool> CanGetGroups()
+  internal async Task<bool> CanGetGroups()
   {
-    var res = await ExecuteRequest(
-      async () =>
-        await _onspringClient.GetAppAsync(
-          _settings.Onspring.GroupsAppId
-        )
-    );
-
-    if (res.IsSuccessful is false)
+    try
     {
-      _logger.Error(
-        "Unable to get groups from Onspring: {@Response}",
-        res
+      var res = await ExecuteRequest(
+        async () =>
+          await _onspringClient.GetAppAsync(
+            _settings.Onspring.GroupsAppId
+          )
       );
-    }
 
-    return res.IsSuccessful;
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to get groups from Onspring: {@Response}",
+          res
+        );
+      }
+
+      return res.IsSuccessful;
+    }
+    catch (Exception e)
+    {
+      _logger.Error(e, "Unable to get groups from Onspring");
+      return false;
+    }
   }
 
   [ExcludeFromCodeCoverage]
-  private ResultRecord BuildUpdatedOnspringGroupRecord(Group azureGroup, ResultRecord onspringGroup)
+  private ResultRecord BuildUpdatedOnspringGroupRecord(
+    Group azureGroup,
+    ResultRecord onspringGroup
+  )
   {
     var updateRecord = new ResultRecord
     {
@@ -288,7 +319,10 @@ public class OnspringService : IOnspringService
   }
 
   [ExcludeFromCodeCoverage]
-  private static RecordFieldValue? GetRecordFieldValue(int fieldId, object? fieldValue)
+  private static RecordFieldValue? GetRecordFieldValue(
+    int fieldId,
+    object? fieldValue
+  )
   {
     return fieldValue is null
     ? null
@@ -306,23 +340,48 @@ public class OnspringService : IOnspringService
   }
 
   [ExcludeFromCodeCoverage]
-  private async Task<ApiResponse<T>> ExecuteRequest<T>(Func<Task<ApiResponse<T>>> func, int retryLimit = 3)
+  private async Task<ApiResponse<T>> ExecuteRequest<T>(
+    Func<Task<ApiResponse<T>>> func,
+    int retry = 1
+  )
   {
     ApiResponse<T> response;
-    var retry = 1;
+    var retryLimit = 3;
 
-    do
+    try
     {
-      response = await func();
-
-      if (response.IsSuccessful is true)
+      do
       {
-        return response;
-      }
+        response = await func();
 
+        if (response.IsSuccessful is true)
+        {
+          return response;
+        }
+
+        _logger.Warning(
+          "Request was unsuccessful. {StatusCode} - {Message}. ({Attempt} of {AttemptLimit})",
+          response.StatusCode,
+          response.Message,
+          retry,
+          retryLimit
+        );
+
+        retry++;
+
+        if (retry > retryLimit)
+        {
+          break;
+        }
+
+        await Wait(retry);
+      } while (retry <= retryLimit);
+    }
+    catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+    {
       _logger.Error(
-        "Request to Onspring API was unsuccessful: {@Response}. ({Attempt} of {AttemptLimit})",
-        response,
+        ex,
+        "Request failed. ({Attempt} of {AttemptLimit})",
         retry,
         retryLimit
       );
@@ -331,31 +390,40 @@ public class OnspringService : IOnspringService
 
       if (retry > retryLimit)
       {
-        break;
+        throw;
       }
 
-      var wait = 1000 * retry;
+      await Wait(retry);
 
-      _logger.Information(
-        "Waiting {Wait}s before retrying request.",
-        wait
-      );
-
-      await Task.Delay(wait);
-
-      _logger.Information(
-        "Retrying request. {Attempt} of {AttemptLimit}",
-        retry,
-        retryLimit
-      );
-    } while (retry <= retryLimit);
+      return await ExecuteRequest(func, retry);
+    }
 
     _logger.Error(
-      "Request failed after {RetryLimit} attempts: {@Response}",
+      "Request failed after {RetryLimit} attempts. {StatusCode} - {Message}.",
       retryLimit,
-      response
+      response.StatusCode,
+      response.Message
     );
 
     return response;
+  }
+
+  [ExcludeFromCodeCoverage]
+  private async Task Wait(int retryAttempt)
+  {
+    var wait = 1000 * retryAttempt;
+
+    _logger.Debug(
+      "Waiting {Wait}s before retrying request.",
+      wait
+    );
+
+    await Task.Delay(wait);
+
+    _logger.Debug(
+      "Retrying request. {Attempt} of {AttemptLimit}",
+      retryAttempt,
+      3
+    );
   }
 }
