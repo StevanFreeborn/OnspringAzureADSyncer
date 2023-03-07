@@ -37,7 +37,7 @@ public class SettingsTests
     var filePath = Path.Combine(
       Directory.GetCurrentDirectory(),
       "testData",
-      "config.test.json"
+      "testconfig.json"
     );
 
     _appOptionsMock
@@ -63,7 +63,7 @@ public class SettingsTests
     var filePath = Path.Combine(
       Directory.GetCurrentDirectory(),
       "testData",
-      "config.test.json"
+      "testconfig.json"
     );
 
     _appOptionsMock
