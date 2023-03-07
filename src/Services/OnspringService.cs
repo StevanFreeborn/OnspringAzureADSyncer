@@ -147,7 +147,7 @@ public class OnspringService : IOnspringService
         else
         {
           _logger.Error(
-            "Unable to get fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+            "Unable to get group fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
             res,
             currentPage,
             totalPages
@@ -158,7 +158,7 @@ public class OnspringService : IOnspringService
       {
         _logger.Error(
           ex,
-          "Unable to get fields. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+          "Unable to get group fields. Current page: {CurrentPage}. Total pages: {TotalPages}.",
           currentPage,
           totalPages
         );
@@ -411,6 +411,8 @@ public class OnspringService : IOnspringService
   [ExcludeFromCodeCoverage]
   private async Task Wait(int retryAttempt)
   {
+    var isTesting = Environment.GetEnvironmentVariable("ENVIRONMENT") == "testing";
+
     var wait = 1000 * retryAttempt;
 
     _logger.Debug(
@@ -418,7 +420,10 @@ public class OnspringService : IOnspringService
       wait
     );
 
-    await Task.Delay(wait);
+    if (isTesting is false)
+    {
+      await Task.Delay(wait);
+    }
 
     _logger.Debug(
       "Retrying request. {Attempt} of {AttemptLimit}",
