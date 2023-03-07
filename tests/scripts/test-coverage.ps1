@@ -2,7 +2,7 @@ $RootPath = Split-Path $PSScriptRoot -Parent
 
 Remove-Item -Path $RootPath\TestResults\* -Recurse -Force
 
-dotnet test --collect:"XPlat Code Coverage;Include=[OnspringAzureADSyncer]*"
+dotnet test --environment ENVIRONMENT=testing --collect:"XPlat Code Coverage;Include=[OnspringAzureADSyncer]*"
 
 reportgenerator `
 -reports:$RootPath\TestResults\*\coverage.cobertura.xml `
