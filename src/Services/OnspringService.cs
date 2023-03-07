@@ -19,106 +19,147 @@ public class OnspringService : IOnspringService
 
   public async Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup)
   {
-    var updateRecord = BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
-
-    if (updateRecord.FieldData.Count == 0)
+    try
     {
+      var updateRecord = BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
+
+      if (updateRecord.FieldData.Count == 0)
+      {
+        _logger.Debug(
+          "No fields for Onspring Group {@OnspringGroup} need to be updated with Azure AD Group {@AzureGroup} values",
+          onspringGroup,
+          azureGroup
+        );
+
+        return null;
+      }
+
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.SaveRecordAsync(updateRecord)
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Debug(
+          "Unable to update group in Onspring: {@Group}. {@Response}",
+          azureGroup,
+          res
+        );
+        return null;
+      }
+
       _logger.Debug(
-        "No fields for Onspring Group {@OnspringGroup} need to be updated with Azure AD Group {@AzureGroup} values",
+        "Onspring Group {@OnspringGroup} updated using {@AzureGroup}: {@Response}",
+        onspringGroup,
+        azureGroup,
+        res
+      );
+
+      return res.Value;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to update Onspring Group {@OnspringGroup} using Azure Group {@AzureGroup}",
         onspringGroup,
         azureGroup
       );
 
       return null;
     }
-
-    var res = await ExecuteRequest(
-      async () => await _onspringClient.SaveRecordAsync(updateRecord)
-    );
-
-    if (res.IsSuccessful is false)
-    {
-      _logger.Debug(
-        "Unable to update group in Onspring: {@Group}. {@Response}",
-        azureGroup,
-        res
-      );
-      return null;
-    }
-
-    _logger.Debug(
-      "Onspring Group {@OnspringGroup} updated using {@AzureGroup}: {@Response}",
-      onspringGroup,
-      azureGroup,
-      res
-    );
-
-    return res.Value;
   }
 
   public async Task<SaveRecordResponse?> CreateGroup(Group azureGroup)
   {
-    var newGroupRecord = BuildNewOnspringGroupRecord(azureGroup);
-
-    if (newGroupRecord.FieldData.Count == 0)
+    try
     {
-      _logger.Debug(
-        "Unable to find any values for fields for group: {@Group}",
-        azureGroup
+      var newGroupRecord = BuildNewOnspringGroupRecord(azureGroup);
+
+      if (newGroupRecord.FieldData.Count == 0)
+      {
+        _logger.Debug(
+          "Unable to find any values for fields for group: {@Group}",
+          azureGroup
+        );
+        return null;
+      }
+
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.SaveRecordAsync(newGroupRecord)
       );
-      return null;
-    }
 
-    var res = await ExecuteRequest(
-      async () => await _onspringClient.SaveRecordAsync(newGroupRecord)
-    );
+      if (res.IsSuccessful is false)
+      {
+        _logger.Debug(
+          "Unable to create group in Onspring: {@Group}. {@Response}",
+          azureGroup,
+          res
+        );
 
-    if (res.IsSuccessful is false)
-    {
+        return null;
+      }
+
       _logger.Debug(
-        "Unable to create group in Onspring: {@Group}. {@Response}",
+        "Group {@Group} created in Onspring: {@Response}",
         azureGroup,
         res
       );
+
+      return res.Value;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to create group in Onspring: {@Group}",
+        azureGroup
+      );
+
       return null;
     }
-
-    _logger.Debug(
-      "Group {@Group} created in Onspring: {@Response}",
-      azureGroup,
-      res
-    );
-
-    return res.Value;
   }
 
   public async Task<ResultRecord?> GetGroup(string? id)
   {
-    var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
-
-    var request = new QueryRecordsRequest
+    try
     {
-      AppId = _settings.Onspring.GroupsAppId,
-      Filter = $"{groupNameFieldId} eq '{id}'",
-      FieldIds = _settings.GroupsFieldMappings.Values.ToList(),
-      DataFormat = DataFormat.Formatted
-    };
+      var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
 
-    var res = await ExecuteRequest(
-      async () =>
-        await _onspringClient.QueryRecordsAsync(request)
-    );
+      var request = new QueryRecordsRequest
+      {
+        AppId = _settings.Onspring.GroupsAppId,
+        Filter = $"{groupNameFieldId} eq '{id}'",
+        FieldIds = _settings.GroupsFieldMappings.Values.ToList(),
+        DataFormat = DataFormat.Formatted
+      };
 
-    if (res.IsSuccessful is false)
+      var res = await ExecuteRequest(
+        async () =>
+          await _onspringClient.QueryRecordsAsync(request)
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to get group from Onspring: {@Response}",
+          res
+        );
+        return null;
+      }
+
+      return res.Value.Items.FirstOrDefault();
+    }
+    catch (Exception ex)
     {
       _logger.Error(
-        "Unable to get group from Onspring: {@Response}",
-        res
+        ex,
+        "Unable to get group from Onspring: {Id}",
+        id
       );
+
       return null;
     }
-
-    return res.Value.Items.FirstOrDefault();
   }
 
   public async Task<List<Field>> GetGroupFields()
