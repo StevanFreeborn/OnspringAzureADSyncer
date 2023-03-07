@@ -25,6 +25,16 @@ public class OnspringServiceTests
       }
     );
 
+    _settingsMock
+    .SetupGet(m => m.GroupsFieldMappings)
+    .Returns(
+      new Dictionary<string, int>
+      {
+        { "id", 1 },
+        { "description", 2 },
+      }
+    );
+
     _onspringService = new OnspringService(
       _loggerMock.Object,
       _settingsMock.Object,
@@ -643,6 +653,544 @@ public class OnspringServiceTests
       m => m.GetFieldsForAppAsync(
         It.IsAny<int>(),
         It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task GetGroup_WhenCalledAndGroupIsFound_ItShouldReturnAGroup()
+  {
+    var groups = new List<ResultRecord>
+    {
+      new ResultRecord()
+    };
+
+    var pagedResponse = new GetPagedRecordsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = groups,
+    };
+
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pagedResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.GetGroup(It.IsAny<string>());
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.Should().BeEquivalentTo(groups[0]);
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetGroup_WhenCalledAndGroupIsNotFound_ItShouldReturnNull()
+  {
+    var groups = new List<ResultRecord>();
+
+    var pagedResponse = new GetPagedRecordsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = groups,
+    };
+
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pagedResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.GetGroup(It.IsAny<string>());
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetGroup_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
+  {
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.GetGroup(It.IsAny<string>());
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetGroup_WhenCalledAndAnHttpExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    _onspringClientMock
+    .SetupSequence(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new HttpRequestException());
+
+    var result = await _onspringService.GetGroup(It.IsAny<string>());
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task GetGroup_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.InternalServerError,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.GetGroup(It.IsAny<string>());
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task CreateGroup_WhenCalledAndCanBuildNewGroupWithFieldDataAndRequestIsSuccessful_ItShouldReturnSaveRecordResponse()
+  {
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 123,
+    };
+
+    var response = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = saveRecordResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.CreateGroup(azureGroup);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<SaveRecordResponse>();
+    result.Should().BeEquivalentTo(saveRecordResponse);
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task CreateGroup_WhenCalledAndCannotBuildNewGroupWithFieldData_ItShouldReturnNull()
+  {
+    var azureGroup = new Group();
+
+    var result = await _onspringService.CreateGroup(azureGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Never
+    );
+  }
+
+  [Fact]
+  public async Task CreateGroup_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
+  {
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.CreateGroup(azureGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task CreateGroup_WhenCalledAndAnHttpExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _onspringClientMock
+    .SetupSequence(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new HttpRequestException());
+
+    var result = await _onspringService.CreateGroup(azureGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task CreateGroup_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    var response = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.InternalServerError,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.CreateGroup(azureGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task UpdateGroup_WhenCalledAndCanBuildAnUpdatedRecordAndRequestIsSuccessful_ItShouldReturnASaveRecordResponse()
+  {
+    var onspringGroup = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, ""),
+        new StringFieldValue(2, ""),
+      },
+    };
+
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 123,
+    };
+
+    var response = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = saveRecordResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<SaveRecordResponse>();
+    result.Should().BeEquivalentTo(saveRecordResponse);
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task UpdateGroup_WhenCalledAndCannotBuildAnUpdatedRecord_ItShouldReturnNull()
+  {
+    var onspringGroup = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "464a535b-bbc8-4c18-bb12-9f1596464d43"),
+        new StringFieldValue(2, "Test Group Description"),
+      },
+    };
+
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 123,
+    };
+
+    var response = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = saveRecordResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Never
+    );
+  }
+
+  [Fact]
+  public async Task UpdateGroup_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
+  {
+    var onspringGroup = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, ""),
+        new StringFieldValue(2, ""),
+      },
+    };
+
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task UpdateGroup_WhenCalledAndAnHttpExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var onspringGroup = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, ""),
+        new StringFieldValue(2, ""),
+      },
+    };
+
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _onspringClientMock
+    .SetupSequence(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new TaskCanceledException());
+
+    var result = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task UpdateGroup_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var onspringGroup = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, ""),
+        new StringFieldValue(2, ""),
+      },
+    };
+
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    var apiResponse = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.InternalServerError,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(apiResponse);
+
+    var result = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+
+    result.Should().BeNull();
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
       ),
       Times.Exactly(3)
     );
