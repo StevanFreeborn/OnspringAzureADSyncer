@@ -4,6 +4,7 @@ namespace OnspringAzureADSyncer.Interfaces
   {
     Task SetDefaultFieldMappings();
     Task SyncGroups();
+    Task SyncUsers();
     Task<bool> VerifyConnections();
   }
 }

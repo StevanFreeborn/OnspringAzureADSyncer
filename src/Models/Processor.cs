@@ -20,6 +20,148 @@ public class Processor : IProcessor
     _graphService = graphService;
   }
 
+  public async Task SyncUsers()
+  {
+    var azureUsers = new List<User>();
+    var pageSize = 50;
+    var userIterator = await _graphService.GetUsersIterator(azureUsers, pageSize);
+
+    if (userIterator is null)
+    {
+      _logger.Warning("No users found in Azure AD");
+      return;
+    }
+
+    var pageNumberProcessing = 0;
+
+    do
+    {
+      if (userIterator.State == PagingState.Paused)
+      {
+        await userIterator.ResumeAsync();
+      }
+
+      if (userIterator.State == PagingState.NotStarted)
+      {
+        await userIterator.IterateAsync();
+      }
+
+      if (azureUsers.Count == 0)
+      {
+        continue;
+      }
+
+      pageNumberProcessing++;
+
+      var options = new ProgressBarOptions
+      {
+        ForegroundColor = ConsoleColor.DarkBlue,
+        ProgressCharacter = '─',
+        ShowEstimatedDuration = false,
+      };
+
+      using (
+        var progressBar = new ProgressBar(
+          azureUsers.Count,
+          $"Starting processing Azure Users: page {pageNumberProcessing}",
+          options
+        )
+      )
+      {
+        foreach (var azureUser in azureUsers)
+        {
+          progressBar.Tick($"Processing Azure User: {azureUser.Id}");
+          await SyncUser(azureUser);
+        }
+
+        progressBar.Message = $"Finished processing Azure Users: page {pageNumberProcessing}";
+      }
+
+      // clear the list before
+      // the next iteration
+      // to avoid processing a user
+      // multiple times
+      azureUsers.Clear();
+
+    } while (userIterator.State != PagingState.Complete);
+  }
+
+  internal async Task SyncUser(User azureUser)
+  {
+    _logger.Debug(
+      "Syncing Azure User: {@AzureUser}",
+      azureUser
+    );
+
+    var onspringUser = await _onspringService.GetUserByEmail(azureUser.Mail);
+
+    if (onspringUser is null)
+    {
+      _logger.Debug(
+        "Azure User not found in Onspring: {@AzureUser}",
+        azureUser
+      );
+
+      _logger.Debug(
+        "Attempting to create Azure User in Onspring: {@AzureUser}",
+        azureUser
+      );
+
+      var createResponse = await _onspringService.CreateUser(azureUser);
+
+      if (createResponse is null)
+      {
+        _logger.Warning(
+          "Unable to create Azure User in Onspring: {@AzureUser}",
+          azureUser
+        );
+
+        return;
+      }
+
+      _logger.Debug(
+        "Azure User {@AzureUser} created in Onspring: {@Response}",
+        azureUser,
+        createResponse
+      );
+
+      return;
+    }
+
+    _logger.Debug(
+      "Azure User found in Onspring: {@OnspringUser}",
+      onspringUser
+    );
+
+    _logger.Debug(
+      "Attempting to update Azure User in Onspring: {@AzureUser}",
+      azureUser
+    );
+
+    var updateResponse = await _onspringService.UpdateUser(azureUser, onspringUser);
+
+    if (updateResponse is null)
+    {
+      _logger.Warning(
+        "Onspring User {@OnspringUser} not updated",
+        onspringUser
+      );
+
+      return;
+    }
+
+    _logger.Debug(
+      "Onspring User {@OnspringUser} updated: {@Response}",
+      onspringUser,
+      updateResponse
+    );
+
+    _logger.Debug(
+      "Finished processing Azure User: {@AzureUser}",
+      azureUser
+    );
+  }
+
   public async Task SyncGroups()
   {
     var azureGroups = new List<Group>();
@@ -94,8 +236,15 @@ public class Processor : IProcessor
 
     if (onspringGroup is null)
     {
-      _logger.Debug("Azure Group not found in Onspring: {@AzureGroup}", azureGroup);
-      _logger.Debug("Attempting to create Azure Group in Onspring: {@AzureGroup}", azureGroup);
+      _logger.Debug(
+        "Azure Group not found in Onspring: {@AzureGroup}",
+        azureGroup
+      );
+
+      _logger.Debug(
+        "Attempting to create Azure Group in Onspring: {@AzureGroup}",
+        azureGroup
+      );
 
       var createResponse = await _onspringService.CreateGroup(azureGroup);
 
@@ -118,8 +267,16 @@ public class Processor : IProcessor
       return;
     }
 
-    _logger.Debug("Azure Group found in Onspring: {@OnspringGroup}", onspringGroup);
-    _logger.Debug("Updating Onspring Group: {@OnspringGroup}", onspringGroup);
+    _logger.Debug(
+      "Azure Group found in Onspring: {@OnspringGroup}",
+      onspringGroup
+    );
+
+    _logger.Debug(
+      "Updating Onspring Group: {@OnspringGroup}",
+      onspringGroup
+    );
+
     var updateResponse = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
 
     if (updateResponse is null)
@@ -138,7 +295,10 @@ public class Processor : IProcessor
       updateResponse
     );
 
-    _logger.Debug("Finished processing Azure AD Group: {@AzureGroup}", azureGroup);
+    _logger.Debug(
+      "Finished processing Azure AD Group: {@AzureGroup}",
+      azureGroup
+    );
   }
 
   public async Task SetDefaultFieldMappings()

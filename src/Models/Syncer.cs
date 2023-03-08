@@ -51,6 +51,11 @@ public class Syncer : ISyncer
     await _processor.SyncGroups();
 
     // TODO: Sync users
+    var syncUsersMsg = "Syncing users";
+    Console.WriteLine(syncUsersMsg);
+    _logger.Information(syncUsersMsg);
+
+    await _processor.SyncUsers();
 
     // TODO: Sync group memberships
 
