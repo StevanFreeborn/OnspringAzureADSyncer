@@ -1,5 +1,7 @@
 global using System.Net;
 
+global using Azure.Core;
+
 global using FluentAssertions;
 
 global using Microsoft.Extensions.DependencyInjection;
