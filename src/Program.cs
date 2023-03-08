@@ -59,37 +59,41 @@ class Program
     );
 
     rootCommand.SetHandler(
-      async context =>
-        await Host
-        .CreateDefaultBuilder()
-        .ConfigureAppConfiguration(
-          (hostContext, config) =>
-            config.AddEnvironmentVariables()
-        )
-        .ConfigureServices(
-          services =>
-          {
-            services.AddSingleton(modelBinder);
-            services.AddSingleton(context.BindingContext);
-            services.AddOptions<AppOptions>().BindCommandLine();
-            services.AddSingleton<ISettings, Settings>();
-            services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
-            services.AddSingleton<IMsGraph, MsGraph>();
-            services.AddSingleton<IOnspringService, OnspringService>();
-            services.AddSingleton<IGraphService, GraphService>();
-            services.AddSingleton<IProcessor, Processor>();
-            services.AddSingleton<ISyncer, Syncer>();
-          }
-        )
-        .AddSerilog()
-        .AddOnspringClient()
-        .AddGraphClient()
-        .Build()
-        .Services
-        .GetRequiredService<ISyncer>()
-        .Run()
+      context => StartUp(context, modelBinder)
     );
 
     return new CommandLineBuilder(rootCommand);
+  }
+
+  static async Task<int> StartUp(InvocationContext context, ModelBinder<AppOptions> modelBinder)
+  {
+    return await Host
+    .CreateDefaultBuilder()
+    .ConfigureAppConfiguration(
+      (hostContext, config) =>
+        config.AddEnvironmentVariables()
+    )
+    .ConfigureServices(
+      services =>
+      {
+        services.AddSingleton(modelBinder);
+        services.AddSingleton(context.BindingContext);
+        services.AddOptions<AppOptions>().BindCommandLine();
+        services.AddSingleton<ISettings, Settings>();
+        services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
+        services.AddSingleton<IMsGraph, MsGraph>();
+        services.AddSingleton<IOnspringService, OnspringService>();
+        services.AddSingleton<IGraphService, GraphService>();
+        services.AddSingleton<IProcessor, Processor>();
+        services.AddSingleton<ISyncer, Syncer>();
+      }
+    )
+    .AddSerilog()
+    .AddOnspringClient()
+    .AddGraphClient()
+    .Build()
+    .Services
+    .GetRequiredService<ISyncer>()
+    .Run();
   }
 }
