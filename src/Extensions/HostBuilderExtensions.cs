@@ -71,10 +71,6 @@ public static class HostBuilderExtensions
             $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
             "log.json"
           )
-        )
-        .WriteTo.Console(
-          restrictedToMinimumLevel: options.LogLevel,
-          theme: AnsiConsoleTheme.Code
         );
       }
     );
