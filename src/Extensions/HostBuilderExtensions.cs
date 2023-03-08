@@ -9,34 +9,21 @@ public static class HostBuilderExtensions
       (context, services) =>
       {
         var settings = services.BuildServiceProvider().GetRequiredService<ISettings>();
-        var logger = services.BuildServiceProvider().GetRequiredService<ILogger>();
 
-        try
-        {
-          var graphServiceClient = new GraphServiceClient(
-            new ClientSecretCredential(
-              settings.Azure.TenantId,
-              settings.Azure.ClientId,
-              settings.Azure.ClientSecret,
-              new TokenCredentialOptions
-              {
-                AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-              }
-            ),
-            new[] { "https://graph.microsoft.com/.default" }
-          );
+        var graphServiceClient = new GraphServiceClient(
+          new ClientSecretCredential(
+            settings.Azure.TenantId,
+            settings.Azure.ClientId,
+            settings.Azure.ClientSecret,
+            new TokenCredentialOptions
+            {
+              AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+            }
+          ),
+          new[] { "https://graph.microsoft.com/.default" }
+        );
 
-          services.AddSingleton(graphServiceClient);
-        }
-        catch (Exception ex)
-        {
-          logger.Fatal(
-            ex,
-            "Unable to create Graph client: {Message}",
-            ex.Message
-          );
-          throw;
-        }
+        services.AddSingleton(graphServiceClient);
       }
     );
   }
@@ -48,27 +35,13 @@ public static class HostBuilderExtensions
       (context, services) =>
       {
         var settings = services.BuildServiceProvider().GetRequiredService<ISettings>();
-        var logger = services.BuildServiceProvider().GetRequiredService<ILogger>();
 
-        try
-        {
-          var onspringClient = new OnspringClient(
-            settings.Onspring.BaseUrl,
-            settings.Onspring.ApiKey
-          );
+        var onspringClient = new OnspringClient(
+          settings.Onspring.BaseUrl,
+          settings.Onspring.ApiKey
+        );
 
-          services.AddSingleton<IOnspringClient>(onspringClient);
-        }
-        catch (Exception ex)
-        {
-          logger.Fatal(
-            ex,
-            "Unable to create Onspring client: {Message}",
-            ex.Message
-          );
-
-          throw;
-        }
+        services.AddSingleton<IOnspringClient>(onspringClient);
       }
     );
   }
