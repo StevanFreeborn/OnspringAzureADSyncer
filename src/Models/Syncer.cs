@@ -1,6 +1,6 @@
 namespace OnspringAzureADSyncer.Models;
 
-public class Syncer
+public class Syncer : ISyncer
 {
   private readonly ILogger _logger;
   private readonly IProcessor _processor;
@@ -21,6 +21,10 @@ public class Syncer
       return 2;
     }
 
+    // TODO: Validate field mappings
+    // TODO: Validate that mapped fields exist in Onspring
+    // TODO: Validate that mapped properties exist for Azure AD resource
+
     _logger.Information("Connected successfully to Onspring and Azure AD");
 
     _logger.Information("Setting default field mappings");
@@ -29,72 +33,16 @@ public class Syncer
     _logger.Information("Syncing groups");
     await _processor.SyncGroups();
 
+    // TODO: Sync users
+
+    // TODO: Sync group memberships
+
+    // TODO: Reconcile users status
+
     _logger.Information("Syncer finished");
 
     await Log.CloseAndFlushAsync();
 
     return 0;
-  }
-
-  public static async Task<int> StartUp(Options options)
-  {
-    try
-    {
-      return await Host
-      .CreateDefaultBuilder()
-      .UseSerilog(
-        (context, services, config) =>
-          config
-          .Destructure.With(new IDestructuringPolicy[]
-            {
-              services.GetRequiredService<AzureGroupDestructuringPolicy>(),
-            }
-          )
-          .MinimumLevel.Debug()
-          .Enrich.FromLogContext()
-          .WriteTo.File(
-            new CompactJsonFormatter(),
-            Path.Combine(
-              AppContext.BaseDirectory,
-              $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
-              "log.json"
-            )
-          )
-          .WriteTo.Console(
-            restrictedToMinimumLevel: options.LogLevel,
-            theme: AnsiConsoleTheme.Code
-          )
-      )
-      .ConfigureAppConfiguration(
-        (context, config) =>
-          config
-          .AddJsonFile(
-            options.ConfigFile!,
-            optional: false,
-            reloadOnChange: true
-          )
-          .AddEnvironmentVariables()
-      )
-      .ConfigureServices(
-        (context, services) =>
-        {
-          services.AddSingleton<Settings>();
-          services.AddSingleton<AzureGroupDestructuringPolicy>();
-          services.AddSingleton<IOnspringService, OnspringService>();
-          services.AddSingleton<IGraphService, GraphService>();
-          services.AddSingleton<IProcessor, Processor>();
-          services.AddSingleton<Syncer>();
-        }
-      )
-      .Build()
-      .Services
-      .GetRequiredService<Syncer>()
-      .Run();
-    }
-    catch (Exception ex)
-    {
-      Console.WriteLine($"An error occurred: {ex.Message}");
-      return 1;
-    }
   }
 }

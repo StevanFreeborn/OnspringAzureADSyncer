@@ -3,38 +3,281 @@ namespace OnspringAzureADSyncer.Services;
 public class OnspringService : IOnspringService
 {
   private readonly ILogger _logger;
-  private readonly Settings _settings;
+  private readonly ISettings _settings;
+  private readonly IOnspringClient _onspringClient;
 
-  private readonly OnspringClient _onspringClient;
-
-  public OnspringService(ILogger logger, Settings settings)
+  public OnspringService(
+    ILogger logger,
+    ISettings settings,
+    IOnspringClient onspringClient
+  )
   {
     _logger = logger;
     _settings = settings;
-
-    try
-    {
-      _onspringClient = new OnspringClient(
-        _settings.Onspring.BaseUrl,
-        _settings.Onspring.ApiKey
-      );
-    }
-    catch (Exception ex)
-    {
-      _logger.Fatal(
-        ex,
-        "Unable to create Onspring client: {Message}",
-        ex.Message
-      );
-      throw;
-    }
-    _onspringClient = new OnspringClient(
-      _settings.Onspring.BaseUrl,
-      _settings.Onspring.ApiKey
-    );
+    _onspringClient = onspringClient;
   }
 
   public async Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup)
+  {
+    try
+    {
+      var updateRecord = BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
+
+      if (updateRecord.FieldData.Count == 0)
+      {
+        _logger.Debug(
+          "No fields for Onspring Group {@OnspringGroup} need to be updated with Azure AD Group {@AzureGroup} values",
+          onspringGroup,
+          azureGroup
+        );
+
+        return null;
+      }
+
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.SaveRecordAsync(updateRecord)
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Debug(
+          "Unable to update group in Onspring: {@Group}. {@Response}",
+          azureGroup,
+          res
+        );
+        return null;
+      }
+
+      _logger.Debug(
+        "Onspring Group {@OnspringGroup} updated using {@AzureGroup}: {@Response}",
+        onspringGroup,
+        azureGroup,
+        res
+      );
+
+      return res.Value;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to update Onspring Group {@OnspringGroup} using Azure Group {@AzureGroup}",
+        onspringGroup,
+        azureGroup
+      );
+
+      return null;
+    }
+  }
+
+  public async Task<SaveRecordResponse?> CreateGroup(Group azureGroup)
+  {
+    try
+    {
+      var newGroupRecord = BuildNewOnspringGroupRecord(azureGroup);
+
+      if (newGroupRecord.FieldData.Count == 0)
+      {
+        _logger.Debug(
+          "Unable to find any values for fields for group: {@Group}",
+          azureGroup
+        );
+        return null;
+      }
+
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.SaveRecordAsync(newGroupRecord)
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Debug(
+          "Unable to create group in Onspring: {@Group}. {@Response}",
+          azureGroup,
+          res
+        );
+
+        return null;
+      }
+
+      _logger.Debug(
+        "Group {@Group} created in Onspring: {@Response}",
+        azureGroup,
+        res
+      );
+
+      return res.Value;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to create group in Onspring: {@Group}",
+        azureGroup
+      );
+
+      return null;
+    }
+  }
+
+  public async Task<ResultRecord?> GetGroup(string? id)
+  {
+    try
+    {
+      var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
+
+      var request = new QueryRecordsRequest
+      {
+        AppId = _settings.Onspring.GroupsAppId,
+        Filter = $"{groupNameFieldId} eq '{id}'",
+        FieldIds = _settings.GroupsFieldMappings.Values.ToList(),
+        DataFormat = DataFormat.Formatted
+      };
+
+      var res = await ExecuteRequest(
+        async () =>
+          await _onspringClient.QueryRecordsAsync(request)
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to get group from Onspring: {@Response}",
+          res
+        );
+        return null;
+      }
+
+      return res.Value.Items.FirstOrDefault();
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to get group from Onspring: {Id}",
+        id
+      );
+
+      return null;
+    }
+  }
+
+  public async Task<List<Field>> GetGroupFields()
+  {
+    var fields = new List<Field>();
+    var totalPages = 1;
+    var pagingRequest = new PagingRequest(1, 50);
+    var currentPage = pagingRequest.PageNumber;
+
+    do
+    {
+      try
+      {
+        var res = await ExecuteRequest(
+          async () => await _onspringClient.GetFieldsForAppAsync(
+            _settings.Onspring.GroupsAppId,
+            pagingRequest
+          )
+        );
+
+        if (res.IsSuccessful is true)
+        {
+          fields.AddRange(res.Value.Items);
+          totalPages = res.Value.TotalPages;
+        }
+        else
+        {
+          _logger.Error(
+            "Unable to get group fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+            res,
+            currentPage,
+            totalPages
+          );
+        }
+      }
+      catch (Exception ex)
+      {
+        _logger.Error(
+          ex,
+          "Unable to get group fields. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+          currentPage,
+          totalPages
+        );
+      }
+
+      pagingRequest.PageNumber++;
+      currentPage = pagingRequest.PageNumber;
+    } while (currentPage <= totalPages);
+
+    return fields;
+  }
+
+  public async Task<bool> IsConnected()
+  {
+    return await CanGetUsers() && await CanGetGroups();
+  }
+
+  internal async Task<bool> CanGetUsers()
+  {
+    try
+    {
+      var res = await ExecuteRequest(
+        async () =>
+          await _onspringClient.GetAppAsync(
+            _settings.Onspring.UsersAppId
+          )
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to get users from Onspring: {@Response}",
+          res
+        );
+      }
+
+      return res.IsSuccessful;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(ex, "Unable to get users from Onspring");
+      return false;
+    }
+  }
+
+  internal async Task<bool> CanGetGroups()
+  {
+    try
+    {
+      var res = await ExecuteRequest(
+        async () =>
+          await _onspringClient.GetAppAsync(
+            _settings.Onspring.GroupsAppId
+          )
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to get groups from Onspring: {@Response}",
+          res
+        );
+      }
+
+      return res.IsSuccessful;
+    }
+    catch (Exception e)
+    {
+      _logger.Error(e, "Unable to get groups from Onspring");
+      return false;
+    }
+  }
+
+  [ExcludeFromCodeCoverage]
+  private ResultRecord BuildUpdatedOnspringGroupRecord(
+    Group azureGroup,
+    ResultRecord onspringGroup
+  )
   {
     var updateRecord = new ResultRecord
     {
@@ -80,41 +323,11 @@ public class OnspringService : IOnspringService
       updateRecord.FieldData.Add(recordFieldValue);
     }
 
-    if (updateRecord.FieldData.Count == 0)
-    {
-      _logger.Debug(
-        "No fields for Onspring Group {@OnspringGroup} need to be updated with Azure AD Group {@AzureGroup} values",
-        onspringGroup,
-        azureGroup
-      );
-      return null;
-    }
-
-    var res = await ExecuteRequest(
-      async () => await _onspringClient.SaveRecordAsync(updateRecord)
-    );
-
-    if (res.IsSuccessful is false)
-    {
-      _logger.Debug(
-        "Unable to update group in Onspring: {@Group}. {@Response}",
-        azureGroup,
-        res
-      );
-      return null;
-    }
-
-    _logger.Debug(
-      "Onspring Group {@OnspringGroup} updated using {@AzureGroup}: {@Response}",
-      onspringGroup,
-      azureGroup,
-      res
-    );
-
-    return res.Value;
+    return updateRecord;
   }
 
-  public async Task<SaveRecordResponse?> CreateGroup(Group azureGroup)
+  [ExcludeFromCodeCoverage]
+  private ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
   {
     var newGroupRecord = new ResultRecord
     {
@@ -143,151 +356,14 @@ public class OnspringService : IOnspringService
       newGroupRecord.FieldData.Add(recordFieldValue);
     }
 
-    if (newGroupRecord.FieldData.Count == 0)
-    {
-      _logger.Debug(
-        "Unable to find any values for fields for group: {@Group}",
-        azureGroup
-      );
-      return null;
-    }
-
-    var res = await ExecuteRequest(
-      async () => await _onspringClient.SaveRecordAsync(newGroupRecord)
-    );
-
-    if (res.IsSuccessful is false)
-    {
-      _logger.Debug(
-        "Unable to create group in Onspring: {@Group}. {@Response}",
-        azureGroup,
-        res
-      );
-      return null;
-    }
-
-    _logger.Debug(
-      "Group {@Group} created in Onspring: {@Response}",
-      azureGroup,
-      res
-    );
-
-    return res.Value;
+    return newGroupRecord;
   }
 
-  public async Task<ResultRecord?> GetGroup(string? id)
-  {
-    var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
-
-    var request = new QueryRecordsRequest
-    {
-      AppId = _settings.Onspring.GroupsAppId,
-      Filter = $"{groupNameFieldId} eq '{id}'",
-      FieldIds = _settings.GroupsFieldMappings.Values.ToList(),
-      DataFormat = DataFormat.Formatted
-    };
-
-    var res = await ExecuteRequest(
-      async () =>
-        await _onspringClient.QueryRecordsAsync(request)
-    );
-
-    if (res.IsSuccessful is false)
-    {
-      _logger.Error(
-        "Unable to get group from Onspring: {@Response}",
-        res
-      );
-      return null;
-    }
-
-    return res.Value.Items.FirstOrDefault();
-  }
-
-  public async Task<List<Field>> GetGroupFields()
-  {
-    var fields = new List<Field>();
-    var totalPages = 1;
-    var pagingRequest = new PagingRequest(1, 50);
-    var currentPage = pagingRequest.PageNumber;
-
-    do
-    {
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.GetFieldsForAppAsync(
-          _settings.Onspring.GroupsAppId,
-          pagingRequest
-        )
-      );
-
-      if (res.IsSuccessful is true)
-      {
-        fields.AddRange(res.Value.Items);
-        totalPages = res.Value.TotalPages;
-      }
-      else
-      {
-        _logger.Error(
-          "Unable to get fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
-          res,
-          currentPage,
-          totalPages
-        );
-      }
-
-      pagingRequest.PageNumber++;
-      currentPage = pagingRequest.PageNumber;
-    } while (currentPage <= totalPages);
-
-    return fields;
-  }
-
-  public async Task<bool> IsConnected()
-  {
-    return await CanGetUsers() && await CanGetGroups();
-  }
-
-  public async Task<bool> CanGetUsers()
-  {
-    var res = await ExecuteRequest(
-      async () =>
-        await _onspringClient.GetAppAsync(
-          _settings.Onspring.UsersAppId
-        )
-    );
-
-    if (res.IsSuccessful is false)
-    {
-      _logger.Error(
-        "Unable to get users from Onspring: {@Response}",
-        res
-      );
-    }
-
-    return res.IsSuccessful;
-  }
-
-  public async Task<bool> CanGetGroups()
-  {
-    var res = await ExecuteRequest(
-      async () =>
-        await _onspringClient.GetAppAsync(
-          _settings.Onspring.GroupsAppId
-        )
-    );
-
-    if (res.IsSuccessful is false)
-    {
-      _logger.Error(
-        "Unable to get groups from Onspring: {@Response}",
-        res
-      );
-    }
-
-    return res.IsSuccessful;
-  }
-
-  private static RecordFieldValue? GetRecordFieldValue(int fieldId, object? fieldValue)
+  [ExcludeFromCodeCoverage]
+  private static RecordFieldValue? GetRecordFieldValue(
+    int fieldId,
+    object? fieldValue
+  )
   {
     return fieldValue is null
     ? null
@@ -305,23 +381,48 @@ public class OnspringService : IOnspringService
   }
 
   [ExcludeFromCodeCoverage]
-  private async Task<ApiResponse<T>> ExecuteRequest<T>(Func<Task<ApiResponse<T>>> func, int retryLimit = 3)
+  private async Task<ApiResponse<T>> ExecuteRequest<T>(
+    Func<Task<ApiResponse<T>>> func,
+    int retry = 1
+  )
   {
     ApiResponse<T> response;
-    var retry = 1;
+    var retryLimit = 3;
 
-    do
+    try
     {
-      response = await func();
-
-      if (response.IsSuccessful is true)
+      do
       {
-        return response;
-      }
+        response = await func();
 
+        if (response.IsSuccessful is true)
+        {
+          return response;
+        }
+
+        _logger.Warning(
+          "Request was unsuccessful. {StatusCode} - {Message}. ({Attempt} of {AttemptLimit})",
+          response.StatusCode,
+          response.Message,
+          retry,
+          retryLimit
+        );
+
+        retry++;
+
+        if (retry > retryLimit)
+        {
+          break;
+        }
+
+        await Wait(retry);
+      } while (retry <= retryLimit);
+    }
+    catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+    {
       _logger.Error(
-        "Request to Onspring API was unsuccessful: {@Response}. ({Attempt} of {AttemptLimit})",
-        response,
+        ex,
+        "Request failed. ({Attempt} of {AttemptLimit})",
         retry,
         retryLimit
       );
@@ -330,31 +431,45 @@ public class OnspringService : IOnspringService
 
       if (retry > retryLimit)
       {
-        break;
+        throw;
       }
 
-      var wait = 1000 * retry;
+      await Wait(retry);
 
-      _logger.Information(
-        "Waiting {Wait}s before retrying request.",
-        wait
-      );
-
-      await Task.Delay(wait);
-
-      _logger.Information(
-        "Retrying request. {Attempt} of {AttemptLimit}",
-        retry,
-        retryLimit
-      );
-    } while (retry <= retryLimit);
+      return await ExecuteRequest(func, retry);
+    }
 
     _logger.Error(
-      "Request failed after {RetryLimit} attempts: {@Response}",
+      "Request failed after {RetryLimit} attempts. {StatusCode} - {Message}.",
       retryLimit,
-      response
+      response.StatusCode,
+      response.Message
     );
 
     return response;
+  }
+
+  [ExcludeFromCodeCoverage]
+  private async Task Wait(int retryAttempt)
+  {
+    var isTesting = Environment.GetEnvironmentVariable("ENVIRONMENT") == "testing";
+
+    var wait = 1000 * retryAttempt;
+
+    _logger.Debug(
+      "Waiting {Wait}s before retrying request.",
+      wait
+    );
+
+    if (isTesting is false)
+    {
+      await Task.Delay(wait);
+    }
+
+    _logger.Debug(
+      "Retrying request. {Attempt} of {AttemptLimit}",
+      retryAttempt,
+      3
+    );
   }
 }

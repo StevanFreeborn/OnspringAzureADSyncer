@@ -3,13 +3,13 @@ namespace OnspringAzureADSyncer.Models;
 public class Processor : IProcessor
 {
   private readonly ILogger _logger;
-  private readonly Settings _settings;
+  private readonly ISettings _settings;
   private readonly IOnspringService _onspringService;
   private readonly IGraphService _graphService;
 
   public Processor(
     ILogger logger,
-    Settings settings,
+    ISettings settings,
     IOnspringService onspringService,
     IGraphService graphService
   )
@@ -70,8 +70,8 @@ public class Processor : IProcessor
       {
         foreach (var azureGroup in azureGroups)
         {
-          await SyncGroup(azureGroup);
           progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
+          await SyncGroup(azureGroup);
         }
 
         progressBar.Message = $"Finished processing Azure Groups: page {pageNumberProcessing}";
@@ -86,7 +86,7 @@ public class Processor : IProcessor
     } while (groupIterator.State != PagingState.Complete);
   }
 
-  private async Task SyncGroup(Group azureGroup)
+  internal async Task SyncGroup(Group azureGroup)
   {
     _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
@@ -120,11 +120,11 @@ public class Processor : IProcessor
 
     _logger.Debug("Azure Group found in Onspring: {@OnspringGroup}", onspringGroup);
     _logger.Debug("Updating Onspring Group: {@OnspringGroup}", onspringGroup);
-    SaveRecordResponse? updateResponse = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+    var updateResponse = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
 
     if (updateResponse is null)
     {
-      _logger.Debug(
+      _logger.Warning(
         "Onspring Group {@OnspringGroup} not updated",
         onspringGroup
       );
@@ -189,12 +189,12 @@ public class Processor : IProcessor
     _logger.Debug("Verifying connection to Azure AD Graph API");
     var graphConnected = await _graphService.IsConnected();
 
-    if (!onspringConnected)
+    if (onspringConnected is false)
     {
       _logger.Error("Unable to connect to Onspring API");
     }
 
-    if (!graphConnected)
+    if (graphConnected is false)
     {
       _logger.Error("Unable to connect to Azure AD Graph API");
     }
