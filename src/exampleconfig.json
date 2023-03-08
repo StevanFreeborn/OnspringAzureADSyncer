@@ -4,7 +4,11 @@
       "BaseUrl": "https://api.onspring.com",
       "ApiKey": "000000ffffff000000ffffff/00000000-ffff-0000-ffff-000000000000",
       "UsersAppId": 1,
-      "GroupsAppId": 1
+      "GroupsAppId": 1,
+      "UsernameProperty": "userPrincipalName",
+      "FirstNameProperty": "givenName",
+      "LastNameProperty": "surname",
+      "EmailProperty": "mail"
     },
     "Azure": {
       "TenantId": "00000000-0000-0000-0000-000000000000",
