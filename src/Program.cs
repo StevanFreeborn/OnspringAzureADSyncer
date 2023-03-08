@@ -49,17 +49,23 @@ class Program
     };
 
     var modelBinder = new ModelBinder<AppOptions>();
-    modelBinder.BindMemberFromValue(opt => opt.ConfigFile, configFileOption);
-    modelBinder.BindMemberFromValue(opt => opt.LogLevel, logLevelOption);
+
+    modelBinder.BindMemberFromValue(
+      opt => opt.ConfigFile, configFileOption
+    );
+
+    modelBinder.BindMemberFromValue(
+      opt => opt.LogLevel, logLevelOption
+    );
 
     rootCommand.SetHandler(
       async context =>
         await Host
         .CreateDefaultBuilder()
-        // .ConfigureAppConfiguration(
-        //   (hostContext, config) =>
-        //     config.AddEnvironmentVariables()
-        // )
+        .ConfigureAppConfiguration(
+          (hostContext, config) =>
+            config.AddEnvironmentVariables()
+        )
         .ConfigureServices(
           services =>
           {
