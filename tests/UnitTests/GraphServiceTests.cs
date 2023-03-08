@@ -1,5 +1,3 @@
-using static Microsoft.Graph.Users.UsersRequestBuilder;
-
 namespace OnspringAzureADSyncerTests.UnitTests;
 
 public class GraphServiceTests
