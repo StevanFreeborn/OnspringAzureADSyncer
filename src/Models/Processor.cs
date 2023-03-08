@@ -120,7 +120,7 @@ public class Processor : IProcessor
 
     _logger.Debug("Azure Group found in Onspring: {@OnspringGroup}", onspringGroup);
     _logger.Debug("Updating Onspring Group: {@OnspringGroup}", onspringGroup);
-    SaveRecordResponse? updateResponse = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
+    var updateResponse = await _onspringService.UpdateGroup(azureGroup, onspringGroup);
 
     if (updateResponse is null)
     {
@@ -194,7 +194,7 @@ public class Processor : IProcessor
       _logger.Error("Unable to connect to Onspring API");
     }
 
-    if (!graphConnected is false)
+    if (graphConnected is false)
     {
       _logger.Error("Unable to connect to Azure AD Graph API");
     }
