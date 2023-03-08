@@ -83,7 +83,8 @@ public static class HostBuilderExtensions
         var azureGroupDestructPolicy = services.GetRequiredService<IAzureGroupDestructuringPolicy>();
 
         config
-        .Destructure.With(new IDestructuringPolicy[]
+        .Destructure.With(
+          new IDestructuringPolicy[]
           {
             azureGroupDestructPolicy,
           }

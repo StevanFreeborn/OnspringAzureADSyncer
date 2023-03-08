@@ -56,10 +56,10 @@ class Program
       async context =>
         await Host
         .CreateDefaultBuilder()
-        .ConfigureAppConfiguration(
-          (hostContext, config) =>
-            config.AddEnvironmentVariables()
-        )
+        // .ConfigureAppConfiguration(
+        //   (hostContext, config) =>
+        //     config.AddEnvironmentVariables()
+        // )
         .ConfigureServices(
           services =>
           {
