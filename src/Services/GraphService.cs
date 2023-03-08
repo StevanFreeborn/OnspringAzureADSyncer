@@ -4,31 +4,24 @@ public class GraphService : IGraphService
 {
   private readonly ILogger _logger;
   private readonly ISettings _settings;
-  private readonly GraphServiceClient _graphServiceClient;
+  private readonly IMsGraph _msGraph;
 
   public GraphService(
     ILogger logger,
     ISettings settings,
-    GraphServiceClient graphServiceClient
+    IMsGraph msGraph
   )
   {
     _logger = logger;
     _settings = settings;
-    _graphServiceClient = graphServiceClient;
+    _msGraph = msGraph;
   }
 
   public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)
   {
     try
     {
-      var initialGroups = await _graphServiceClient
-      .Groups
-      .GetAsync(
-        config =>
-        config
-        .QueryParameters
-        .Select = _settings.GroupsFieldMappings.Keys.ToArray()
-      );
+      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings);
 
       if (
         initialGroups == null ||
@@ -42,7 +35,7 @@ public class GraphService : IGraphService
 
       var groupsIterator = PageIterator<Group, GroupCollectionResponse>
       .CreatePageIterator(
-        _graphServiceClient,
+        _msGraph.GraphServiceClient,
         initialGroups,
         (g) =>
         {
@@ -74,13 +67,7 @@ public class GraphService : IGraphService
   {
     try
     {
-      var groups = await _graphServiceClient.Groups.GetAsync(
-        config =>
-        {
-          config.QueryParameters.Count = true;
-          config.Headers.Add("ConsistencyLevel", "eventual");
-        }
-      );
+      var groups = await _msGraph.GetGroups();
 
       return true;
     }
@@ -100,13 +87,7 @@ public class GraphService : IGraphService
   {
     try
     {
-      var users = await _graphServiceClient.Users.GetAsync(
-        config =>
-        {
-          config.QueryParameters.Count = true;
-          config.Headers.Add("ConsistencyLevel", "eventual");
-        }
-      );
+      var users = await _msGraph.GetUsers();
 
       return true;
     }
