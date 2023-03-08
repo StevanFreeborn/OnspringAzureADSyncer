@@ -1,3 +1,5 @@
+using Microsoft.Graph.Me;
+
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
@@ -27,22 +29,22 @@ public class MsGraph : IMsGraph
   public async Task<GroupCollectionResponse?> GetGroups()
   {
     return await GraphServiceClient.Groups.GetAsync(
-        config =>
-        {
-          config.QueryParameters.Count = true;
-          config.Headers.Add("ConsistencyLevel", "eventual");
-        }
-      );
+      config =>
+      {
+        config.QueryParameters.Count = true;
+        config.Headers.Add("ConsistencyLevel", "eventual");
+      }
+    );
   }
 
   public async Task<UserCollectionResponse?> GetUsers()
   {
     return await GraphServiceClient.Users.GetAsync(
-        config =>
-        {
-          config.QueryParameters.Count = true;
-          config.Headers.Add("ConsistencyLevel", "eventual");
-        }
-      );
+      config =>
+      {
+        config.QueryParameters.Count = true;
+        config.Headers.Add("ConsistencyLevel", "eventual");
+      }
+    );
   }
 }
