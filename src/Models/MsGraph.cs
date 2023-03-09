@@ -3,6 +3,14 @@ namespace OnspringAzureADSyncer.Models;
 [ExcludeFromCodeCoverage]
 public class MsGraph : IMsGraph
 {
+  public async Task<DirectoryObjectCollectionResponse?> GetUserGroups(string? userId)
+  {
+    return await GraphServiceClient
+    .Users[userId]
+    .MemberOf
+    .GetAsync();
+  }
+
   public async Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<string, int> usersFieldMappings)
   {
     return await GraphServiceClient

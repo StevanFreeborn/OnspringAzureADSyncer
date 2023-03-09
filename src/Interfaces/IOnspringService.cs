@@ -9,6 +9,6 @@ public interface IOnspringService
   Task<SaveRecordResponse?> CreateGroup(Group group);
   Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup);
   Task<ResultRecord?> GetUser(User azureUser);
-  Task<SaveRecordResponse?> CreateUser(User azureUser);
+  Task<SaveRecordResponse?> CreateUser(User azureUser, Dictionary<string, int> usersGroupMappings);
   Task<SaveRecordResponse?> UpdateUser(User azureUser, ResultRecord onspringUser);
 }

@@ -22,11 +22,17 @@ public class OnspringService : IOnspringService
     throw new NotImplementedException();
   }
 
-  public async Task<SaveRecordResponse?> CreateUser(User azureUser)
+  public async Task<SaveRecordResponse?> CreateUser(
+    User azureUser,
+    Dictionary<string, int> usersGroupMappings
+  )
   {
     try
     {
-      var newUserRecord = BuildNewOnspringUserRecord(azureUser);
+      var newUserRecord = BuildNewOnspringUserRecord(
+        azureUser,
+        usersGroupMappings
+      );
 
       if (newUserRecord.FieldData.Count == 0)
       {
@@ -135,7 +141,10 @@ public class OnspringService : IOnspringService
     );
   }
 
-  public async Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup)
+  public async Task<SaveRecordResponse?> UpdateGroup(
+    Group azureGroup,
+    ResultRecord onspringGroup
+  )
   {
     try
     {
@@ -243,12 +252,13 @@ public class OnspringService : IOnspringService
     try
     {
       var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
+      var requestFieldIds = _settings.GroupsFieldMappings.Values.ToList();
 
       var request = new QueryRecordsRequest
       {
         AppId = _settings.Onspring.GroupsAppId,
         Filter = $"{groupNameFieldId} eq '{id}'",
-        FieldIds = _settings.GroupsFieldMappings.Values.ToList(),
+        FieldIds = requestFieldIds,
         DataFormat = DataFormat.Formatted
       };
 
@@ -402,7 +412,10 @@ public class OnspringService : IOnspringService
   }
 
   [ExcludeFromCodeCoverage]
-  private ResultRecord BuildNewOnspringUserRecord(User azureUser)
+  private ResultRecord BuildNewOnspringUserRecord(
+    User azureUser,
+    Dictionary<string, int> usersGroupMappings
+  )
   {
     var newOnspringUser = BuildNewRecord(
       azureUser,
@@ -410,11 +423,26 @@ public class OnspringService : IOnspringService
       _settings.Onspring.UsersAppId
     );
 
-    return SetUsersStatus(newOnspringUser);
+    var groupsFieldId = _settings.UsersFieldMappings[AzureSettings.UsersGroupsKey];
+    newOnspringUser
+    .FieldData
+    .Add(
+      new IntegerListFieldValue(
+        groupsFieldId,
+        usersGroupMappings.Values.ToList()
+      )
+    );
+
+    return SetUsersStatus(
+      newOnspringUser,
+      usersGroupMappings.Keys.ToList()
+    );
   }
 
-  [ExcludeFromCodeCoverage]
-  private ResultRecord SetUsersStatus(ResultRecord onspringUser)
+  internal ResultRecord SetUsersStatus(
+    ResultRecord onspringUser,
+    List<string> usersGroupIds
+  )
   {
     var statusFieldId = _settings.UsersFieldMappings[AzureSettings.UsersStatusKey];
 
@@ -430,13 +458,26 @@ public class OnspringService : IOnspringService
       existingStatusValue
     );
 
-    // TODO: Factor in users group memberships
-    var newStatusValue = existingStatusValue.GetValue() is "True"
-    ? new StringFieldValue(
-      statusFieldId,
-      _settings.Onspring.UserActiveStatusListValue.ToString()
+    if (
+      existingStatusValue.GetValue() is "True" &&
+      usersGroupIds.Any(
+        g => _settings.Azure.OnspringActiveGroups.Contains(g)
+      )
     )
-    : new StringFieldValue(
+    {
+      var activeStatusValue = new StringFieldValue(
+        statusFieldId,
+        _settings.Onspring.UserActiveStatusListValue.ToString()
+      );
+
+      onspringUser
+      .FieldData
+      .Add(activeStatusValue);
+
+      return onspringUser;
+    }
+
+    var inactiveStatusValue = new StringFieldValue(
       statusFieldId,
       _settings.Onspring.UserInactiveStatusListValue.ToString()
     );
@@ -444,13 +485,12 @@ public class OnspringService : IOnspringService
 
     onspringUser
     .FieldData
-    .Add(newStatusValue);
+    .Add(inactiveStatusValue);
 
     return onspringUser;
   }
 
-  [ExcludeFromCodeCoverage]
-  private ResultRecord BuildUpdatedOnspringGroupRecord(
+  internal ResultRecord BuildUpdatedOnspringGroupRecord(
     Group azureGroup,
     ResultRecord onspringGroup
   )
@@ -502,8 +542,7 @@ public class OnspringService : IOnspringService
     return updateRecord;
   }
 
-  [ExcludeFromCodeCoverage]
-  private ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
+  internal ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
   {
     return BuildNewRecord(
       azureGroup,
@@ -512,8 +551,7 @@ public class OnspringService : IOnspringService
     );
   }
 
-  [ExcludeFromCodeCoverage]
-  private ResultRecord BuildNewRecord(
+  internal ResultRecord BuildNewRecord(
     object azureObject,
     Dictionary<string, int> fieldMappings,
     int appId
@@ -549,8 +587,7 @@ public class OnspringService : IOnspringService
     return newRecord;
   }
 
-  [ExcludeFromCodeCoverage]
-  private static RecordFieldValue? GetRecordFieldValue(
+  internal static RecordFieldValue? GetRecordFieldValue(
     int fieldId,
     object? fieldValue
   )
