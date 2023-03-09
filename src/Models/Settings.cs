@@ -33,6 +33,14 @@ public class Settings : ISettings
       AzureSettings.UsersEmailKey,
       OnspringSettings.UsersEmailField
     },
+    {
+      AzureSettings.UsersStatusKey,
+      OnspringSettings.UsersStatusField
+    },
+    {
+      AzureSettings.UsersGroupsKey,
+      OnspringSettings.UsersGroupsField
+    }
   };
 
   public AzureSettings Azure { get; init; } = new AzureSettings();

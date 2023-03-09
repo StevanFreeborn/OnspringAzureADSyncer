@@ -6,4 +6,5 @@ public interface IMsGraph
   Task<GroupCollectionResponse?> GetGroups();
   Task<GroupCollectionResponse?> GetGroupsForIterator(Dictionary<string, int> groupFieldMappings);
   Task<UserCollectionResponse?> GetUsers();
+  Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<string, int> usersFieldMappings);
 }

@@ -19,7 +19,42 @@ public class GraphService : IGraphService
 
   public async Task<PageIterator<User, UserCollectionResponse>?> GetUsersIterator(List<User> azureUsers, int pageSize)
   {
-    throw new NotImplementedException();
+    try
+    {
+      var initialUsers = await _msGraph.GetUsersForIterator(_settings.UsersFieldMappings);
+
+      if (
+        initialUsers == null ||
+        initialUsers.Value == null
+      )
+      {
+        _logger.Debug("No users found in Azure AD");
+        return null;
+      }
+
+      var usersIterator = PageIterator<User, UserCollectionResponse>
+      .CreatePageIterator(
+        _msGraph.GraphServiceClient,
+        initialUsers,
+        (u) =>
+        {
+          azureUsers.Add(u);
+          return azureUsers.Count < pageSize;
+        }
+      );
+
+      return usersIterator;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to connect to Azure AD to get users: {Message}",
+        ex.Message
+      );
+
+      return null;
+    }
   }
 
   public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)

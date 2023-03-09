@@ -1,10 +1,20 @@
-using Microsoft.Graph.Me;
-
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
 public class MsGraph : IMsGraph
 {
+  public async Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<string, int> usersFieldMappings)
+  {
+    return await GraphServiceClient
+    .Users
+    .GetAsync(
+      config =>
+      config
+      .QueryParameters
+      .Select = usersFieldMappings.Keys.ToArray()
+    );
+  }
+
   public GraphServiceClient GraphServiceClient { get; init; }
 
   public MsGraph(GraphServiceClient graphServiceClient)
