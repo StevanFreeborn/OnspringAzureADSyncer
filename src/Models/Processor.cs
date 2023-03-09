@@ -94,7 +94,17 @@ public class Processor : IProcessor
     );
 
     // TODO: get the azure user's group memberships
-    // TODO: for each group membership, get the onspring group's record id value
+    var azureUserGroups = await _graphService.GetUserGroups(azureUser);
+
+    if (azureUserGroups.Any() == false)
+    {
+      _logger.Warning(
+        "No groups found for Azure User: {@AzureUser}",
+        azureUser
+      );
+    }
+
+    var usersGroupMappings = await GetUsersGroupMappings(azureUserGroups);
 
     var onspringUser = await _onspringService.GetUser(azureUser);
 
@@ -110,7 +120,10 @@ public class Processor : IProcessor
         azureUser
       );
 
-      var createResponse = await _onspringService.CreateUser(azureUser);
+      var createResponse = await _onspringService.CreateUser(
+        azureUser,
+        usersGroupMappings
+      );
 
       if (createResponse is null)
       {
@@ -307,6 +320,7 @@ public class Processor : IProcessor
   public async Task SetDefaultUsersFieldMappings()
   {
     _logger.Debug("Setting default field mappings");
+
     var onspringUserFields = await _onspringService.GetUserFields();
 
     foreach (var kvp in Settings.DefaultUsersFieldMappings)
@@ -320,14 +334,13 @@ public class Processor : IProcessor
 
       if (onspringField is null)
       {
-        _logger.Fatal(
+        _logger.Error(
           "Unable to find field {Name} in Users app in Onspring",
           kvp.Value
         );
 
-        throw new ApplicationException(
-          $"Unable to find field {kvp.Value} in Users app in Onspring"
-        );
+        _settings.UsersFieldMappings.Add(kvp.Key, 0);
+        continue;
       }
 
       if (onspringField.Name is OnspringSettings.UsersUsernameField)
@@ -426,6 +439,47 @@ public class Processor : IProcessor
     return onspringConnected && graphConnected;
   }
 
+  internal async Task<Dictionary<string, int>> GetUsersGroupMappings(
+    List<DirectoryObject> azureUserGroups
+  )
+  {
+    var onspringGroupFields = await _onspringService.GetGroupFields();
+
+    var recordIdField = onspringGroupFields
+    .FirstOrDefault(
+      f => f.Type is FieldType.AutoNumber
+    );
+
+    var groupMappings = new Dictionary<string, int>();
+
+    // TODO: for each group membership, get the onspring group's record id value
+    foreach (var azureUserGroup in azureUserGroups)
+    {
+      if (
+        azureUserGroup is null ||
+        azureUserGroup.Id is null
+      )
+      {
+        continue;
+      }
+
+      var onspringGroup = await _onspringService.GetGroup(azureUserGroup.Id);
+
+      if (onspringGroup is null)
+      {
+        _logger.Warning(
+          "Onspring Group not found for Azure User Group: {@AzureUserGroup}",
+          azureUserGroup
+        );
+
+        continue;
+      }
+
+      groupMappings.Add(azureUserGroup.Id, onspringGroup.RecordId);
+    }
+
+    return groupMappings;
+  }
 
   internal void SetStatusListValues(ListField statusListField)
   {

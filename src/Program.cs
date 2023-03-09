@@ -101,7 +101,7 @@ class Program
     catch (Exception ex)
     {
       Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine("An error occurred while starting the syncer:");
+      Console.WriteLine("A fatal error occurred while running the syncer:");
       Console.WriteLine(ex.Message);
       return 1;
     }

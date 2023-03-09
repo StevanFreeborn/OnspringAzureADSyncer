@@ -15,8 +15,12 @@ public class Settings : ISettings
     }
   };
 
-  public static Dictionary<string, string> DefaultUsersFieldMappings => new()
+  public static Dictionary<string, string?> DefaultUsersFieldMappings => new()
   {
+    {
+      AzureSettings.UsersIdPropertyKey,
+      null
+    },
     {
       AzureSettings.UsersUsernameKey,
       OnspringSettings.UsersUsernameField

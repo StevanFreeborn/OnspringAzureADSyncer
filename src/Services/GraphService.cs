@@ -17,6 +17,40 @@ public class GraphService : IGraphService
     _msGraph = msGraph;
   }
 
+  public async Task<List<DirectoryObject>> GetUserGroups(User azureUser)
+  {
+    try
+    {
+      var groups = await _msGraph.GetUserGroups(azureUser.Id);
+
+      if (
+        groups == null ||
+        groups.Value == null
+      )
+      {
+        _logger.Debug(
+          "No groups found for user {@AzureUser}",
+          azureUser
+        );
+
+        return new List<DirectoryObject>();
+      }
+
+      return groups.Value;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to connect to Azure AD to get groups for user {@AzureUser}: {Message}",
+        azureUser,
+        ex.Message
+      );
+
+      return new List<DirectoryObject>();
+    }
+  }
+
   public async Task<PageIterator<User, UserCollectionResponse>?> GetUsersIterator(List<User> azureUsers, int pageSize)
   {
     try
