@@ -17,9 +17,66 @@ public class OnspringService : IOnspringService
     _onspringClient = onspringClient;
   }
 
-  public Task<SaveRecordResponse?> UpdateUser(User azureUser, ResultRecord onspringUser)
+  public async Task<SaveRecordResponse?> UpdateUser(
+    User azureUser,
+    ResultRecord onspringUser,
+    Dictionary<string, int> usersGroupMappings
+  )
   {
-    throw new NotImplementedException();
+    try
+    {
+      var updateRecord = BuildUpdatedOnspringUserRecord(
+        azureUser,
+        onspringUser,
+        usersGroupMappings
+      );
+
+      if (updateRecord.FieldData.Count == 0)
+      {
+        _logger.Debug(
+          "No fields for Onspring User {@OnspringUser} need to be updated with Azure AD User {@AzureUser} values",
+          onspringUser,
+          azureUser
+        );
+
+        return null;
+      }
+
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.SaveRecordAsync(updateRecord)
+      );
+
+      if (res.IsSuccessful is false)
+      {
+        _logger.Debug(
+          "Unable to update Onspring User {@OnspringUser} with Azure User {@AzureUser}. {@Response}",
+          onspringUser,
+          azureUser,
+          res
+        );
+        return null;
+      }
+
+      _logger.Debug(
+        "Onspring User {@OnspringUser} updated using Azure User {@AzureUser}: {@Response}",
+        onspringUser,
+        azureUser,
+        res
+      );
+
+      return res.Value;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to update Onspring User {@OnspringUser} using Azure User {@AzureUser}",
+        onspringUser,
+        azureUser
+      );
+
+      return null;
+    }
   }
 
   public async Task<SaveRecordResponse?> CreateUser(
@@ -168,7 +225,8 @@ public class OnspringService : IOnspringService
       if (res.IsSuccessful is false)
       {
         _logger.Debug(
-          "Unable to update group in Onspring: {@Group}. {@Response}",
+          "Unable to Onspring Group {@OnspringGroup} with Azure Group {@AzureGroup}. {@Response}",
+          onspringGroup,
           azureGroup,
           res
         );
@@ -358,8 +416,7 @@ public class OnspringService : IOnspringService
     }
   }
 
-  [ExcludeFromCodeCoverage]
-  private async Task<List<Field>> GetAllFieldsForApp(int appId)
+  internal async Task<List<Field>> GetAllFieldsForApp(int appId)
   {
     var fields = new List<Field>();
     var totalPages = 1;
@@ -411,8 +468,36 @@ public class OnspringService : IOnspringService
     return fields;
   }
 
-  [ExcludeFromCodeCoverage]
-  private ResultRecord BuildNewOnspringUserRecord(
+  internal ResultRecord BuildUpdatedOnspringUserRecord(
+    User azureUser,
+    ResultRecord onspringUser,
+    Dictionary<string, int> usersGroupMappings
+  )
+  {
+    var updatedOnspringUser = BuildUpdatedRecord(
+      azureUser,
+      onspringUser,
+      _settings.UsersFieldMappings
+    );
+
+    var groupsFieldId = _settings.UsersFieldMappings[AzureSettings.UsersGroupsKey];
+
+    updatedOnspringUser
+    .FieldData
+    .Add(
+      new IntegerListFieldValue(
+        groupsFieldId,
+        usersGroupMappings.Values.ToList()
+      )
+    );
+
+    return SetUsersStatus(
+      updatedOnspringUser,
+      usersGroupMappings.Keys.ToList()
+    );
+  }
+
+  internal ResultRecord BuildNewOnspringUserRecord(
     User azureUser,
     Dictionary<string, int> usersGroupMappings
   )
@@ -424,6 +509,7 @@ public class OnspringService : IOnspringService
     );
 
     var groupsFieldId = _settings.UsersFieldMappings[AzureSettings.UsersGroupsKey];
+
     newOnspringUser
     .FieldData
     .Add(
@@ -495,51 +581,11 @@ public class OnspringService : IOnspringService
     ResultRecord onspringGroup
   )
   {
-    var updateRecord = new ResultRecord
-    {
-      AppId = _settings.Onspring.GroupsAppId,
-      RecordId = onspringGroup.RecordId
-    };
-
-    foreach (var kvp in _settings.GroupsFieldMappings)
-    {
-      var azureGroupValue = azureGroup
-      .GetType()
-      .GetProperty(kvp.Key.Capitalize())
-      ?.GetValue(azureGroup);
-
-      var onspringGroupValue = onspringGroup
-      .FieldData
-      .FirstOrDefault(f => f.FieldId == kvp.Value)
-      ?.GetValue();
-
-      if (
-        onspringGroupValue is not null &&
-        onspringGroupValue.Equals(azureGroupValue)
-      )
-      {
-        _logger.Debug(
-          "Field {FieldId} does not need to be updated. Onspring Group: {@OnspringGroup}. Azure AD Group: {@AzureGroup}",
-          kvp.Value,
-          onspringGroup,
-          azureGroup
-        );
-
-        continue;
-      }
-
-      _logger.Debug(
-        "Field {FieldId} needs to be updated. Onspring value: {CurrentValue}. Azure AD value: {NewValue}",
-        kvp.Value,
-        onspringGroupValue,
-        azureGroupValue
-      );
-
-      var recordFieldValue = GetRecordFieldValue(kvp.Value, azureGroupValue);
-      updateRecord.FieldData.Add(recordFieldValue);
-    }
-
-    return updateRecord;
+    return BuildUpdatedRecord(
+      azureGroup,
+      onspringGroup,
+      _settings.GroupsFieldMappings
+    );
   }
 
   internal ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
@@ -549,6 +595,69 @@ public class OnspringService : IOnspringService
       _settings.GroupsFieldMappings,
       _settings.Onspring.GroupsAppId
     );
+  }
+
+  internal ResultRecord BuildUpdatedRecord(
+    object azureObject,
+    ResultRecord onspringRecord,
+    Dictionary<string, int> fieldMappings
+  )
+  {
+    var updateRecord = new ResultRecord
+    {
+      AppId = onspringRecord.AppId,
+      RecordId = onspringRecord.RecordId
+    };
+
+    foreach (var kvp in fieldMappings)
+    {
+      if (kvp.Key == AzureSettings.UsersGroupsKey)
+      {
+        continue;
+      }
+
+      if (kvp.Key == AzureSettings.UsersStatusKey)
+      {
+        continue;
+      }
+
+      var azureObjectValue = azureObject
+      .GetType()
+      .GetProperty(kvp.Key.Capitalize())
+      ?.GetValue(azureObject);
+
+      var onspringRecordValue = onspringRecord
+      .FieldData
+      .FirstOrDefault(f => f.FieldId == kvp.Value)
+      ?.GetValue();
+
+      if (
+        onspringRecordValue is not null &&
+        onspringRecordValue.Equals(azureObjectValue)
+      )
+      {
+        _logger.Debug(
+          "Field {FieldId} does not need to be updated. Onspring Record: {@OnspringRecord}. Azure AD Object: {@AzureObject}",
+          kvp.Value,
+          onspringRecord,
+          azureObject
+        );
+
+        continue;
+      }
+
+      _logger.Debug(
+        "Field {FieldId} needs to be updated. Onspring value: {CurrentValue}. Azure AD value: {NewValue}",
+        kvp.Value,
+        onspringRecordValue,
+        azureObjectValue
+      );
+
+      var recordFieldValue = GetRecordFieldValue(kvp.Value, azureObjectValue);
+      updateRecord.FieldData.Add(recordFieldValue);
+    }
+
+    return updateRecord;
   }
 
   internal ResultRecord BuildNewRecord(

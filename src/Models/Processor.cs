@@ -93,7 +93,6 @@ public class Processor : IProcessor
       azureUser
     );
 
-    // TODO: get the azure user's group memberships
     var azureUserGroups = await _graphService.GetUserGroups(azureUser);
 
     if (azureUserGroups.Any() == false)
@@ -154,7 +153,11 @@ public class Processor : IProcessor
       azureUser
     );
 
-    var updateResponse = await _onspringService.UpdateUser(azureUser, onspringUser);
+    var updateResponse = await _onspringService.UpdateUser(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
 
     if (updateResponse is null)
     {
@@ -319,22 +322,31 @@ public class Processor : IProcessor
 
   public async Task SetDefaultUsersFieldMappings()
   {
-    _logger.Debug("Setting default field mappings");
+    _logger.Debug("Setting default Users field mappings");
 
     var onspringUserFields = await _onspringService.GetUserFields();
 
     foreach (var kvp in Settings.DefaultUsersFieldMappings)
     {
+      if (kvp.Value is null)
+      {
+        _settings.UsersFieldMappings.Add(kvp.Key, 0);
+        continue;
+      }
+
       _logger.Debug(
         "Attempting to find field {Name} in User app in Onspring",
         kvp.Value
       );
 
-      var onspringField = onspringUserFields.FirstOrDefault(f => f.Name == kvp.Value);
+      var onspringField = onspringUserFields
+      .FirstOrDefault(
+        f => f.Name == kvp.Value
+      );
 
       if (onspringField is null)
       {
-        _logger.Error(
+        _logger.Warning(
           "Unable to find field {Name} in Users app in Onspring",
           kvp.Value
         );
@@ -389,14 +401,13 @@ public class Processor : IProcessor
 
       if (onspringField is null)
       {
-        _logger.Fatal(
+        _logger.Warning(
           "Unable to find field {Name} in Group app in Onspring",
           kvp.Value
         );
 
-        throw new ApplicationException(
-          $"Unable to find field {kvp.Value} in Group app in Onspring"
-        );
+        _settings.GroupsFieldMappings.Add(kvp.Key, 0);
+        continue;
       }
 
       _logger.Debug(
