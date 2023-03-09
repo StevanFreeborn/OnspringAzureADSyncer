@@ -17,6 +17,11 @@ public class GraphService : IGraphService
     _msGraph = msGraph;
   }
 
+  public async Task<PageIterator<User, UserCollectionResponse>?> GetUsersIterator(List<User> azureUsers, int pageSize)
+  {
+    throw new NotImplementedException();
+  }
+
   public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)
   {
     try

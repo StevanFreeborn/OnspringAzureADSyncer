@@ -17,6 +17,29 @@ public class OnspringService : IOnspringService
     _onspringClient = onspringClient;
   }
 
+
+  public Task<ResultRecord?> GetUser(User azureUser)
+  {
+    throw new NotImplementedException();
+  }
+
+  public Task<SaveRecordResponse?> UpdateUser(User azureUser, ResultRecord onspringUser)
+  {
+    throw new NotImplementedException();
+  }
+
+  public Task<SaveRecordResponse?> CreateUser(User azureUser)
+  {
+    throw new NotImplementedException();
+  }
+
+  public async Task<List<Field>> GetUserFields()
+  {
+    return await GetAllFieldsForApp(
+      _settings.Onspring.UsersAppId
+    );
+  }
+
   public async Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup)
   {
     try
@@ -164,52 +187,9 @@ public class OnspringService : IOnspringService
 
   public async Task<List<Field>> GetGroupFields()
   {
-    var fields = new List<Field>();
-    var totalPages = 1;
-    var pagingRequest = new PagingRequest(1, 50);
-    var currentPage = pagingRequest.PageNumber;
-
-    do
-    {
-      try
-      {
-        var res = await ExecuteRequest(
-          async () => await _onspringClient.GetFieldsForAppAsync(
-            _settings.Onspring.GroupsAppId,
-            pagingRequest
-          )
-        );
-
-        if (res.IsSuccessful is true)
-        {
-          fields.AddRange(res.Value.Items);
-          totalPages = res.Value.TotalPages;
-        }
-        else
-        {
-          _logger.Error(
-            "Unable to get group fields: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
-            res,
-            currentPage,
-            totalPages
-          );
-        }
-      }
-      catch (Exception ex)
-      {
-        _logger.Error(
-          ex,
-          "Unable to get group fields. Current page: {CurrentPage}. Total pages: {TotalPages}.",
-          currentPage,
-          totalPages
-        );
-      }
-
-      pagingRequest.PageNumber++;
-      currentPage = pagingRequest.PageNumber;
-    } while (currentPage <= totalPages);
-
-    return fields;
+    return await GetAllFieldsForApp(
+      _settings.Onspring.GroupsAppId
+    );
   }
 
   public async Task<bool> IsConnected()
@@ -324,6 +304,59 @@ public class OnspringService : IOnspringService
     }
 
     return updateRecord;
+  }
+
+  [ExcludeFromCodeCoverage]
+  private async Task<List<Field>> GetAllFieldsForApp(int appId)
+  {
+    var fields = new List<Field>();
+    var totalPages = 1;
+    var pagingRequest = new PagingRequest(1, 50);
+    var currentPage = pagingRequest.PageNumber;
+
+    do
+    {
+      try
+      {
+        var res = await ExecuteRequest(
+          async () => await _onspringClient.GetFieldsForAppAsync(
+            appId,
+            pagingRequest
+          )
+        );
+
+        if (res.IsSuccessful is true)
+        {
+          fields.AddRange(res.Value.Items);
+          totalPages = res.Value.TotalPages;
+        }
+        else
+        {
+          _logger.Error(
+            "Unable to get fields for app {appId}: {@Response}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+            appId,
+            res,
+            currentPage,
+            totalPages
+          );
+        }
+      }
+      catch (Exception ex)
+      {
+        _logger.Error(
+          ex,
+          "Unable to get fields for app {appId}. Current page: {CurrentPage}. Total pages: {TotalPages}.",
+          appId,
+          currentPage,
+          totalPages
+        );
+      }
+
+      pagingRequest.PageNumber++;
+      currentPage = pagingRequest.PageNumber;
+    } while (currentPage <= totalPages);
+
+    return fields;
   }
 
   [ExcludeFromCodeCoverage]
