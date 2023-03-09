@@ -44,7 +44,7 @@ public class SyncerTests
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
     await syncer.Run();
-    _processorMock.Verify(p => p.SetDefaultFieldMappings(), Times.Once);
+    _processorMock.Verify(p => p.SetDefaultGroupsFieldMappings(), Times.Once);
   }
 
   [Fact]
