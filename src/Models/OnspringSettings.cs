@@ -10,8 +10,14 @@ public class OnspringSettings
   public const string UsersEmailField = "Email Address";
   public const string UsersStatusField = "Status";
   public const string UsersGroupsField = "Groups";
+  public const string UsersActiveStatusListValueName = "Active";
+  public const string UsersInactiveStatusListValueName = "Inactive";
   public string BaseUrl { get; init; } = string.Empty;
   public string ApiKey { get; init; } = string.Empty;
   public int UsersAppId { get; init; } = 0;
   public int GroupsAppId { get; init; } = 0;
+  public int UsersUsernameFieldId { get; set; } = 0;
+  public int UsersStatusFieldId { get; set; } = 0;
+  public Guid UserActiveStatusListValue { get; set; }
+  public Guid UserInactiveStatusListValue { get; set; }
 }

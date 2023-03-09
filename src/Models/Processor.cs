@@ -93,6 +93,9 @@ public class Processor : IProcessor
       azureUser
     );
 
+    // TODO: get the azure user's group memberships
+    // TODO: for each group membership, get the onspring group's record id value
+
     var onspringUser = await _onspringService.GetUser(azureUser);
 
     if (onspringUser is null)
@@ -301,11 +304,66 @@ public class Processor : IProcessor
     );
   }
 
-  public async Task SetDefaultFieldMappings()
+  public async Task SetDefaultUsersFieldMappings()
   {
     _logger.Debug("Setting default field mappings");
-    var onspringGroupFields = await _onspringService.GetGroupFields();
     var onspringUserFields = await _onspringService.GetUserFields();
+
+    foreach (var kvp in Settings.DefaultUsersFieldMappings)
+    {
+      _logger.Debug(
+        "Attempting to find field {Name} in User app in Onspring",
+        kvp.Value
+      );
+
+      var onspringField = onspringUserFields.FirstOrDefault(f => f.Name == kvp.Value);
+
+      if (onspringField is null)
+      {
+        _logger.Fatal(
+          "Unable to find field {Name} in Users app in Onspring",
+          kvp.Value
+        );
+
+        throw new ApplicationException(
+          $"Unable to find field {kvp.Value} in Users app in Onspring"
+        );
+      }
+
+      if (onspringField.Name is OnspringSettings.UsersUsernameField)
+      {
+        _settings.Onspring.UsersUsernameFieldId = onspringField.Id;
+      }
+
+      if (
+        onspringField.Name is OnspringSettings.UsersStatusField &&
+        onspringField is ListField statusListField
+      )
+      {
+        _settings.Onspring.UsersStatusFieldId = onspringField.Id;
+        SetStatusListValues(statusListField);
+      }
+
+      _logger.Debug(
+        "Found field {Name} in User app in Onspring with Id {Id}",
+        kvp.Value,
+        onspringField.Id
+      );
+
+      _logger.Debug(
+        "Setting user field mapping: {Key} - {Value}",
+        kvp.Key,
+        onspringField.Id
+      );
+
+      _settings.UsersFieldMappings.Add(kvp.Key, onspringField.Id);
+    }
+  }
+
+  public async Task SetDefaultGroupsFieldMappings()
+  {
+    _logger.Debug("Setting default Groups field mappings");
+    var onspringGroupFields = await _onspringService.GetGroupFields();
 
     foreach (var kvp in Settings.DefaultGroupsFieldMappings)
     {
@@ -342,42 +400,6 @@ public class Processor : IProcessor
 
       _settings.GroupsFieldMappings.Add(kvp.Key, onspringField.Id);
     }
-
-    foreach (var kvp in Settings.DefaultUsersFieldMappings)
-    {
-      _logger.Debug(
-        "Attempting to find field {Name} in User app in Onspring",
-        kvp.Value
-      );
-
-      var onspringField = onspringUserFields.FirstOrDefault(f => f.Name == kvp.Value);
-
-      if (onspringField is null)
-      {
-        _logger.Fatal(
-          "Unable to find field {Name} in Users app in Onspring",
-          kvp.Value
-        );
-
-        throw new ApplicationException(
-          $"Unable to find field {kvp.Value} in Users app in Onspring"
-        );
-      }
-
-      _logger.Debug(
-        "Found field {Name} in User app in Onspring with Id {Id}",
-        kvp.Value,
-        onspringField.Id
-      );
-
-      _logger.Debug(
-        "Setting user field mapping: {Key} - {Value}",
-        kvp.Key,
-        onspringField.Id
-      );
-
-      _settings.UsersFieldMappings.Add(kvp.Key, onspringField.Id);
-    }
   }
 
   public async Task<bool> VerifyConnections()
@@ -402,5 +424,52 @@ public class Processor : IProcessor
 
     _logger.Debug("Connections verified");
     return onspringConnected && graphConnected;
+  }
+
+
+  internal void SetStatusListValues(ListField statusListField)
+  {
+    var activeListValue = statusListField
+        .Values
+        .FirstOrDefault(
+          v =>
+            v.Name == OnspringSettings.UsersActiveStatusListValueName
+        );
+
+    var inactiveListValue = statusListField
+    .Values
+    .FirstOrDefault(
+      v =>
+        v.Name == OnspringSettings.UsersInactiveStatusListValueName
+    );
+
+    if (activeListValue is null)
+    {
+      _logger.Fatal(
+        "Unable to find list value {Name} in field {Field} in Onspring",
+        OnspringSettings.UsersActiveStatusListValueName,
+        statusListField.Name
+      );
+
+      throw new ApplicationException(
+        $"Unable to find list value {OnspringSettings.UsersActiveStatusListValueName} in field {statusListField.Name} in Onspring"
+      );
+    }
+
+    if (inactiveListValue is null)
+    {
+      _logger.Fatal(
+        "Unable to find list value {Name} in field {Field} in Onspring",
+        OnspringSettings.UsersInactiveStatusListValueName,
+        statusListField.Name
+      );
+
+      throw new ApplicationException(
+        $"Unable to find list value {OnspringSettings.UsersInactiveStatusListValueName} in field {statusListField.Name} in Onspring"
+      );
+    }
+
+    _settings.Onspring.UserActiveStatusListValue = activeListValue.Id;
+    _settings.Onspring.UserInactiveStatusListValue = inactiveListValue.Id;
   }
 }

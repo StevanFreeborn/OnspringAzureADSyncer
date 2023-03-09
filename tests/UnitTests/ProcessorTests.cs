@@ -109,7 +109,7 @@ public class ProcessorTests
   }
 
   [Fact]
-  public async Task SetDefaultFieldMappings_WhenCalled_ItShouldSetDefaultFieldMappings()
+  public async Task SetDefaultGroupsFieldMappings_WhenCalled_ItShouldSetDefaultGroupsFieldMappings()
   {
     var groupFields = new List<Field>
     {
@@ -167,7 +167,7 @@ public class ProcessorTests
     )
     .Returns(groupFields);
 
-    await processor.SetDefaultFieldMappings();
+    await processor.SetDefaultGroupsFieldMappings();
 
     settings.GroupsFieldMappings.Should().NotBeEmpty();
     settings.GroupsFieldMappings.Should().HaveCount(2);
@@ -178,7 +178,7 @@ public class ProcessorTests
   }
 
   [Fact]
-  public void SetDefaultFieldMappings_WhenCalledAndOnspringFieldCannotBeFound_ItShouldThrowException()
+  public void SetDefaultGroupsFieldMappings_WhenCalledAndOnspringFieldCannotBeFound_ItShouldThrowException()
   {
     var groupFields = new List<Field>();
 
@@ -188,7 +188,7 @@ public class ProcessorTests
     )
     .Returns(groupFields);
 
-    Task Act() => _processor.SetDefaultFieldMappings();
+    Task Act() => _processor.SetDefaultGroupsFieldMappings();
 
     Assert.ThrowsAsync<Exception>(Act);
   }

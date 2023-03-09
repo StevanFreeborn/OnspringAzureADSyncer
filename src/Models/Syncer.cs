@@ -38,11 +38,17 @@ public class Syncer : ISyncer
     Console.WriteLine("Connected successfully to Onspring and Azure AD");
     _logger.Information("Connected successfully to Onspring and Azure AD");
 
-    var setDefaultFieldsMsg = "Setting default field mappings";
-    Console.WriteLine(setDefaultFieldsMsg);
-    _logger.Information(setDefaultFieldsMsg);
+    var setDefaultGroupsFieldsMsg = "Setting default Groups field mappings";
+    Console.WriteLine(setDefaultGroupsFieldsMsg);
+    _logger.Information(setDefaultGroupsFieldsMsg);
 
-    await _processor.SetDefaultFieldMappings();
+    await _processor.SetDefaultGroupsFieldMappings();
+
+    var setDefaultUsersFieldsMsg = "Setting default Users field mappings";
+    Console.WriteLine(setDefaultUsersFieldsMsg);
+    _logger.Information(setDefaultUsersFieldsMsg);
+
+    await _processor.SetDefaultUsersFieldMappings();
 
     var syncGroupsMsg = "Syncing groups";
     Console.WriteLine(syncGroupsMsg);
