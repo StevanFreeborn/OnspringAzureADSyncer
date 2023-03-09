@@ -2,8 +2,10 @@ namespace OnspringAzureADSyncer.Interfaces
 {
   public interface IProcessor
   {
-    Task SetDefaultFieldMappings();
+    Task SetDefaultGroupsFieldMappings();
+    Task SetDefaultUsersFieldMappings();
     Task SyncGroups();
+    Task SyncUsers();
     Task<bool> VerifyConnections();
   }
 }

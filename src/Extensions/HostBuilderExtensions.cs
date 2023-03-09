@@ -54,12 +54,14 @@ public static class HostBuilderExtensions
       {
         var options = services.GetRequiredService<IOptions<AppOptions>>().Value;
         var azureGroupDestructPolicy = services.GetRequiredService<IAzureGroupDestructuringPolicy>();
+        var azureUserDestructPolicy = services.GetRequiredService<IAzureUserDestructuringPolicy>();
 
         config
         .Destructure.With(
           new IDestructuringPolicy[]
           {
             azureGroupDestructPolicy,
+            azureUserDestructPolicy
           }
         )
         .MinimumLevel.Debug()
