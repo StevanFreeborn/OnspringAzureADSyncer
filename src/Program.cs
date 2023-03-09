@@ -83,6 +83,7 @@ class Program
           services.AddOptions<AppOptions>().BindCommandLine();
           services.AddSingleton<ISettings, Settings>();
           services.AddSingleton<IAzureGroupDestructuringPolicy, AzureGroupDestructuringPolicy>();
+          services.AddSingleton<IAzureUserDestructuringPolicy, AzureUserDestructuringPolicy>();
           services.AddSingleton<IMsGraph, MsGraph>();
           services.AddSingleton<IOnspringService, OnspringService>();
           services.AddSingleton<IGraphService, GraphService>();
