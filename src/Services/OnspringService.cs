@@ -616,11 +616,6 @@ public class OnspringService : IOnspringService
         continue;
       }
 
-      if (kvp.Key == AzureSettings.UsersStatusKey)
-      {
-        continue;
-      }
-
       var azureObjectValue = azureObject
       .GetType()
       .GetProperty(kvp.Key.Capitalize())
