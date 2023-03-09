@@ -15,6 +15,26 @@ public class Settings : ISettings
     }
   };
 
+  public static Dictionary<string, string> DefaultUsersFieldMappings => new()
+  {
+    {
+      AzureSettings.UsersUsernameKey,
+      OnspringSettings.UsersUsernameField
+    },
+    {
+      AzureSettings.UsersFirstNameKey,
+      OnspringSettings.UsersFirstNameField
+    },
+    {
+      AzureSettings.UsersLastNameKey,
+      OnspringSettings.UsersLastNameField
+    },
+    {
+      AzureSettings.UsersEmailKey,
+      OnspringSettings.UsersEmailField
+    },
+  };
+
   public AzureSettings Azure { get; init; } = new AzureSettings();
   public OnspringSettings Onspring { get; init; } = new OnspringSettings();
   public Dictionary<string, int> GroupsFieldMappings { get; init; } = new Dictionary<string, int>();

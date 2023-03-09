@@ -93,7 +93,7 @@ public class Processor : IProcessor
       azureUser
     );
 
-    var onspringUser = await _onspringService.GetUserByEmail(azureUser.Mail);
+    var onspringUser = await _onspringService.GetUser(azureUser);
 
     if (onspringUser is null)
     {
@@ -305,10 +305,15 @@ public class Processor : IProcessor
   {
     _logger.Debug("Setting default field mappings");
     var onspringGroupFields = await _onspringService.GetGroupFields();
+    var onspringUserFields = await _onspringService.GetUserFields();
 
     foreach (var kvp in Settings.DefaultGroupsFieldMappings)
     {
-      _logger.Debug("Attempting to find field {Name} in Group app in Onspring", kvp.Value);
+      _logger.Debug(
+        "Attempting to find field {Name} in Group app in Onspring",
+        kvp.Value
+      );
+
       var onspringField = onspringGroupFields.FirstOrDefault(f => f.Name == kvp.Value);
 
       if (onspringField is null)
@@ -336,6 +341,42 @@ public class Processor : IProcessor
       );
 
       _settings.GroupsFieldMappings.Add(kvp.Key, onspringField.Id);
+    }
+
+    foreach (var kvp in Settings.DefaultUsersFieldMappings)
+    {
+      _logger.Debug(
+        "Attempting to find field {Name} in User app in Onspring",
+        kvp.Value
+      );
+
+      var onspringField = onspringUserFields.FirstOrDefault(f => f.Name == kvp.Value);
+
+      if (onspringField is null)
+      {
+        _logger.Fatal(
+          "Unable to find field {Name} in Users app in Onspring",
+          kvp.Value
+        );
+
+        throw new ApplicationException(
+          $"Unable to find field {kvp.Value} in Users app in Onspring"
+        );
+      }
+
+      _logger.Debug(
+        "Found field {Name} in User app in Onspring with Id {Id}",
+        kvp.Value,
+        onspringField.Id
+      );
+
+      _logger.Debug(
+        "Setting user field mapping: {Key} - {Value}",
+        kvp.Key,
+        onspringField.Id
+      );
+
+      _settings.UsersFieldMappings.Add(kvp.Key, onspringField.Id);
     }
   }
 
