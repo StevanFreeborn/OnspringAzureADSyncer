@@ -24,7 +24,7 @@ public class AzureGroupDestructuringPolicy : IAzureGroupDestructuringPolicy
 
     var mappedGroupProperties = _settings
     .GroupsFieldMappings
-    .Keys
+    .Values
     .Select(p => p.Capitalize())
     .ToList();
 

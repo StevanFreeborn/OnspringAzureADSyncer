@@ -48,17 +48,6 @@ public class Syncer : ISyncer
 
     await _processor.GetOnspringUserFields();
 
-    if (_processor.CustomFieldMappingsAreValid() is false)
-    {
-      Console.ForegroundColor = ConsoleColor.Red;
-
-      var invalidCustomFieldMappingsMsg = "Custom field mappings are invalid";
-      Console.WriteLine(invalidCustomFieldMappingsMsg);
-      _logger.Fatal(invalidCustomFieldMappingsMsg);
-
-      return 3;
-    }
-
     var setDefaultGroupsFieldsMsg = "Setting default Groups field mappings";
     Console.WriteLine(setDefaultGroupsFieldsMsg);
     _logger.Information(setDefaultGroupsFieldsMsg);
@@ -71,9 +60,20 @@ public class Syncer : ISyncer
 
     _processor.SetDefaultUsersFieldMappings();
 
-    var validateCustomFieldMappings = "Validating custom field mappings";
-    Console.WriteLine(validateCustomFieldMappings);
-    _logger.Information(validateCustomFieldMappings);
+    var validateFieldMappings = "Validating field mappings";
+    Console.WriteLine(validateFieldMappings);
+    _logger.Information(validateFieldMappings);
+
+    if (_processor.FieldMappingsAreValid() is false)
+    {
+      Console.ForegroundColor = ConsoleColor.Red;
+
+      var invalidCustomFieldMappingsMsg = "Field mappings are invalid";
+      Console.WriteLine(invalidCustomFieldMappingsMsg);
+      _logger.Fatal(invalidCustomFieldMappingsMsg);
+
+      return 3;
+    }
 
     var syncGroupsMsg = "Syncing groups";
     Console.WriteLine(syncGroupsMsg);

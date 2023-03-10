@@ -144,8 +144,8 @@ public class OnspringService : IOnspringService
       var azurePropertyMappedToUserName = _settings
       .UsersFieldMappings
       .FirstOrDefault(
-        x => x.Value == userUsernameFieldId
-      ).Key;
+        x => x.Key == userUsernameFieldId
+      ).Value;
 
       var lookupValue = azureUser
       .GetType()
@@ -158,7 +158,7 @@ public class OnspringService : IOnspringService
       {
         AppId = _settings.Onspring.UsersAppId,
         Filter = $"{userUsernameFieldId} eq '{lookupValue}'",
-        FieldIds = _settings.UsersFieldMappings.Values.ToList(),
+        FieldIds = _settings.UsersFieldMappings.Keys.ToList(),
         DataFormat = DataFormat.Formatted
       };
 
@@ -309,8 +309,8 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var groupNameFieldId = _settings.GroupsFieldMappings[AzureSettings.GroupsNameKey];
-      var requestFieldIds = _settings.GroupsFieldMappings.Values.ToList();
+      var groupNameFieldId = _settings.Onspring.GroupsNameFieldId;
+      var requestFieldIds = _settings.GroupsFieldMappings.Keys.ToList();
 
       var request = new QueryRecordsRequest
       {
@@ -480,7 +480,7 @@ public class OnspringService : IOnspringService
       _settings.UsersFieldMappings
     );
 
-    var groupsFieldId = _settings.UsersFieldMappings[AzureSettings.UsersGroupsKey];
+    var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
 
     updatedOnspringUser
     .FieldData
@@ -508,7 +508,7 @@ public class OnspringService : IOnspringService
       _settings.Onspring.UsersAppId
     );
 
-    var groupsFieldId = _settings.UsersFieldMappings[AzureSettings.UsersGroupsKey];
+    var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
 
     newOnspringUser
     .FieldData
@@ -530,7 +530,7 @@ public class OnspringService : IOnspringService
     List<string> usersGroupIds
   )
   {
-    var statusFieldId = _settings.UsersFieldMappings[AzureSettings.UsersStatusKey];
+    var statusFieldId = _settings.Onspring.UsersStatusFieldId;
 
     var existingStatusValue = onspringUser
     .FieldData
@@ -568,7 +568,6 @@ public class OnspringService : IOnspringService
       _settings.Onspring.UserInactiveStatusListValue.ToString()
     );
 
-
     onspringUser
     .FieldData
     .Add(inactiveStatusValue);
@@ -600,7 +599,7 @@ public class OnspringService : IOnspringService
   internal ResultRecord BuildUpdatedRecord(
     object azureObject,
     ResultRecord onspringRecord,
-    Dictionary<string, int> fieldMappings
+    Dictionary<int, string> fieldMappings
   )
   {
     var updateRecord = new ResultRecord
@@ -611,19 +610,19 @@ public class OnspringService : IOnspringService
 
     foreach (var kvp in fieldMappings)
     {
-      if (kvp.Key == AzureSettings.UsersGroupsKey)
+      if (kvp.Value == AzureSettings.UsersGroupsKey)
       {
         continue;
       }
 
       var azureObjectValue = azureObject
       .GetType()
-      .GetProperty(kvp.Key.Capitalize())
+      .GetProperty(kvp.Value.Capitalize())
       ?.GetValue(azureObject);
 
       var onspringRecordValue = onspringRecord
       .FieldData
-      .FirstOrDefault(f => f.FieldId == kvp.Value)
+      .FirstOrDefault(f => f.FieldId == kvp.Key)
       ?.GetValue();
 
       if (
@@ -648,7 +647,20 @@ public class OnspringService : IOnspringService
         azureObjectValue
       );
 
-      var recordFieldValue = GetRecordFieldValue(kvp.Value, azureObjectValue);
+      if (azureObjectValue is null)
+      {
+        _logger.Debug(
+          "Unable to find value for field {FieldId} for property {Property} on: {@AzureObject}",
+          kvp.Value,
+          kvp.Key,
+          azureObject
+        );
+
+        continue;
+      }
+
+      var recordFieldValue = GetRecordFieldValue(kvp.Key, azureObjectValue);
+
       updateRecord.FieldData.Add(recordFieldValue);
     }
 
@@ -657,7 +669,7 @@ public class OnspringService : IOnspringService
 
   internal ResultRecord BuildNewRecord(
     object azureObject,
-    Dictionary<string, int> fieldMappings,
+    Dictionary<int, string> fieldMappings,
     int appId
   )
   {
@@ -670,7 +682,7 @@ public class OnspringService : IOnspringService
     {
       var fieldValue = azureObject
       .GetType()
-      .GetProperty(kvp.Key.Capitalize())
+      .GetProperty(kvp.Value.Capitalize())
       ?.GetValue(azureObject);
 
       if (fieldValue is null)
@@ -684,21 +696,19 @@ public class OnspringService : IOnspringService
         continue;
       }
 
-      var recordFieldValue = GetRecordFieldValue(kvp.Value, fieldValue);
+      var recordFieldValue = GetRecordFieldValue(kvp.Key, fieldValue);
       newRecord.FieldData.Add(recordFieldValue);
     }
 
     return newRecord;
   }
 
-  internal static RecordFieldValue? GetRecordFieldValue(
+  internal static RecordFieldValue GetRecordFieldValue(
     int fieldId,
-    object? fieldValue
+    object fieldValue
   )
   {
-    return fieldValue is null
-    ? null
-    : fieldValue switch
+    return fieldValue switch
     {
       string s => new StringFieldValue(fieldId, s),
       bool b => new StringFieldValue(fieldId, b.ToString()),

@@ -4,7 +4,7 @@ namespace OnspringAzureADSyncer.Interfaces
   {
     Task SyncUsers();
     Task SyncGroups();
-    bool CustomFieldMappingsAreValid();
+    bool FieldMappingsAreValid();
     Task GetOnspringUserFields();
     Task GetOnspringGroupFields();
     void SetDefaultGroupsFieldMappings();
