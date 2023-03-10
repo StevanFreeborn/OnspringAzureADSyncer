@@ -474,27 +474,71 @@ public class OnspringService : IOnspringService
     Dictionary<string, int> usersGroupMappings
   )
   {
+    var usersStatus = GetUsersStatus(
+      azureUser,
+      onspringUser,
+      usersGroupMappings.Keys.ToList()
+    );
+
     var updatedOnspringUser = BuildUpdatedRecord(
       azureUser,
       onspringUser,
       _settings.UsersFieldMappings
     );
 
+    if (usersStatus is not null)
+    {
+      updatedOnspringUser
+      .FieldData.Add(
+        usersStatus
+      );
+    }
+
     var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
 
-    updatedOnspringUser
-    .FieldData
-    .Add(
-      new IntegerListFieldValue(
-        groupsFieldId,
-        usersGroupMappings.Values.ToList()
-      )
+    var newUsersGroupFieldValue = new IntegerListFieldValue(
+      groupsFieldId,
+      usersGroupMappings.Values.ToList()
     );
 
-    return SetUsersStatus(
-      updatedOnspringUser,
-      usersGroupMappings.Keys.ToList()
-    );
+    var existingUsersGroups = onspringUser
+    .FieldData
+    .FirstOrDefault(
+      f => f.FieldId == groupsFieldId
+    ) as IntegerListFieldValue;
+
+    if (
+      existingUsersGroups is null &&
+      usersGroupMappings.Any() is true
+    )
+    {
+      updatedOnspringUser
+      .FieldData
+      .Add(
+        newUsersGroupFieldValue
+      );
+
+      return updatedOnspringUser;
+    }
+
+    var usersGroupsNeedUpdated =
+      existingUsersGroups is not null &&
+      existingUsersGroups
+      .Value
+      .Any(
+        v => usersGroupMappings.ContainsValue(v) is false
+      );
+
+    if (usersGroupsNeedUpdated is true)
+    {
+      updatedOnspringUser
+      .FieldData
+      .Add(
+        newUsersGroupFieldValue
+      );
+    }
+
+    return updatedOnspringUser;
   }
 
   internal ResultRecord BuildNewOnspringUserRecord(
@@ -502,6 +546,12 @@ public class OnspringService : IOnspringService
     Dictionary<string, int> usersGroupMappings
   )
   {
+    var usersStatus = GetUsersStatus(
+      azureUser,
+      null,
+      usersGroupMappings.Keys.ToList()
+    );
+
     var newOnspringUser = BuildNewRecord(
       azureUser,
       _settings.UsersFieldMappings,
@@ -509,28 +559,59 @@ public class OnspringService : IOnspringService
     );
 
     var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
+    var usersGroupsFieldValue = new IntegerListFieldValue(
+      groupsFieldId,
+      usersGroupMappings.Values.ToList()
+    );
 
     newOnspringUser
     .FieldData
     .Add(
-      new IntegerListFieldValue(
-        groupsFieldId,
-        usersGroupMappings.Values.ToList()
-      )
+      usersGroupsFieldValue
     );
 
-    return SetUsersStatus(
-      newOnspringUser,
-      usersGroupMappings.Keys.ToList()
-    );
+    if (usersStatus is not null)
+    {
+      newOnspringUser
+      .FieldData
+      .Add(
+        usersStatus
+      );
+    }
+
+    return newOnspringUser;
   }
 
-  internal ResultRecord SetUsersStatus(
-    ResultRecord onspringUser,
+  internal RecordFieldValue? GetUsersStatus(
+    User azureUser,
+    ResultRecord? onspringUser,
     List<string> usersGroupIds
   )
   {
     var statusFieldId = _settings.Onspring.UsersStatusFieldId;
+    var statusValue = _settings.Onspring.UserInactiveStatusListValue;
+    var statusValueName = OnspringSettings.UsersInactiveStatusListValueName;
+
+    var userHasActiveGroup = usersGroupIds.Any(
+      g => _settings.Azure.OnspringActiveGroups.Contains(g)
+    );
+
+    if (
+      azureUser.AccountEnabled is true &&
+      userHasActiveGroup is true
+    )
+    {
+      statusValue = _settings.Onspring.UserActiveStatusListValue;
+      statusValueName = OnspringSettings.UsersActiveStatusListValueName;
+    }
+
+    if (onspringUser is null)
+    {
+      return new StringFieldValue(
+        statusFieldId,
+        statusValue.ToString()
+      );
+    }
 
     var existingStatusValue = onspringUser
     .FieldData
@@ -538,41 +619,18 @@ public class OnspringService : IOnspringService
       f => f.FieldId == statusFieldId
     );
 
-    onspringUser
-    .FieldData
-    .Remove(
-      existingStatusValue
-    );
-
     if (
-      existingStatusValue.GetValue() is "True" &&
-      usersGroupIds.Any(
-        g => _settings.Azure.OnspringActiveGroups.Contains(g)
-      )
+      existingStatusValue is not null &&
+      existingStatusValue.AsString() != statusValueName
     )
     {
-      var activeStatusValue = new StringFieldValue(
+      return new StringFieldValue(
         statusFieldId,
-        _settings.Onspring.UserActiveStatusListValue.ToString()
+        statusValue.ToString()
       );
-
-      onspringUser
-      .FieldData
-      .Add(activeStatusValue);
-
-      return onspringUser;
     }
 
-    var inactiveStatusValue = new StringFieldValue(
-      statusFieldId,
-      _settings.Onspring.UserInactiveStatusListValue.ToString()
-    );
-
-    onspringUser
-    .FieldData
-    .Add(inactiveStatusValue);
-
-    return onspringUser;
+    return null;
   }
 
   internal ResultRecord BuildUpdatedOnspringGroupRecord(
@@ -610,7 +668,7 @@ public class OnspringService : IOnspringService
 
     foreach (var kvp in fieldMappings)
     {
-      if (kvp.Value == AzureSettings.UsersGroupsKey)
+      if (CanIgnoreFieldMapping(kvp.Key) is true)
       {
         continue;
       }
@@ -685,6 +743,11 @@ public class OnspringService : IOnspringService
       .GetProperty(kvp.Value.Capitalize())
       ?.GetValue(azureObject);
 
+      if (CanIgnoreFieldMapping(kvp.Key) is true)
+      {
+        continue;
+      }
+
       if (fieldValue is null)
       {
         _logger.Debug(
@@ -701,6 +764,13 @@ public class OnspringService : IOnspringService
     }
 
     return newRecord;
+  }
+
+  internal bool CanIgnoreFieldMapping(int fieldId)
+  {
+    return fieldId == _settings.Onspring.UsersGroupsFieldId ||
+      fieldId == _settings.Onspring.UsersStatusFieldId ||
+      fieldId == 0;
   }
 
   internal static RecordFieldValue GetRecordFieldValue(

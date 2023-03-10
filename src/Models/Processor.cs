@@ -68,11 +68,11 @@ public class Processor : IProcessor
         )
       )
       {
-        foreach (var azureUser in azureUsers)
+        await Parallel.ForEachAsync(azureUsers, async (azureUser, token) =>
         {
-          progressBar.Tick($"Processing Azure User: {azureUser.Id}");
           await SyncUser(azureUser);
-        }
+          progressBar.Tick($"Processing Azure User: {azureUser.Id}");
+        });
 
         progressBar.Message = $"Finished processing Azure Users: page {pageNumberProcessing}";
       }
@@ -134,11 +134,11 @@ public class Processor : IProcessor
         )
       )
       {
-        foreach (var azureGroup in azureGroups)
+        await Parallel.ForEachAsync(azureGroups, async (azureGroup, token) =>
         {
-          progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
           await SyncGroup(azureGroup);
-        }
+          progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
+        });
 
         progressBar.Message = $"Finished processing Azure Groups: page {pageNumberProcessing}";
       }
