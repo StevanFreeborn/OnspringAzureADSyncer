@@ -16,6 +16,8 @@ public class OnspringSettings
   public string ApiKey { get; init; } = string.Empty;
   public int UsersAppId { get; init; } = 0;
   public int GroupsAppId { get; init; } = 0;
+  public List<Field> UsersFields { get; set; } = new List<Field>();
+  public List<Field> GroupsFields { get; set; } = new List<Field>();
   public int UsersUsernameFieldId { get; set; } = 0;
   public int UsersStatusFieldId { get; set; } = 0;
   public Guid UserActiveStatusListValue { get; set; }
