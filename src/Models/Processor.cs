@@ -152,100 +152,13 @@ public class Processor : IProcessor
     } while (groupIterator.State != PagingState.Complete);
   }
 
-  public bool CustomFieldMappingsAreValid()
+  public bool FieldMappingsAreValid()
   {
-    var azureGroupPropertyNames = typeof(Group)
-    .GetProperties()
-    .Select(p => p.Name)
-    .ToList();
+    // TODO: validate that properties are mapped to compatible fields
 
-    var onspringGroupFieldIds = _settings
-    .Onspring
-    .GroupsFields
-    .Select(f => f.Id)
-    .ToList();
-
-    var azureUserPropertyNames = typeof(User)
-    .GetProperties()
-    .Select(p => p.Name)
-    .ToList();
-
-    var onspringUserFieldIds = _settings
-    .Onspring
-    .UsersFields
-    .Select(f => f.Id)
-    .ToList();
-
-    var hasValidAzureGroupProperties = _settings
-    .GroupsFieldMappings
-    .All(
-      kvp =>
-        azureGroupPropertyNames
-        .Contains(kvp.Key.Capitalize())
-    );
-
-    var hasValidAzureUserProperties = _settings
-    .UsersFieldMappings
-    .All(
-      kvp =>
-        azureUserPropertyNames
-        .Contains(kvp.Key.Capitalize())
-    );
-
-    // 0 is a valid value for Onspring field ids in
-    // this context because it means a required default
-    // Azure AD property is being used but was not
-    // mapped to a Onspring field
-    var hasValidOnspringGroupFields = _settings
-    .GroupsFieldMappings
-    .All(
-      kvp =>
-        onspringGroupFieldIds
-        .Contains(kvp.Value) ||
-        kvp.Value == 0
-    );
-
-    var hasValidOnspringUserFields = _settings
-    .UsersFieldMappings
-    .All(
-      kvp =>
-        onspringUserFieldIds
-        .Contains(kvp.Value) ||
-        kvp.Value == 0
-    );
-
-    if (hasValidAzureGroupProperties is false)
-    {
-      _logger.Debug(
-        "Invalid Azure Group property name found in GroupsFieldMappings"
-      );
-    }
-
-    if (!hasValidAzureUserProperties is false)
-    {
-      _logger.Debug(
-        "Invalid Azure User property name found in UsersFieldMappings"
-      );
-    }
-
-    if (!hasValidOnspringGroupFields is false)
-    {
-      _logger.Debug(
-        "Invalid Onspring Group field id found in GroupsFieldMappings"
-      );
-    }
-
-    if (!hasValidOnspringUserFields is false)
-    {
-      _logger.Debug(
-        "Invalid Onspring User field id found in UsersFieldMappings"
-      );
-    }
-
-    return hasValidAzureGroupProperties &&
-    hasValidAzureUserProperties &&
-    hasValidOnspringGroupFields &&
-    hasValidOnspringUserFields;
+    return HasValidAzureProperties() &&
+    HasValidOnspringFields() &&
+    HasRequiredOnspringFields();
   }
 
   public void SetDefaultUsersFieldMappings()
@@ -264,68 +177,42 @@ public class Processor : IProcessor
         f => f.Name == kvp.Value
       );
 
-      if (onspringField is null)
+      var fieldId = onspringField?.Id ?? 0;
+
+      if (
+        onspringField is not null &&
+        onspringField.Name is OnspringSettings.UsersUsernameField
+      )
       {
-        _logger.Warning(
-          "Unable to find field {Name} in Users app in Onspring",
-          kvp.Value
-        );
-
-        if (_settings.UsersFieldMappings.TryGetValue(kvp.Key, out int existingValue))
-        {
-          _logger.Debug(
-            "Azure User property {Name} is already mapped to Onspring field {Id}",
-            kvp.Key,
-            existingValue
-          );
-
-          continue;
-        }
-
-        _settings
-        .UsersFieldMappings
-        .Add(
-          kvp.Key,
-          0
-        );
-
-        continue;
-      }
-
-      if (onspringField.Name is OnspringSettings.UsersUsernameField)
-      {
-        _settings.Onspring.UsersUsernameFieldId = onspringField.Id;
+        _settings.Onspring.UsersUsernameFieldId = fieldId;
       }
 
       if (
+        onspringField is not null &&
+        onspringField.Name is OnspringSettings.UsersGroupsField
+      )
+      {
+        _settings.Onspring.UsersGroupsFieldId = fieldId;
+      }
+
+      if (
+        onspringField is not null &&
         onspringField.Name is OnspringSettings.UsersStatusField &&
         onspringField is ListField statusListField
       )
       {
-        _settings.Onspring.UsersStatusFieldId = onspringField.Id;
+        _settings.Onspring.UsersStatusFieldId = fieldId;
         SetStatusListValues(statusListField);
       }
 
-      // if the Azure User property is already mapped
-      // to a Onspring field, skip it
-      if (_settings.UsersFieldMappings.TryGetValue(kvp.Key, out int value))
+      // if the Onspring field is already mapped
+      // to an Azure User property, skip it
+      if (_settings.UsersFieldMappings.ContainsKey(fieldId))
       {
         _logger.Debug(
-          "Azure User property {Name} is already mapped to Onspring field {Id}",
-          kvp.Key,
-          value
-        );
-
-        continue;
-      }
-
-      if (kvp.Value is null)
-      {
-        _settings
-        .UsersFieldMappings
-        .Add(
-          kvp.Key,
-          0
+          "Onspring Field {Name} is already mapped to an Azure User property: {@FieldMappings}",
+          kvp.Value,
+          _settings.UsersFieldMappings
         );
 
         continue;
@@ -334,20 +221,20 @@ public class Processor : IProcessor
       _logger.Debug(
         "Found field {Name} in User app in Onspring with Id {Id}",
         kvp.Value,
-        onspringField.Id
+        fieldId
       );
 
       _logger.Debug(
         "Setting user field mapping: {Key} - {Value}",
         kvp.Key,
-        onspringField.Id
+        fieldId
       );
 
       _settings
       .UsersFieldMappings
       .Add(
-        kvp.Key,
-        onspringField.Id
+        fieldId,
+        kvp.Key
       );
     }
   }
@@ -372,11 +259,21 @@ public class Processor : IProcessor
 
       var fieldId = onspringField?.Id ?? 0;
 
-      // if the property being mapped is the Azure Group id
-      // property and the property is already mapped to a
-      // Onspring field, override the existing mapping
       if (
-        _settings.GroupsFieldMappings.ContainsKey(kvp.Key) &&
+        onspringField is not null &&
+        onspringField.Name is OnspringSettings.GroupsNameField
+      )
+      {
+        _settings.Onspring.GroupsNameFieldId = fieldId;
+      }
+
+      // if the property being mapped is the Azure Group id
+      // property and the Onspring Group Name field is already
+      // mapped to a Azure Group property, override
+      // the existing mapping. Azure Group id is always mapped
+      // to the Onspring Group Name field
+      if (
+        _settings.GroupsFieldMappings.ContainsKey(fieldId) &&
         kvp.Key == AzureSettings.GroupsNameKey
       )
       {
@@ -386,19 +283,19 @@ public class Processor : IProcessor
           fieldId
         );
 
-        _settings.GroupsFieldMappings[kvp.Key] = fieldId;
+        _settings.GroupsFieldMappings[fieldId] = AzureSettings.GroupsNameKey;
 
         continue;
       }
 
-      // if the Azure Group property is already mapped to a
-      // Onspring field, skip it
-      if (_settings.GroupsFieldMappings.TryGetValue(kvp.Key, out int value))
+      // if the Onspring Group field is already mapped to a
+      // Azure Group property, skip it
+      if (_settings.GroupsFieldMappings.ContainsKey(fieldId))
       {
         _logger.Debug(
-          "Azure Group property {Key} is already mapped to a Onspring Field {Value}",
-          kvp.Key,
-          value
+          "Onspring Group field {Name} is already mapped to an Azure Group property: {@FieldMappings}",
+          kvp.Value,
+          _settings.GroupsFieldMappings
         );
 
         continue;
@@ -413,8 +310,8 @@ public class Processor : IProcessor
       _settings
       .GroupsFieldMappings
       .Add(
-        kvp.Key,
-        fieldId
+        fieldId,
+        kvp.Key
       );
     }
   }
@@ -451,6 +348,156 @@ public class Processor : IProcessor
 
     _logger.Debug("Connections verified");
     return onspringConnected && graphConnected;
+  }
+
+  internal bool HasRequiredOnspringFields()
+  {
+    var requiredGroupFieldIds = _settings
+    .Onspring
+    .GroupsFields
+    .Where(
+      f => _settings.Onspring.GroupRequiredFields.Contains(f.Name)
+    )
+    .Select(f => f.Id)
+    .ToList();
+
+    var requiredUserFieldIds = _settings
+    .Onspring
+    .UsersFields
+    .Where(
+      f => _settings.Onspring.UserRequiredFields.Contains(f.Name)
+    )
+    .Select(f => f.Id)
+    .ToList();
+
+    var hasRequiredOnspringGroupFields = requiredGroupFieldIds
+    .All(
+      _settings.GroupsFieldMappings.ContainsKey
+    );
+
+    var hasRequiredOnspringUserFields = requiredUserFieldIds
+    .All(
+      _settings.UsersFieldMappings.ContainsKey
+    );
+
+    if (hasRequiredOnspringGroupFields is false)
+    {
+      _logger.Debug(
+        "Required Onspring Group Field not found in Groups Field Mappings: {@GroupsFieldMappings}",
+        _settings.GroupsFieldMappings
+      );
+    }
+
+    if (hasRequiredOnspringUserFields is false)
+    {
+      _logger.Debug(
+        "Required Onspring User Field not found in Users Field Mappings: {@UsersFieldMappings}",
+        _settings.UsersFieldMappings
+      );
+    }
+
+    return hasRequiredOnspringGroupFields &&
+    hasRequiredOnspringUserFields;
+  }
+
+  internal bool HasValidOnspringFields()
+  {
+    var onspringGroupFieldIds = _settings
+    .Onspring
+    .GroupsFields
+    .Select(f => f.Id)
+    .ToList();
+
+    var onspringUserFieldIds = _settings
+    .Onspring
+    .UsersFields
+    .Select(f => f.Id)
+    .ToList();
+
+    // 0 is a valid value for Onspring field ids in
+    // this context because it means a required default
+    // Azure AD property is being used but was not
+    // mapped to a Onspring field
+    var hasValidOnspringGroupFields = _settings
+    .GroupsFieldMappings
+    .All(
+      kvp =>
+        onspringGroupFieldIds
+        .Contains(kvp.Key) ||
+        kvp.Key == 0
+    );
+
+    var hasValidOnspringUserFields = _settings
+    .UsersFieldMappings
+    .All(
+      kvp =>
+        onspringUserFieldIds
+        .Contains(kvp.Key) ||
+        kvp.Key == 0
+    );
+
+    if (hasValidOnspringGroupFields is false)
+    {
+      _logger.Debug(
+        "Invalid Onspring Group field id found in GroupsFieldMappings"
+      );
+    }
+
+    if (hasValidOnspringUserFields is false)
+    {
+      _logger.Debug(
+        "Invalid Onspring User field id found in UsersFieldMappings"
+      );
+    }
+
+    return hasValidOnspringGroupFields && hasValidOnspringUserFields;
+  }
+
+  internal bool HasValidAzureProperties()
+  {
+    var azureGroupPropertyNames = typeof(Group)
+    .GetProperties()
+    .Select(p => p.Name)
+    .ToList();
+
+    var azureUserPropertyNames = typeof(User)
+    .GetProperties()
+    .Select(p => p.Name)
+    .ToList();
+
+    var hasValidAzureGroupProperties = _settings
+    .GroupsFieldMappings
+    .All(
+      kvp =>
+        azureGroupPropertyNames
+        .Contains(kvp.Value.Capitalize())
+    );
+
+    var hasValidAzureUserProperties = _settings
+    .UsersFieldMappings
+    .All(
+      kvp =>
+        azureUserPropertyNames
+        .Contains(kvp.Value.Capitalize())
+    );
+
+    if (hasValidAzureGroupProperties is false)
+    {
+      _logger.Debug(
+        "Invalid Azure Group property name found in GroupsFieldMappings: {@GroupsFieldMappings}",
+        _settings.GroupsFieldMappings
+      );
+    }
+
+    if (hasValidAzureUserProperties is false)
+    {
+      _logger.Debug(
+        "Invalid Azure User property name found in UsersFieldMappings: {@UsersFieldMappings}",
+        _settings.UsersFieldMappings
+      );
+    }
+
+    return hasValidAzureGroupProperties && hasValidAzureUserProperties;
   }
 
   internal async Task SyncUser(User azureUser)
