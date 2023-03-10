@@ -65,7 +65,10 @@ class Program
     return new CommandLineBuilder(rootCommand);
   }
 
-  static async Task<int> StartUp(InvocationContext context, ModelBinder<AppOptions> modelBinder)
+  static async Task<int> StartUp(
+    InvocationContext context,
+    ModelBinder<AppOptions> modelBinder
+  )
   {
     try
     {

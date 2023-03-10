@@ -11,7 +11,7 @@ public class MsGraph : IMsGraph
     .GetAsync();
   }
 
-  public async Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<string, int> usersFieldMappings)
+  public async Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<int, string> usersFieldMappings)
   {
     return await GraphServiceClient
     .Users
@@ -19,7 +19,7 @@ public class MsGraph : IMsGraph
       config =>
       config
       .QueryParameters
-      .Select = usersFieldMappings.Keys.ToArray()
+      .Select = usersFieldMappings.Values.ToArray()
     );
   }
 
@@ -31,7 +31,7 @@ public class MsGraph : IMsGraph
   }
 
   public async Task<GroupCollectionResponse?> GetGroupsForIterator(
-    Dictionary<string, int> groupFieldMappings
+    Dictionary<int, string> groupFieldMappings
   )
   {
     return await GraphServiceClient
@@ -40,7 +40,7 @@ public class MsGraph : IMsGraph
       config =>
       config
       .QueryParameters
-      .Select = groupFieldMappings.Keys.ToArray()
+      .Select = groupFieldMappings.Values.ToArray()
     );
   }
 
