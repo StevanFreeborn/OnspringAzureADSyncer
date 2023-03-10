@@ -15,7 +15,14 @@
         "00000000-0000-0000-0000-000000000000"
       ]
     },
-    "GroupsFieldMappings": {},
-    "UsersFieldMappings": {}
+    "GroupsFieldMappings": {
+      "4933": "displayName"
+    },
+    "UsersFieldMappings": {
+      "9": "streetAddress",
+      "2": "city",
+      "4934": "state",
+      "11": "postalCode"
+    }
   }
 }

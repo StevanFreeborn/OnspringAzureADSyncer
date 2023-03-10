@@ -24,7 +24,7 @@ public class AzureUserDestructuringPolicy : IAzureUserDestructuringPolicy
 
     var mappedUserProperties = _settings
     .UsersFieldMappings
-    .Keys
+    .Values
     .Select(p => p.Capitalize())
     .ToList();
 
