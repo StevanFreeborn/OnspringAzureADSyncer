@@ -31,24 +31,49 @@ public class Syncer : ISyncer
     }
 
     // TODO: Validate field mappings
-    // TODO: Validate that mapped fields exist in Onspring
-    // TODO: Validate that mapped properties exist for Azure AD resource
 
     Console.ForegroundColor = ConsoleColor.DarkBlue;
     Console.WriteLine("Connected successfully to Onspring and Azure AD");
     _logger.Information("Connected successfully to Onspring and Azure AD");
 
+    var retrieveGroupsFieldsMsg = "Retrieving fields for Onspring Groups app";
+    Console.WriteLine(retrieveGroupsFieldsMsg);
+    _logger.Information(retrieveGroupsFieldsMsg);
+
+    await _processor.GetOnspringGroupFields();
+
+    var retrieveUsersFieldsMsg = "Retrieving fields for Onspring Users app";
+    Console.WriteLine(retrieveUsersFieldsMsg);
+    _logger.Information(retrieveUsersFieldsMsg);
+
+    await _processor.GetOnspringUserFields();
+
+    if (_processor.CustomFieldMappingsAreValid() is false)
+    {
+      Console.ForegroundColor = ConsoleColor.Red;
+
+      var invalidCustomFieldMappingsMsg = "Custom field mappings are invalid";
+      Console.WriteLine(invalidCustomFieldMappingsMsg);
+      _logger.Fatal(invalidCustomFieldMappingsMsg);
+
+      return 3;
+    }
+
     var setDefaultGroupsFieldsMsg = "Setting default Groups field mappings";
     Console.WriteLine(setDefaultGroupsFieldsMsg);
     _logger.Information(setDefaultGroupsFieldsMsg);
 
-    await _processor.SetDefaultGroupsFieldMappings();
+    _processor.SetDefaultGroupsFieldMappings();
 
     var setDefaultUsersFieldsMsg = "Setting default Users field mappings";
     Console.WriteLine(setDefaultUsersFieldsMsg);
     _logger.Information(setDefaultUsersFieldsMsg);
 
-    await _processor.SetDefaultUsersFieldMappings();
+    _processor.SetDefaultUsersFieldMappings();
+
+    var validateCustomFieldMappings = "Validating custom field mappings";
+    Console.WriteLine(validateCustomFieldMappings);
+    _logger.Information(validateCustomFieldMappings);
 
     var syncGroupsMsg = "Syncing groups";
     Console.WriteLine(syncGroupsMsg);
@@ -56,16 +81,11 @@ public class Syncer : ISyncer
 
     await _processor.SyncGroups();
 
-    // TODO: Sync users
     var syncUsersMsg = "Syncing users";
     Console.WriteLine(syncUsersMsg);
     _logger.Information(syncUsersMsg);
 
     await _processor.SyncUsers();
-
-    // TODO: Sync group memberships
-
-    // TODO: Reconcile users status
 
     var exitMsg = "Syncer finished";
     Console.WriteLine(exitMsg);
