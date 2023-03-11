@@ -37,7 +37,7 @@ class Program
     var logLevelOption = new Option<LogEventLevel>(
       aliases: new string[] { "--log-level", "-l" },
       description: "The level of logging to use.",
-      getDefaultValue: () => LogEventLevel.Information
+      getDefaultValue: () => LogEventLevel.Verbose
     );
 
     var rootCommand = new RootCommand(

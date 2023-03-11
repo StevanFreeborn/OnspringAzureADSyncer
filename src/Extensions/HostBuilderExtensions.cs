@@ -72,7 +72,8 @@ public static class HostBuilderExtensions
             AppContext.BaseDirectory,
             $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
             "log.json"
-          )
+          ),
+          options.LogLevel
         );
       }
     );
