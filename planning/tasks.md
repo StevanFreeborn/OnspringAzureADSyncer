@@ -84,8 +84,8 @@
 
 ## Sprint 7: Sync Users to Onspring with Custom Properties
 
-- [ ] add ability to specify custom properties to sync from Azure Active Directory to Onspring
+- [x] add ability to specify custom properties to sync from Azure Active Directory to Onspring
 
 ## Sprint 8: Sync Groups to Onspring with Custom Properties
 
-- [ ] add ability to specify custom properties to sync from Azure Active Directory to Onspring
+- [x] add ability to specify custom properties to sync from Azure Active Directory to Onspring
