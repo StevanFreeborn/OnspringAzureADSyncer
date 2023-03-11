@@ -89,3 +89,12 @@
 ## Sprint 8: Sync Groups to Onspring with Custom Properties
 
 - [x] add ability to specify custom properties to sync from Azure Active Directory to Onspring
+
+## Spring 9: Add Documentation
+
+- [ ] add documentation to README.md
+
+## Spring 10: Add Unit Tests
+
+- [ ] add unit tests minimum 90% code coverage
+  - page iteration using PageIterator is likely to go uncovered
