@@ -154,11 +154,10 @@ public class Processor : IProcessor
 
   public bool FieldMappingsAreValid()
   {
-    // TODO: validate that properties are mapped to compatible fields
-
     return HasValidAzureProperties() &&
     HasValidOnspringFields() &&
-    HasRequiredOnspringFields();
+    HasRequiredOnspringFields() &&
+    HasValidFieldTypeToPropertyTypeMappings();
   }
 
   public void SetDefaultUsersFieldMappings()
@@ -328,12 +327,8 @@ public class Processor : IProcessor
 
   public async Task<bool> VerifyConnections()
   {
-    _logger.Debug("Verifying connections to Onspring and Azure AD");
-
-    _logger.Debug("Verifying connection to Onspring API");
     var onspringConnected = await _onspringService.IsConnected();
 
-    _logger.Debug("Verifying connection to Azure AD Graph API");
     var graphConnected = await _graphService.IsConnected();
 
     if (onspringConnected is false)
@@ -346,8 +341,143 @@ public class Processor : IProcessor
       _logger.Error("Unable to connect to Azure AD Graph API");
     }
 
-    _logger.Debug("Connections verified");
     return onspringConnected && graphConnected;
+  }
+
+  internal bool HasValidFieldTypeToPropertyTypeMappings()
+  {
+    var invalidMappings = new Dictionary<int, string>();
+
+    foreach (var kvp in _settings.GroupsFieldMappings)
+    {
+      var onspringField = _settings
+      .Onspring
+      .GroupsFields
+      .FirstOrDefault(
+        f => f.Id == kvp.Key
+      );
+
+      var azureGroupProperty = _settings
+      .Azure
+      .GroupsProperties
+      .FirstOrDefault(
+        p => p.Name == kvp.Value.Capitalize()
+      );
+
+      if (
+        azureGroupProperty is null ||
+        onspringField is null
+      )
+      {
+        _logger.Error(
+          "Unable to find Onspring Group field {Id} or Azure Group property {Name}",
+          kvp.Key,
+          kvp.Value
+        );
+
+        continue;
+      }
+
+      if (IsValidFieldTypeAndPropertyType(onspringField, azureGroupProperty) is false)
+      {
+        invalidMappings.Add(kvp.Key, kvp.Value);
+      }
+    }
+
+    foreach (var kvp in _settings.UsersFieldMappings)
+    {
+      if (
+        kvp.Key == _settings.Onspring.UsersGroupsFieldId ||
+        kvp.Key == 0
+      )
+      {
+        continue;
+      }
+
+      var onspringField = _settings
+      .Onspring
+      .UsersFields
+      .FirstOrDefault(
+        f => f.Id == kvp.Key
+      );
+
+      var azureUserProperty = _settings
+      .Azure
+      .UsersProperties
+      .FirstOrDefault(
+        p => p.Name == kvp.Value.Capitalize()
+      );
+
+      if (
+        azureUserProperty is null ||
+        onspringField is null
+      )
+      {
+        _logger.Error(
+          "Unable to find Onspring User field {Id} or Azure User property {Name}",
+          kvp.Key,
+          kvp.Value
+        );
+
+        continue;
+      }
+
+      if (IsValidFieldTypeAndPropertyType(onspringField, azureUserProperty) is false)
+      {
+        invalidMappings.Add(kvp.Key, kvp.Value);
+      }
+    }
+
+    if (invalidMappings.Any())
+    {
+      _logger.Error(
+        "Invalid field type to property type mappings: {@InvalidMappings}",
+        invalidMappings
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  internal static bool IsValidFieldTypeAndPropertyType(
+    Field field,
+    PropertyInfo azureProperty
+  )
+  {
+    var type = azureProperty.PropertyType;
+
+    // string values can be mapped to text or list fields
+    // bool values can be mapped to text or list fields
+    // DateTime values can be mapped to date or text fields
+    // DateTimeOffset values can be mapped to date or text fields
+    // List<string> values can be mapped to list fields that are multi-select
+    // or text fields
+    switch (type)
+    {
+      case var s when s == typeof(string):
+      case var b when b == typeof(bool?):
+        return field.Type is FieldType.Text or FieldType.List;
+
+      case var dt when dt == typeof(DateTime?):
+      case var dto when dto == typeof(DateTimeOffset?):
+        return field.Type is FieldType.Date or FieldType.Text;
+
+      case var t when t == typeof(List<string>):
+        if (field.Type is FieldType.List)
+        {
+          var listField = (ListField) field;
+
+          return listField.Type is FieldType.List &&
+          listField.Multiplicity is Multiplicity.MultiSelect;
+        }
+
+        return field.Type is FieldType.Text;
+
+      default:
+        return false;
+    }
   }
 
   internal bool HasRequiredOnspringFields()
@@ -455,13 +585,15 @@ public class Processor : IProcessor
 
   internal bool HasValidAzureProperties()
   {
-    var azureGroupPropertyNames = typeof(Group)
-    .GetProperties()
+    var azureGroupPropertyNames = _settings
+    .Azure
+    .GroupsProperties
     .Select(p => p.Name)
     .ToList();
 
-    var azureUserPropertyNames = typeof(User)
-    .GetProperties()
+    var azureUserPropertyNames = _settings
+    .Azure
+    .UsersProperties
     .Select(p => p.Name)
     .ToList();
 
@@ -681,7 +813,6 @@ public class Processor : IProcessor
 
     var groupMappings = new Dictionary<string, int>();
 
-    // TODO: for each group membership, get the onspring group's record id value
     foreach (var azureUserGroup in azureUserGroups)
     {
       if (
