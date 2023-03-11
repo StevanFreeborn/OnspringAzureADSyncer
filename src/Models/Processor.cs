@@ -450,6 +450,7 @@ public class Processor : IProcessor
 
     // string values can be mapped to text or list fields
     // bool values can be mapped to text or list fields
+    // int values can be mapped to number, text, or list fields
     // DateTime values can be mapped to date or text fields
     // DateTimeOffset values can be mapped to date or text fields
     // List<string> values can be mapped to list fields that are multi-select
@@ -459,6 +460,12 @@ public class Processor : IProcessor
       case var s when s == typeof(string):
       case var b when b == typeof(bool?):
         return field.Type is FieldType.Text or FieldType.List;
+
+      case var n when n == typeof(int?):
+        return field.Type is
+        FieldType.Number or
+        FieldType.Text or
+        FieldType.List;
 
       case var dt when dt == typeof(DateTime?):
       case var dto when dto == typeof(DateTimeOffset?):
