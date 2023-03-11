@@ -25,7 +25,7 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var updateRecord = BuildUpdatedOnspringUserRecord(
+      var updateRecord = await BuildUpdatedOnspringUserRecord(
         azureUser,
         onspringUser,
         usersGroupMappings
@@ -33,7 +33,7 @@ public class OnspringService : IOnspringService
 
       if (updateRecord.FieldData.Count == 0)
       {
-        _logger.Debug(
+        _logger.Warning(
           "No fields for Onspring User {@OnspringUser} need to be updated with Azure AD User {@AzureUser} values",
           onspringUser,
           azureUser
@@ -48,7 +48,7 @@ public class OnspringService : IOnspringService
 
       if (res.IsSuccessful is false)
       {
-        _logger.Debug(
+        _logger.Error(
           "Unable to update Onspring User {@OnspringUser} with Azure User {@AzureUser}. {@Response}",
           onspringUser,
           azureUser,
@@ -86,14 +86,14 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var newUserRecord = BuildNewOnspringUserRecord(
+      var newUserRecord = await BuildNewOnspringUserRecord(
         azureUser,
         usersGroupMappings
       );
 
       if (newUserRecord.FieldData.Count == 0)
       {
-        _logger.Debug(
+        _logger.Warning(
           "Unable to find any values for fields for user: {@AzureUser}",
           azureUser
         );
@@ -106,7 +106,7 @@ public class OnspringService : IOnspringService
 
       if (res.IsSuccessful is false)
       {
-        _logger.Debug(
+        _logger.Error(
           "Unable to create user in Onspring: {@AzureUser}. {@Response}",
           azureUser,
           res
@@ -190,7 +190,6 @@ public class OnspringService : IOnspringService
     }
   }
 
-
   public async Task<List<Field>> GetUserFields()
   {
     return await GetAllFieldsForApp(
@@ -205,11 +204,11 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var updateRecord = BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
+      var updateRecord = await BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
 
       if (updateRecord.FieldData.Count == 0)
       {
-        _logger.Debug(
+        _logger.Warning(
           "No fields for Onspring Group {@OnspringGroup} need to be updated with Azure AD Group {@AzureGroup} values",
           onspringGroup,
           azureGroup
@@ -224,8 +223,8 @@ public class OnspringService : IOnspringService
 
       if (res.IsSuccessful is false)
       {
-        _logger.Debug(
-          "Unable to Onspring Group {@OnspringGroup} with Azure Group {@AzureGroup}. {@Response}",
+        _logger.Error(
+          "Unable to update Onspring Group {@OnspringGroup} with Azure Group {@AzureGroup}. {@Response}",
           onspringGroup,
           azureGroup,
           res
@@ -259,11 +258,11 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var newGroupRecord = BuildNewOnspringGroupRecord(azureGroup);
+      var newGroupRecord = await BuildNewOnspringGroupRecord(azureGroup);
 
       if (newGroupRecord.FieldData.Count == 0)
       {
-        _logger.Debug(
+        _logger.Warning(
           "Unable to find any values for fields for group: {@Group}",
           azureGroup
         );
@@ -276,7 +275,7 @@ public class OnspringService : IOnspringService
 
       if (res.IsSuccessful is false)
       {
-        _logger.Debug(
+        _logger.Error(
           "Unable to create group in Onspring: {@Group}. {@Response}",
           azureGroup,
           res
@@ -468,7 +467,7 @@ public class OnspringService : IOnspringService
     return fields;
   }
 
-  internal ResultRecord BuildUpdatedOnspringUserRecord(
+  internal async Task<ResultRecord> BuildUpdatedOnspringUserRecord(
     User azureUser,
     ResultRecord onspringUser,
     Dictionary<string, int> usersGroupMappings
@@ -480,7 +479,7 @@ public class OnspringService : IOnspringService
       usersGroupMappings.Keys.ToList()
     );
 
-    var updatedOnspringUser = BuildUpdatedRecord(
+    var updatedOnspringUser = await BuildUpdatedRecord(
       azureUser,
       onspringUser,
       _settings.UsersFieldMappings
@@ -541,7 +540,7 @@ public class OnspringService : IOnspringService
     return updatedOnspringUser;
   }
 
-  internal ResultRecord BuildNewOnspringUserRecord(
+  internal async Task<ResultRecord> BuildNewOnspringUserRecord(
     User azureUser,
     Dictionary<string, int> usersGroupMappings
   )
@@ -552,7 +551,7 @@ public class OnspringService : IOnspringService
       usersGroupMappings.Keys.ToList()
     );
 
-    var newOnspringUser = BuildNewRecord(
+    var newOnspringUser = await BuildNewRecord(
       azureUser,
       _settings.UsersFieldMappings,
       _settings.Onspring.UsersAppId
@@ -619,42 +618,37 @@ public class OnspringService : IOnspringService
       f => f.FieldId == statusFieldId
     );
 
-    if (
-      existingStatusValue is not null &&
+    return existingStatusValue is not null &&
       existingStatusValue.AsString() != statusValueName
-    )
-    {
-      return new StringFieldValue(
+      ? new StringFieldValue(
         statusFieldId,
         statusValue.ToString()
-      );
-    }
-
-    return null;
+      )
+      : (RecordFieldValue?) null;
   }
 
-  internal ResultRecord BuildUpdatedOnspringGroupRecord(
+  internal async Task<ResultRecord> BuildUpdatedOnspringGroupRecord(
     Group azureGroup,
     ResultRecord onspringGroup
   )
   {
-    return BuildUpdatedRecord(
+    return await BuildUpdatedRecord(
       azureGroup,
       onspringGroup,
       _settings.GroupsFieldMappings
     );
   }
 
-  internal ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
+  internal async Task<ResultRecord> BuildNewOnspringGroupRecord(Group azureGroup)
   {
-    return BuildNewRecord(
+    return await BuildNewRecord(
       azureGroup,
       _settings.GroupsFieldMappings,
       _settings.Onspring.GroupsAppId
     );
   }
 
-  internal ResultRecord BuildUpdatedRecord(
+  internal async Task<ResultRecord> BuildUpdatedRecord(
     object azureObject,
     ResultRecord onspringRecord,
     Dictionary<int, string> fieldMappings
@@ -717,7 +711,7 @@ public class OnspringService : IOnspringService
         continue;
       }
 
-      var recordFieldValue = GetRecordFieldValue(kvp.Key, azureObjectValue);
+      var recordFieldValue = await GetRecordFieldValue(kvp.Key, azureObjectValue);
 
       updateRecord.FieldData.Add(recordFieldValue);
     }
@@ -725,7 +719,7 @@ public class OnspringService : IOnspringService
     return updateRecord;
   }
 
-  internal ResultRecord BuildNewRecord(
+  internal async Task<ResultRecord> BuildNewRecord(
     object azureObject,
     Dictionary<int, string> fieldMappings,
     int appId
@@ -759,7 +753,7 @@ public class OnspringService : IOnspringService
         continue;
       }
 
-      var recordFieldValue = GetRecordFieldValue(kvp.Key, fieldValue);
+      var recordFieldValue = await GetRecordFieldValue(kvp.Key, fieldValue);
       newRecord.FieldData.Add(recordFieldValue);
     }
 
@@ -773,22 +767,245 @@ public class OnspringService : IOnspringService
       fieldId == 0;
   }
 
-  internal static RecordFieldValue GetRecordFieldValue(
+  internal async Task<RecordFieldValue> GetRecordFieldValue(
     int fieldId,
     object fieldValue
   )
   {
-    return fieldValue switch
+    var groupFields = await GetGroupFields();
+    var userFields = await GetUserFields();
+    var allFields = groupFields.Concat(userFields);
+    var field = allFields.FirstOrDefault(f => f.Id == fieldId);
+    var valueType = fieldValue.GetType();
+
+    if (field is null)
     {
-      string s => new StringFieldValue(fieldId, s),
-      bool b => new StringFieldValue(fieldId, b.ToString()),
-      int i => new IntegerFieldValue(fieldId, i),
-      DateTime dt => new DateFieldValue(fieldId, dt.ToUniversalTime()),
-      DateTimeOffset dto => new DateFieldValue(fieldId, dto.UtcDateTime),
-      List<string> ls => new StringListFieldValue(fieldId, ls),
-      List<int> li => new IntegerListFieldValue(fieldId, li),
-      _ => new StringFieldValue(fieldId, JsonConvert.SerializeObject(fieldValue))
+      return new StringFieldValue(
+        0,
+        JsonConvert.SerializeObject(fieldValue)
+      );
+    }
+
+    if (
+      valueType == typeof(string)
+    )
+    {
+      var stringValue = fieldValue as string;
+
+      return field.Type switch
+      {
+        FieldType.List => await GetListValue(
+          field as ListField,
+          stringValue
+        ),
+        _ => new StringFieldValue(
+          fieldId,
+          stringValue
+        ),
+      };
+    }
+
+    if (
+      valueType == typeof(bool?)
+    )
+    {
+      var boolValue = fieldValue as bool?;
+
+      return field.Type switch
+      {
+        FieldType.List => await GetListValue(
+          field as ListField,
+          boolValue.ToString()
+        ),
+        _ => new StringFieldValue(
+          fieldId,
+          boolValue.ToString()
+        ),
+      };
+    }
+
+    if (
+      valueType == typeof(int?)
+    )
+    {
+      var intValue = fieldValue as int?;
+
+      return field.Type switch
+      {
+        FieldType.List => await GetListValue(
+          field as ListField,
+          intValue.ToString()
+        ),
+        FieldType.Text => new StringFieldValue(
+          fieldId,
+          intValue.ToString()
+        ),
+        _ => new IntegerFieldValue(
+          fieldId,
+          intValue
+        ),
+      };
+    }
+
+    if (
+      valueType == typeof(DateTime)
+    )
+    {
+      var dateTimeValue = (DateTime) fieldValue;
+
+      return field.Type switch
+      {
+        FieldType.Text => new StringFieldValue(
+          fieldId,
+          dateTimeValue.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        ),
+        _ => new DateFieldValue(
+          fieldId,
+          dateTimeValue.ToUniversalTime()
+        ),
+      };
+    }
+
+    if (
+      valueType == typeof(DateTimeOffset)
+    )
+    {
+      var dateTimeOffsetValue = (DateTimeOffset) fieldValue;
+
+      return field.Type switch
+      {
+        FieldType.Text => new StringFieldValue(
+          fieldId,
+          dateTimeOffsetValue.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")
+        ),
+        _ => new DateFieldValue(
+          fieldId,
+          dateTimeOffsetValue.UtcDateTime
+        ),
+      };
+    }
+
+    if (
+      valueType == typeof(List<string>)
+    )
+    {
+      var stringListValue = fieldValue as List<string>;
+
+      return field.Type switch
+      {
+        FieldType.List => await GetListValues(
+          field as ListField,
+          stringListValue
+        ),
+        _ => new StringFieldValue(
+          fieldId,
+          string.Join(
+            ",",
+            stringListValue!
+          )
+        ),
+      };
+    }
+
+    return new StringFieldValue(
+      fieldId,
+      JsonConvert.SerializeObject(
+        fieldValue
+      )
+    );
+  }
+
+  internal async Task<StringListFieldValue> GetListValues(ListField? field, List<string>? values)
+  {
+    if (field is null || values is null)
+    {
+      return new StringListFieldValue(
+        0,
+        new List<string>()
+      );
+    }
+
+    var listValueIds = new List<string>();
+
+    foreach (var value in values)
+    {
+      var listValue = await GetListValue(
+        field,
+        value
+      );
+
+      listValueIds.Add(listValue.Value);
+    }
+
+    return new StringListFieldValue(
+      field.Id,
+      listValueIds
+    );
+  }
+
+  internal async Task<StringFieldValue> GetListValue(ListField? field, string? value)
+  {
+    if (field is null || value is null)
+    {
+      return new StringFieldValue(
+        0,
+        string.Empty
+      );
+    }
+
+    var listValues = field.Values.ToList();
+    var listValue = listValues
+    .FirstOrDefault(
+      v => v.Name == value
+    );
+
+    if (listValue is not null)
+    {
+      return new StringFieldValue(
+        field.Id,
+        listValue.Id.ToString()
+      );
+    }
+
+    var listValueId = await AddListValue(
+      field.ListId,
+      value
+    );
+
+    return new StringFieldValue(
+      field.Id,
+      listValueId
+    );
+  }
+
+  internal async Task<string> AddListValue(int listId, string listValueName)
+  {
+    var saveListItemRequest = new SaveListItemRequest
+    {
+      ListId = listId,
+      Name = listValueName
     };
+
+    var res = await ExecuteRequest(
+      async () => await _onspringClient.SaveListItemAsync(
+        saveListItemRequest
+      )
+    );
+
+    if (res.IsSuccessful is false)
+    {
+      _logger.Error(
+        "Unable to add list value {ListValue} for list {ListId}. {StatusCode} - {Message}",
+        listValueName,
+        listId,
+        res.StatusCode,
+        res.Message
+      );
+
+      return string.Empty;
+    }
+
+    return res.Value.Id.ToString();
   }
 
   [ExcludeFromCodeCoverage]

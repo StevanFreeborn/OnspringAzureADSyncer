@@ -68,11 +68,11 @@ public class Processor : IProcessor
         )
       )
       {
-        await Parallel.ForEachAsync(azureUsers, async (azureUser, token) =>
+        foreach (var azureUser in azureUsers)
         {
-          await SyncUser(azureUser);
           progressBar.Tick($"Processing Azure User: {azureUser.Id}");
-        });
+          await SyncUser(azureUser);
+        }
 
         progressBar.Message = $"Finished processing Azure Users: page {pageNumberProcessing}";
       }
@@ -134,11 +134,11 @@ public class Processor : IProcessor
         )
       )
       {
-        await Parallel.ForEachAsync(azureGroups, async (azureGroup, token) =>
+        foreach (var azureGroup in azureGroups)
         {
-          await SyncGroup(azureGroup);
           progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
-        });
+          await SyncGroup(azureGroup);
+        }
 
         progressBar.Message = $"Finished processing Azure Groups: page {pageNumberProcessing}";
       }
@@ -164,11 +164,6 @@ public class Processor : IProcessor
   {
     foreach (var kvp in Settings.DefaultUsersFieldMappings)
     {
-      _logger.Debug(
-        "Attempting to find field {Name} in User app in Onspring",
-        kvp.Value
-      );
-
       var onspringField = _settings
       .Onspring
       .UsersFields
@@ -208,7 +203,7 @@ public class Processor : IProcessor
       // to an Azure User property, skip it
       if (_settings.UsersFieldMappings.ContainsKey(fieldId))
       {
-        _logger.Debug(
+        _logger.Warning(
           "Onspring Field {Name} is already mapped to an Azure User property: {@FieldMappings}",
           kvp.Value,
           _settings.UsersFieldMappings
@@ -217,18 +212,6 @@ public class Processor : IProcessor
         continue;
       }
 
-      _logger.Debug(
-        "Found field {Name} in User app in Onspring with Id {Id}",
-        kvp.Value,
-        fieldId
-      );
-
-      _logger.Debug(
-        "Setting user field mapping: {Key} - {Value}",
-        kvp.Key,
-        fieldId
-      );
-
       _settings
       .UsersFieldMappings
       .Add(
@@ -236,19 +219,17 @@ public class Processor : IProcessor
         kvp.Key
       );
     }
+
+    _logger.Debug(
+      "Users field mappings set: {@FieldMappings}",
+      _settings.UsersFieldMappings
+    );
   }
 
   public void SetDefaultGroupsFieldMappings()
   {
-    _logger.Debug("Setting default Groups field mappings");
-
     foreach (var kvp in Settings.DefaultGroupsFieldMappings)
     {
-      _logger.Debug(
-        "Attempting to find field {Name} in Group app in Onspring",
-        kvp.Value
-      );
-
       var onspringField = _settings
       .Onspring
       .GroupsFields
@@ -276,7 +257,7 @@ public class Processor : IProcessor
         kvp.Key == AzureSettings.GroupsNameKey
       )
       {
-        _logger.Debug(
+        _logger.Warning(
           "Overriding existing Azure Group id field mapping: {Key} - {Value}",
           kvp.Key,
           fieldId
@@ -291,7 +272,7 @@ public class Processor : IProcessor
       // Azure Group property, skip it
       if (_settings.GroupsFieldMappings.ContainsKey(fieldId))
       {
-        _logger.Debug(
+        _logger.Warning(
           "Onspring Group field {Name} is already mapped to an Azure Group property: {@FieldMappings}",
           kvp.Value,
           _settings.GroupsFieldMappings
@@ -300,12 +281,6 @@ public class Processor : IProcessor
         continue;
       }
 
-      _logger.Debug(
-        "Setting group field mapping: {Key} - {Value}",
-        kvp.Key,
-        fieldId
-      );
-
       _settings
       .GroupsFieldMappings
       .Add(
@@ -313,6 +288,11 @@ public class Processor : IProcessor
         kvp.Key
       );
     }
+
+    _logger.Debug(
+      "Groups field mappings set: {@FieldMappings}",
+      _settings.GroupsFieldMappings
+    );
   }
 
   public async Task GetOnspringUserFields()
@@ -369,7 +349,7 @@ public class Processor : IProcessor
         onspringField is null
       )
       {
-        _logger.Error(
+        _logger.Warning(
           "Unable to find Onspring Group field {Id} or Azure Group property {Name}",
           kvp.Key,
           kvp.Value
@@ -413,7 +393,7 @@ public class Processor : IProcessor
         onspringField is null
       )
       {
-        _logger.Error(
+        _logger.Warning(
           "Unable to find Onspring User field {Id} or Azure User property {Name}",
           kvp.Key,
           kvp.Value
@@ -448,13 +428,6 @@ public class Processor : IProcessor
   {
     var type = azureProperty.PropertyType;
 
-    // string values can be mapped to text or list fields
-    // bool values can be mapped to text or list fields
-    // int values can be mapped to number, text, or list fields
-    // DateTime values can be mapped to date or text fields
-    // DateTimeOffset values can be mapped to date or text fields
-    // List<string> values can be mapped to list fields that are multi-select
-    // or text fields
     switch (type)
     {
       case var s when s == typeof(string):
@@ -519,7 +492,7 @@ public class Processor : IProcessor
 
     if (hasRequiredOnspringGroupFields is false)
     {
-      _logger.Debug(
+      _logger.Error(
         "Required Onspring Group Field not found in Groups Field Mappings: {@GroupsFieldMappings}",
         _settings.GroupsFieldMappings
       );
@@ -527,7 +500,7 @@ public class Processor : IProcessor
 
     if (hasRequiredOnspringUserFields is false)
     {
-      _logger.Debug(
+      _logger.Error(
         "Required Onspring User Field not found in Users Field Mappings: {@UsersFieldMappings}",
         _settings.UsersFieldMappings
       );
@@ -575,14 +548,14 @@ public class Processor : IProcessor
 
     if (hasValidOnspringGroupFields is false)
     {
-      _logger.Debug(
+      _logger.Error(
         "Invalid Onspring Group field id found in GroupsFieldMappings"
       );
     }
 
     if (hasValidOnspringUserFields is false)
     {
-      _logger.Debug(
+      _logger.Error(
         "Invalid Onspring User field id found in UsersFieldMappings"
       );
     }
@@ -622,7 +595,7 @@ public class Processor : IProcessor
 
     if (hasValidAzureGroupProperties is false)
     {
-      _logger.Debug(
+      _logger.Error(
         "Invalid Azure Group property name found in GroupsFieldMappings: {@GroupsFieldMappings}",
         _settings.GroupsFieldMappings
       );
@@ -630,7 +603,7 @@ public class Processor : IProcessor
 
     if (hasValidAzureUserProperties is false)
     {
-      _logger.Debug(
+      _logger.Error(
         "Invalid Azure User property name found in UsersFieldMappings: {@UsersFieldMappings}",
         _settings.UsersFieldMappings
       );
