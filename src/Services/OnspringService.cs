@@ -678,8 +678,10 @@ public class OnspringService : IOnspringService
       ?.GetValue();
 
       if (
-        onspringRecordValue is not null &&
-        onspringRecordValue.Equals(azureObjectValue)
+        ValuesAreEqual(
+        onspringRecordValue,
+        azureObjectValue
+        )
       )
       {
         _logger.Debug(
@@ -717,6 +719,42 @@ public class OnspringService : IOnspringService
     }
 
     return updateRecord;
+  }
+
+  // when comparing date values returned from Azure and Onspring
+  // they are always going to be different because Azure returns
+  // the date in UTC and Onspring returns the date formatted as a
+  // string. this is because Onspring data is being requested in a
+  // a formatted format so that we can use the names of list values
+  // to determine if values need to be added and to remove html
+  // tags from the multi-line text fields. the trade off of this being
+  // date values are always going to be different.
+  internal static bool ValuesAreEqual(
+    object? onspringRecordValue,
+    object? azureObjectValue
+  )
+  {
+    if (onspringRecordValue is null && azureObjectValue is null)
+    {
+      return true;
+    }
+
+    if (azureObjectValue is List<string> azObjList)
+    {
+      if (onspringRecordValue is null)
+      {
+        return azObjList.Count == 0;
+      }
+
+      if (onspringRecordValue is List<string> onspringRecordList)
+      {
+        return onspringRecordList.All(
+          azObjList.Contains
+        );
+      }
+    }
+
+    return onspringRecordValue?.Equals(azureObjectValue) ?? false;
   }
 
   internal ResultRecord BuildNewRecord(
