@@ -11,4 +11,5 @@ public interface IOnspringService
   Task<ResultRecord?> GetUser(User azureUser);
   Task<SaveRecordResponse?> CreateUser(User azureUser, Dictionary<string, int> usersGroupMappings);
   Task<SaveRecordResponse?> UpdateUser(User azureUser, ResultRecord onspringUser, Dictionary<string, int> usersGroupMappings);
+  Task<SaveListItemResponse?> AddListValue(int listId, string listValueName);
 }

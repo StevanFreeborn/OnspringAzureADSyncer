@@ -25,7 +25,7 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var updateRecord = await BuildUpdatedOnspringUserRecord(
+      var updateRecord = BuildUpdatedOnspringUserRecord(
         azureUser,
         onspringUser,
         usersGroupMappings
@@ -86,7 +86,7 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var newUserRecord = await BuildNewOnspringUserRecord(
+      var newUserRecord = BuildNewOnspringUserRecord(
         azureUser,
         usersGroupMappings
       );
@@ -204,7 +204,7 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var updateRecord = await BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
+      var updateRecord = BuildUpdatedOnspringGroupRecord(azureGroup, onspringGroup);
 
       if (updateRecord.FieldData.Count == 0)
       {
@@ -258,7 +258,7 @@ public class OnspringService : IOnspringService
   {
     try
     {
-      var newGroupRecord = await BuildNewOnspringGroupRecord(azureGroup);
+      var newGroupRecord = BuildNewOnspringGroupRecord(azureGroup);
 
       if (newGroupRecord.FieldData.Count == 0)
       {
@@ -467,7 +467,7 @@ public class OnspringService : IOnspringService
     return fields;
   }
 
-  internal async Task<ResultRecord> BuildUpdatedOnspringUserRecord(
+  internal ResultRecord BuildUpdatedOnspringUserRecord(
     User azureUser,
     ResultRecord onspringUser,
     Dictionary<string, int> usersGroupMappings
@@ -479,7 +479,7 @@ public class OnspringService : IOnspringService
       usersGroupMappings.Keys.ToList()
     );
 
-    var updatedOnspringUser = await BuildUpdatedRecord(
+    var updatedOnspringUser = BuildUpdatedRecord(
       azureUser,
       onspringUser,
       _settings.UsersFieldMappings
@@ -540,7 +540,7 @@ public class OnspringService : IOnspringService
     return updatedOnspringUser;
   }
 
-  internal async Task<ResultRecord> BuildNewOnspringUserRecord(
+  internal ResultRecord BuildNewOnspringUserRecord(
     User azureUser,
     Dictionary<string, int> usersGroupMappings
   )
@@ -551,7 +551,7 @@ public class OnspringService : IOnspringService
       usersGroupMappings.Keys.ToList()
     );
 
-    var newOnspringUser = await BuildNewRecord(
+    var newOnspringUser = BuildNewRecord(
       azureUser,
       _settings.UsersFieldMappings,
       _settings.Onspring.UsersAppId
@@ -627,28 +627,28 @@ public class OnspringService : IOnspringService
       : (RecordFieldValue?) null;
   }
 
-  internal async Task<ResultRecord> BuildUpdatedOnspringGroupRecord(
+  internal ResultRecord BuildUpdatedOnspringGroupRecord(
     Group azureGroup,
     ResultRecord onspringGroup
   )
   {
-    return await BuildUpdatedRecord(
+    return BuildUpdatedRecord(
       azureGroup,
       onspringGroup,
       _settings.GroupsFieldMappings
     );
   }
 
-  internal async Task<ResultRecord> BuildNewOnspringGroupRecord(Group azureGroup)
+  internal ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
   {
-    return await BuildNewRecord(
+    return BuildNewRecord(
       azureGroup,
       _settings.GroupsFieldMappings,
       _settings.Onspring.GroupsAppId
     );
   }
 
-  internal async Task<ResultRecord> BuildUpdatedRecord(
+  internal ResultRecord BuildUpdatedRecord(
     object azureObject,
     ResultRecord onspringRecord,
     Dictionary<int, string> fieldMappings
@@ -711,7 +711,7 @@ public class OnspringService : IOnspringService
         continue;
       }
 
-      var recordFieldValue = await GetRecordFieldValue(kvp.Key, azureObjectValue);
+      var recordFieldValue = GetRecordFieldValue(kvp.Key, azureObjectValue);
 
       updateRecord.FieldData.Add(recordFieldValue);
     }
@@ -719,7 +719,7 @@ public class OnspringService : IOnspringService
     return updateRecord;
   }
 
-  internal async Task<ResultRecord> BuildNewRecord(
+  internal ResultRecord BuildNewRecord(
     object azureObject,
     Dictionary<int, string> fieldMappings,
     int appId
@@ -753,7 +753,7 @@ public class OnspringService : IOnspringService
         continue;
       }
 
-      var recordFieldValue = await GetRecordFieldValue(kvp.Key, fieldValue);
+      var recordFieldValue = GetRecordFieldValue(kvp.Key, fieldValue);
       newRecord.FieldData.Add(recordFieldValue);
     }
 
@@ -767,13 +767,13 @@ public class OnspringService : IOnspringService
       fieldId == 0;
   }
 
-  internal async Task<RecordFieldValue> GetRecordFieldValue(
+  internal RecordFieldValue GetRecordFieldValue(
     int fieldId,
     object fieldValue
   )
   {
-    var groupFields = await GetGroupFields();
-    var userFields = await GetUserFields();
+    var groupFields = _settings.Onspring.GroupsFields;
+    var userFields = _settings.Onspring.UsersFields;
     var allFields = groupFields.Concat(userFields);
     var field = allFields.FirstOrDefault(f => f.Id == fieldId);
     var valueType = fieldValue.GetType();
@@ -794,7 +794,7 @@ public class OnspringService : IOnspringService
 
       return field.Type switch
       {
-        FieldType.List => await GetListValue(
+        FieldType.List => GetListValue(
           field as ListField,
           stringValue
         ),
@@ -813,7 +813,7 @@ public class OnspringService : IOnspringService
 
       return field.Type switch
       {
-        FieldType.List => await GetListValue(
+        FieldType.List => GetListValue(
           field as ListField,
           boolValue.ToString()
         ),
@@ -832,7 +832,7 @@ public class OnspringService : IOnspringService
 
       return field.Type switch
       {
-        FieldType.List => await GetListValue(
+        FieldType.List => GetListValue(
           field as ListField,
           intValue.ToString()
         ),
@@ -893,7 +893,7 @@ public class OnspringService : IOnspringService
 
       return field.Type switch
       {
-        FieldType.List => await GetListValues(
+        FieldType.List => GetListValues(
           field as ListField,
           stringListValue
         ),
@@ -915,7 +915,10 @@ public class OnspringService : IOnspringService
     );
   }
 
-  internal async Task<StringListFieldValue> GetListValues(ListField? field, List<string>? values)
+  internal static StringListFieldValue GetListValues(
+    ListField? field,
+    List<string>? values
+  )
   {
     if (field is null || values is null)
     {
@@ -929,7 +932,7 @@ public class OnspringService : IOnspringService
 
     foreach (var value in values)
     {
-      var listValue = await GetListValue(
+      var listValue = GetListValue(
         field,
         value
       );
@@ -943,7 +946,10 @@ public class OnspringService : IOnspringService
     );
   }
 
-  internal async Task<StringFieldValue> GetListValue(ListField? field, string? value)
+  internal static StringFieldValue GetListValue(
+    ListField? field,
+    string? value
+  )
   {
     if (field is null || value is null)
     {
@@ -956,29 +962,24 @@ public class OnspringService : IOnspringService
     var listValues = field.Values.ToList();
     var listValue = listValues
     .FirstOrDefault(
-      v => v.Name == value
+      v => v.Name.ToLower() == value.ToLower()
     );
 
-    if (listValue is not null)
-    {
-      return new StringFieldValue(
+    return listValue is null
+      ? new StringFieldValue(
         field.Id,
-        listValue.Id.ToString()
-      );
-    }
-
-    var listValueId = await AddListValue(
-      field.ListId,
-      value
-    );
-
-    return new StringFieldValue(
+        string.Empty
+      )
+      : new StringFieldValue(
       field.Id,
-      listValueId
+      listValue.Id.ToString()
     );
   }
 
-  internal async Task<string> AddListValue(int listId, string listValueName)
+  public async Task<SaveListItemResponse?> AddListValue(
+    int listId,
+    string listValueName
+  )
   {
     var saveListItemRequest = new SaveListItemRequest
     {
@@ -1002,10 +1003,10 @@ public class OnspringService : IOnspringService
         res.Message
       );
 
-      return string.Empty;
+      return null;
     }
 
-    return res.Value.Id.ToString();
+    return res.Value;
   }
 
   [ExcludeFromCodeCoverage]

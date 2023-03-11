@@ -53,6 +53,19 @@ public class Processor : IProcessor
 
       pageNumberProcessing++;
 
+      var usersListFields = _settings
+      .Onspring
+      .UsersFields
+      .Where(f => f is ListField)
+      .Cast<ListField>()
+      .ToList();
+
+      await SyncListValues(
+        usersListFields,
+        _settings.UsersFieldMappings,
+        azureUsers
+      );
+
       var options = new ProgressBarOptions
       {
         ForegroundColor = ConsoleColor.DarkBlue,
@@ -68,11 +81,14 @@ public class Processor : IProcessor
         )
       )
       {
-        foreach (var azureUser in azureUsers)
-        {
-          progressBar.Tick($"Processing Azure User: {azureUser.Id}");
-          await SyncUser(azureUser);
-        }
+        await Parallel.ForEachAsync(
+          azureUsers,
+          async (azureUser, token) =>
+          {
+            progressBar.Tick($"Processing Azure User: {azureUser.Id}");
+            await SyncUser(azureUser);
+          }
+        );
 
         progressBar.Message = $"Finished processing Azure Users: page {pageNumberProcessing}";
       }
@@ -119,6 +135,19 @@ public class Processor : IProcessor
 
       pageNumberProcessing++;
 
+      var groupsListFields = _settings
+      .Onspring
+      .GroupsFields
+      .Where(f => f is ListField)
+      .Cast<ListField>()
+      .ToList();
+
+      await SyncListValues(
+        groupsListFields,
+        _settings.GroupsFieldMappings,
+        azureGroups
+      );
+
       var options = new ProgressBarOptions
       {
         ForegroundColor = ConsoleColor.DarkBlue,
@@ -134,11 +163,14 @@ public class Processor : IProcessor
         )
       )
       {
-        foreach (var azureGroup in azureGroups)
-        {
-          progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
-          await SyncGroup(azureGroup);
-        }
+        await Parallel.ForEachAsync(
+          azureGroups,
+          async (azureGroup, token) =>
+          {
+            progressBar.Tick($"Processing Azure Group: {azureGroup.Id}");
+            await SyncGroup(azureGroup);
+          }
+        );
 
         progressBar.Message = $"Finished processing Azure Groups: page {pageNumberProcessing}";
       }
@@ -322,6 +354,132 @@ public class Processor : IProcessor
     }
 
     return onspringConnected && graphConnected;
+  }
+
+  internal async Task SyncListValues<T>(
+    List<ListField> listFields,
+    Dictionary<int, string> fieldMappings,
+    List<T> azureObjects
+  )
+  {
+
+    var listFieldIds = listFields
+    .Select(f => f.Id)
+    .ToList();
+
+    var propertiesMappedToListFields = fieldMappings
+    .Where(kvp => listFieldIds.Contains(kvp.Key))
+    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+    var newListValues = new List<KeyValuePair<int, string>>();
+
+    foreach (var kvp in propertiesMappedToListFields)
+    {
+      var field = listFields.FirstOrDefault(f => f.Id == kvp.Key);
+
+      if (field is null)
+      {
+        continue;
+      }
+
+      foreach (var azureObject in azureObjects)
+      {
+        if (azureObject is null)
+        {
+          continue;
+        }
+
+        var propertyValue = azureObject
+        .GetType()
+        .GetProperty(kvp.Value.Capitalize())
+        ?.GetValue(azureObject);
+
+        var possibleNewListValues = new List<string>();
+
+        if (propertyValue is null)
+        {
+          continue;
+        }
+
+        if (propertyValue is List<string> propertyValueList)
+        {
+          possibleNewListValues.AddRange(propertyValueList);
+        }
+
+        var propertyValueString = propertyValue.ToString();
+
+        if (propertyValueString is null)
+        {
+          continue;
+        }
+
+        possibleNewListValues.Add(propertyValueString);
+
+        foreach (var possibleNewListValue in possibleNewListValues)
+        {
+          if (
+            TryGetNewListValue(field, possibleNewListValue, out var newListValue)
+          )
+          {
+            newListValues.Add(newListValue);
+          }
+        }
+      }
+    }
+
+    newListValues = newListValues
+    .DistinctBy(
+      kvp => kvp.Value.ToLower()
+    )
+    .ToList();
+
+    foreach (var newListValue in newListValues)
+    {
+      var listItemResponse = await _onspringService.AddListValue(
+        newListValue.Key,
+        newListValue.Value
+      );
+
+      if (listItemResponse is null)
+      {
+        _logger.Warning(
+          "Failed to add list value: {@NewListValue} to list: {ListId} for field {FieldId}",
+          newListValue.Value,
+          newListValue.Key
+        );
+      }
+    }
+
+    // have to update the list fields after adding new list values
+    _settings.Onspring.GroupsFields = await _onspringService.GetGroupFields();
+    _settings.Onspring.UsersFields = await _onspringService.GetUserFields();
+  }
+
+  internal static bool TryGetNewListValue(
+    ListField listField,
+    string possibleNewListValue,
+    out KeyValuePair<int, string> newListValue
+  )
+  {
+    var existingListValues = listField.Values;
+    var isNewListValue = existingListValues
+    .Select(v => v.Name.ToLower())
+    .Contains(
+      possibleNewListValue.ToLower()
+    ) is false;
+
+    if (isNewListValue is false)
+    {
+      newListValue = new KeyValuePair<int, string>();
+      return false;
+    }
+
+    newListValue = new KeyValuePair<int, string>(
+      listField.ListId,
+      possibleNewListValue
+    );
+
+    return true;
   }
 
   internal bool HasValidFieldTypeToPropertyTypeMappings()
