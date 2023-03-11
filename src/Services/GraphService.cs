@@ -28,7 +28,7 @@ public class GraphService : IGraphService
         groups.Value == null
       )
       {
-        _logger.Debug(
+        _logger.Warning(
           "No groups found for user {@AzureUser}",
           azureUser
         );
@@ -62,7 +62,7 @@ public class GraphService : IGraphService
         initialUsers.Value == null
       )
       {
-        _logger.Debug("No users found in Azure AD");
+        _logger.Warning("No users found in Azure AD");
         return null;
       }
 
@@ -102,7 +102,7 @@ public class GraphService : IGraphService
         initialGroups.Value == null
       )
       {
-        _logger.Debug("No groups found in Azure AD");
+        _logger.Warning("No groups found in Azure AD");
         return null;
       }
 
