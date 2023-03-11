@@ -5,6 +5,7 @@ global using System.CommandLine.Invocation;
 global using System.CommandLine.NamingConventionBinder;
 global using System.CommandLine.Parsing;
 global using System.Diagnostics.CodeAnalysis;
+global using System.Reflection;
 
 global using Azure.Identity;
 
@@ -30,6 +31,5 @@ global using Serilog;
 global using Serilog.Core;
 global using Serilog.Events;
 global using Serilog.Formatting.Compact;
-global using Serilog.Sinks.SystemConsole.Themes;
 
 global using ShellProgressBar;
