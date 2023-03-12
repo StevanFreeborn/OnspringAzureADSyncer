@@ -13,13 +13,12 @@ _**Note:**_ This is an unofficial Onspring integration. It was not built in cons
 - [Onspring Setup](#onspring-setup)
 - [Azure Active Directory Setup](#azure-active-directory-setup)
 - [Configuration](#configuration)
-
   - [Default Mappings](#default-mappings)
   - [Activating and Deactivating Users](#activating-and-deactivating-users)
   - [Custom Mappings](#custom-mappings)
   - [Validating Mappings](#validating-mappings)
-
 - [Usage](#usage)
+- [Limitations](#limitations)
 - [License](#license)
 - [Inspiration](#inspiration)
 
@@ -64,6 +63,8 @@ The app is published as a release on GitHub. You can download the latest release
 - ox-x64 (Minimum OS version is macOS 10.12 Sierra)
   - Note after downloading the executable you may need to run `chmod +x` to give the executable execute permissions on your machine.
   - Note after downloading the executable you may need to provide permission for the application to run via the your systems settings.
+
+You are also welcome to clone this repository and run the app using the [.NET 7](https://dotnet.microsoft.com/en-us/download) tooling and runtime. As well as modify the app further for your specific needs.
 
 ## Onspring Setup
 
@@ -124,7 +125,7 @@ _**Note:**_ The `id` property to `Name` field mapping cannot be changed or overw
 
 _**Note:**_ The `memberOf` property to `Groups` field mapping cannot be changed or overwritten.
 
-_**Note:**_ The Onspring Users `Status` field is not mapped and cannot be mapped to an Azure property. However it will be set for each user. The app uses logic to determine what value this field is set to based upon whether the user is a member of a specified [OnspringActiveGroup](#activating-and-deactivating-users) and is Enabled in Azure Active Directory.
+_**Note:**_ The Onspring Users `Status` field is not mapped and cannot be mapped to an Azure property. However it will be set by the app for each user. The app determines what value (Active or Inactive) this field is set to based upon whether the user is a member of a specified [OnspringActiveGroup](#activating-and-deactivating-users) and is `Enabled` in Azure Active Directory.
 
 ### Activating and Deactivating Users
 
@@ -146,7 +147,7 @@ The app can be configured to enable activating and deactivating users in Onsprin
 }
 ```
 
-When this property is set the app will set Onspring users to active if they are a member of one of these groups and their account is Enabled in Azure Active Directory.
+When this property is set the app will set Onspring users to active if they are a member of one of these groups and their account is `Enabled` in Azure Active Directory.
 
 ### Custom Mappings
 
@@ -168,9 +169,53 @@ The app can be configured to map custom properties from Azure Active Directory t
 }
 ```
 
+This does support mapping Azure properties to Onspring fields that are and are not included in the default mappings. In addition you can map a single Azure property to multiple Onspring fields if you need to. As noted in the [Default Mappings](#default-mappings) section there are some fields that cannot be mapped or whose mappings can not be overwritten.
+
+A list of properties that can be mapped to Onspring fields can be found in the [Microsoft Graph API documentation](https://learn.microsoft.com/graph):
+
+- [Group](https://docs.microsoft.com/graph/api/resources/group?view=graph-rest-1.0#properties)
+- [User](https://docs.microsoft.com/graph/api/resources/user?view=graph-rest-1.0#properties)
+
+_**Note:**_ Only properties that are of primitive types can be mapped to Onspring fields. Complex types are not supported.
+
 ### Validating Mappings
 
+Prior to the app actually attempting to sync groups or users it will validate the mappings that have been passed to it in the configuration file. Specifically it will check to make sure that all the required fields have a property mapped to them. It will also validate that the type of field a property is mapped to is compatible with the type of the property.
+
+#### Required Fields
+
+##### Groups - Required Fields
+
+| Onspring Group Field |
+| -------------------- |
+| `Name`               |
+
+##### Users - Required Fields
+
+| Onspring User Field |
+| ------------------- |
+| `Username`          |
+| `First Name`        |
+| `Last Name`         |
+| `Email Address`     |
+| `Groups`            |
+
+#### Azure Property to Onspring Field Type Compatibility
+
+| Azure Property Type | Onspring Field Type |
+| ------------------- | ------------------- |
+| `String`            | `Text`              |
+| `String`            | `List`              |
+| `String Collection` | `Text`              |
+| `String Collection` | `Multi-Select List` |
+| `Boolean`           | `Text`              |
+| `Boolean`           | `List`              |
+| `DateTimeOffset`    | `Text`              |
+| `DateTimeOffset`    | `Date/Time`         |
+
 ## Usage
+
+## Limitations
 
 ## License
 
