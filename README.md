@@ -11,6 +11,10 @@ _**Note:**_ This is an unofficial Onspring integration. It was not built in cons
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Onspring Setup](#onspring-setup)
+  - [BaseUrl](#base-url)
+  - [ApiKey](#apikey)
+    - [Permission Considerations](#permission-considerations)
+    - [API Usage Considerations](#api-usage-considerations)
 - [Azure Active Directory Setup](#azure-active-directory-setup)
 - [Configuration](#configuration)
   - [Default Mappings](#default-mappings)
@@ -68,7 +72,78 @@ You are also welcome to clone this repository and run the app using the [.NET 7]
 
 ## Onspring Setup
 
+In order to configure the app you will need to perform some setup in Onspring to acquire the following required configuration values:
+
+- `BaseUrl`
+- `ApiKey`
+- `UsersAppId`
+- `GroupsAppId`
+
+### Base Url
+
+The `BaseUrl` is the base url for the Onspring API. Currently this will always be `https://api.onspring.com`. It does not matter if you are using the app with a `Development`, `Test`, or `Production` instance.
+
+### ApiKey
+
+This app makes use of version 2 of the Onspring API. Therefore you will need an API Key to be able to utilize the app. API keys may be obtained by an Onspring user with permissions to at least read API Keys for your instance, using the following instructions:
+
+- Within Onspring, navigate to /Admin/Security/ApiKey.
+- On the list page, add a new API Key (requires Create permissions) or click an existing API Key to view its details.
+- On the details page for an API Key, click on the Developer Information tab.
+- Copy the X-ApiKey Header value from this section.
+
+_**Important:**_
+
+- An API Key must have a status of Enabled in order to be used.
+- Each API Key must have an assigned Role. This role controls the permissions for requests that are made by this tool to retrieve files from fields on records in an app. If the API Key does not have sufficient permissions the attachment will not be downloaded.
+
+#### Permission Considerations
+
+You can think of any API Key as another user in your Onspring instance and therefore it is subject to all the same permission considerations as any other user when it comes to it's ability to access a file. The API Key you use with this tool need to have all the correct permissions within your instance to access the record where a file is held and the field where the file is held. Things to think about in this context are `role permissions`, `content security`, and `field security`.
+
+#### API Usage Considerations
+
+This app uses version 2 of the Onspring API to sync groups and users. Currently this version of the Onspring API does not provide any endpoints to perform bulk operations.
+
+This app will make a number of api requests to Onspring in order to...
+
+- collect all the fields in each app
+- look up if list values need to be created
+- create list values
+- look up whether a group or user exists
+- create or update groups or users
+
+The total number of requests will vary depending on the number of users and groups being synced as well as the mappings you've configured.
+
+This all being shared because it is important you take into consideration the number of Groups and Users you are planning to sync with Onspring. If the quantity is quite considerable I'd encourage you to consult with your Onspring representative to understand what if any limits there are to your usage of the Onspring API.
+
+### App Ids
+
+The app needs to know the `App Id` for the `Users` and `Groups` apps in your Onspring instance. You can find the `App Id` for each app by navigating to the app's admin panel in Onspring and looking at the url. The `App Id` is the number at the end of the url.
+
+For example, if you are looking at the `Users` app in Onspring and the url is `https://myinstance.onspring.com/Admin/App/1` then the `App Id` is `1`.
+
+You can also find the `AppId` for each app by using the `API Key` you created to call the `/Apps` endpoint of the Onspring API. This [swagger page](https://api.onspring.com/swagger/index.html) can be useful for this type of exploratory call.
+
 ## Azure Active Directory Setup
+
+In order to provide the app with the proper permissions to sync your Azure Active Directory groups and users you will need to setup a new application registration within Azure Active Directory. The following steps can be followed to register the app and get the necessary `Tenant Id`, `Client Id`, and `Client Secret`.
+
+1. Go to Azure Active Directory and select `App Registrations` from the left hand menu.
+2. Click `New Registration`.
+3. Enter a name for the app and select `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)` for the supported account types.
+4. Leave the `Redirect URI` blank.
+5. Click `Register`.
+6. Go to the `API Permissions` section and click `Add a permission`.
+7. Select `Microsoft Graph` and then `Application permissions`.
+8. Select the following permissions:
+   - `Group.Read.All`
+   - `User.Read.All`
+9. Click `Add permissions`.
+10. Click `Grant admin consent for <your tenant name>`.
+11. Go to the `Certificates & secrets` section and click `New client secret`.
+12. Enter a description for the secret and select an expiry time. Click `Add`.
+13. Copy the `Tenant Id`, `Client Id`, and `Client Secret` values from the `Overview` section of the app registration.
 
 ## Configuration
 
@@ -97,6 +172,8 @@ The configuration file needs to have the following format and properties set:
   }
 }
 ```
+
+_**Note:**_ You can see an example of a complete configuration file in the [exampleconfig.json](src/exampleconfig.json) file in this repository.
 
 ### Default Mappings
 
@@ -215,7 +292,24 @@ Prior to the app actually attempting to sync groups or users it will validate th
 
 ## Usage
 
+### Syncing Groups and Users
+
+### Activating A User
+
+### Deactivating A User
+
+### Updating A Group
+
+### Updating A User
+
 ## Limitations
+
+- The app will not support deleting groups or users in Onspring. It will only support creating and updating groups and users.
+- The application will only support syncing groups and users in Azure Active Directory that are in the same tenant as specified in the configuration file.
+- The application will only support syncing groups and users in Onspring that are in the same Onspring instance as that identified by the configured `ApiKey`.
+- The application will only support syncing groups and users between one Onspring instance and one Azure Active Directory tenant.
+
+_**Note:**_ You can run the app multiple times with different configuration values to allow for syncing groups and users for multiple tenants into multiple instances.
 
 ## License
 
