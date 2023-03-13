@@ -1,8 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AssemblyTitle>OnspringAzureADSyncer</AssemblyTitle>
+    <Product>OnspringAzureADSyncer</Product>
+    <Description>An app that wil sync groups and users between an Azure AD tenant and an Onspring instance</Description>
+    <Version>1.0.0</Version>
+    <Authors>Stevan Freeborn</Authors>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishReadyToRun>true</PublishReadyToRun>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
