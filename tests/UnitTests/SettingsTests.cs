@@ -18,7 +18,10 @@ public class SettingsTests
   [Fact]
   public void Settings_ItShouldHaveDefaultGroupsFieldMappingsBasedOnConstantPropertiesOfAzureSettingsAndOnspringSettings()
   {
-    Settings.DefaultGroupsFieldMappings.Should().BeEquivalentTo(new Dictionary<string, string>
+    Settings
+    .DefaultGroupsFieldMappings
+    .Should()
+    .BeEquivalentTo(new Dictionary<string, string>
     {
       {
         AzureSettings.GroupsNameKey,
@@ -89,27 +92,27 @@ public class SettingsTests
       GroupsAppId = 2
     };
 
-    var groupFieldMappings = new Dictionary<string, int>
+    var groupFieldMappings = new Dictionary<int, string>
     {
       {
-        "id",
-        1
+        1,
+        "id"
       },
       {
-        "description",
-        2
+        2,
+        "description"
       }
     };
 
-    var usersFieldMappings = new Dictionary<string, int>
+    var usersFieldMappings = new Dictionary<int, string>
     {
       {
-        "id",
-        1
+        1,
+        "id"
       },
       {
-        "description",
-        2
+        2,
+        "description"
       }
     };
 
