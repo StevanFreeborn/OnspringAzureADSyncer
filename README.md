@@ -294,13 +294,13 @@ Prior to the app actually attempting to sync groups or users it will validate th
 
 ### Syncing Groups and Users
 
+Utilize the tool to sync groups and users from Azure Active Directory to Onspring using the default field mappings or configuring your own custom field mappings:
+
+[sync_groups_and_users](README/videos/sync_groups_and_users.mp4)
+
 ### Activating A User
 
 ### Deactivating A User
-
-### Updating A Group
-
-### Updating A User
 
 ## Limitations
 
