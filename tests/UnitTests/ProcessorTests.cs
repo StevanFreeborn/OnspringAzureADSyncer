@@ -109,7 +109,7 @@ public class ProcessorTests
   }
 
   [Fact]
-  public async Task SetDefaultGroupsFieldMappings_WhenCalled_ItShouldSetDefaultGroupsFieldMappings()
+  public void SetDefaultGroupsFieldMappings_WhenCalled_ItShouldSetDefaultGroupsFieldMappings()
   {
     var groupFields = new List<Field>
     {
@@ -151,7 +151,10 @@ public class ProcessorTests
 
     var settings = new Settings(optionsMock.Object)
     {
-      GroupsFieldMappings = new Dictionary<string, int>()
+      Onspring = new OnspringSettings
+      {
+        GroupsFields = groupFields
+      }
     };
 
     var processor = new Processor(
@@ -161,36 +164,14 @@ public class ProcessorTests
       _graphServiceMock.Object
     );
 
-    _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(groupFields);
-
-    await processor.SetDefaultGroupsFieldMappings();
+    processor.SetDefaultGroupsFieldMappings();
 
     settings.GroupsFieldMappings.Should().NotBeEmpty();
     settings.GroupsFieldMappings.Should().HaveCount(2);
-    settings.GroupsFieldMappings.Should().ContainKey("id");
-    settings.GroupsFieldMappings.Should().ContainKey("description");
-    settings.GroupsFieldMappings["id"].Should().Be(1);
-    settings.GroupsFieldMappings["description"].Should().Be(2);
-  }
-
-  [Fact]
-  public void SetDefaultGroupsFieldMappings_WhenCalledAndOnspringFieldCannotBeFound_ItShouldThrowException()
-  {
-    var groupFields = new List<Field>();
-
-    _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(groupFields);
-
-    Task Act() => _processor.SetDefaultGroupsFieldMappings();
-
-    Assert.ThrowsAsync<Exception>(Act);
+    settings.GroupsFieldMappings.Should().ContainKey(1);
+    settings.GroupsFieldMappings.Should().ContainKey(2);
+    settings.GroupsFieldMappings[1].Should().Be("id");
+    settings.GroupsFieldMappings[2].Should().Be("description");
   }
 
   [Fact]
@@ -275,7 +256,7 @@ public class ProcessorTests
     msGraphMock
     .Setup(
       x => x.GetGroupsForIterator(
-        It.IsAny<Dictionary<string, int>>()
+        It.IsAny<Dictionary<int, string>>()
       ).Result
     )
     .Returns(azureGroupCollection);
@@ -300,6 +281,24 @@ public class ProcessorTests
       _loggerMock.Object,
       _settingsMock.Object,
       msGraphMock.Object
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    ).Returns(
+      new OnspringSettings
+      {
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>()
     );
 
     // setup onspring service

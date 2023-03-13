@@ -28,10 +28,10 @@ public class OnspringServiceTests
     _settingsMock
     .SetupGet(m => m.GroupsFieldMappings)
     .Returns(
-      new Dictionary<string, int>
+      new Dictionary<int, string>
       {
-        { "id", 1 },
-        { "description", 2 },
+        { 1, "id" },
+        { 2, "description" },
       }
     );
 

@@ -115,7 +115,7 @@ public class GraphServiceTests
 
     _msGraphMock
     .Setup(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<string, int>>()).Result
+      x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>()).Result
     )
     .Returns<GroupCollectionResponse>(null);
 
@@ -123,7 +123,7 @@ public class GraphServiceTests
 
     result.Should().BeNull();
     _msGraphMock.Verify(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<string, int>>()),
+      x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>()),
       Times.Once
     );
   }
@@ -153,7 +153,9 @@ public class GraphServiceTests
 
     _msGraphMock
     .Setup(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<string, int>>()).Result
+      x => x.GetGroupsForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
     )
     .Returns(initialGroups);
 
@@ -162,7 +164,9 @@ public class GraphServiceTests
     result.Should().NotBeNull();
     result.Should().BeOfType<PageIterator<Group, GroupCollectionResponse>>();
     _msGraphMock.Verify(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<string, int>>()),
+      x => x.GetGroupsForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ),
       Times.Once
     );
   }
@@ -175,7 +179,9 @@ public class GraphServiceTests
 
     _msGraphMock
     .Setup(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<string, int>>()).Result
+      x => x.GetGroupsForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
     )
     .Throws(new Exception());
 
@@ -183,7 +189,9 @@ public class GraphServiceTests
 
     result.Should().BeNull();
     _msGraphMock.Verify(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<string, int>>()),
+      x => x.GetGroupsForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ),
       Times.Once
     );
   }
