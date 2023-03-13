@@ -92,7 +92,7 @@
 
 ## Spring 9: Add Documentation
 
-- [ ] add documentation to README.md
+- [x] add documentation to README.md
 
 ## Spring 10: Add Unit Tests
 
