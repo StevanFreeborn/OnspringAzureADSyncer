@@ -70,9 +70,6 @@
     ]
   },
   "GroupProperties": {
-    "Number/Text/List Field": [
-      "unseenCount"
-    ],
     "Text/List Field": [
       "allowExternalSenders",
       "autoSubscribeNewMembers",
@@ -102,7 +99,7 @@
       "theme",
       "visibility"
     ],
-    "Date/Time Field": [
+    "Date/Time/Text Field": [
       "createdDateTime",
       "deletedDateTime",
       "expirationDateTime",

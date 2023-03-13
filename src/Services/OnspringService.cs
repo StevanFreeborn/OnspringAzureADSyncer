@@ -844,7 +844,7 @@ public class OnspringService : IOnspringService
     }
 
     if (
-      valueType == typeof(bool?)
+      valueType == typeof(bool)
     )
     {
       var boolValue = fieldValue as bool?;
@@ -858,29 +858,6 @@ public class OnspringService : IOnspringService
         _ => new StringFieldValue(
           fieldId,
           boolValue.ToString()
-        ),
-      };
-    }
-
-    if (
-      valueType == typeof(int?)
-    )
-    {
-      var intValue = fieldValue as int?;
-
-      return field.Type switch
-      {
-        FieldType.List => GetListValue(
-          field as ListField,
-          intValue.ToString()
-        ),
-        FieldType.Text => new StringFieldValue(
-          fieldId,
-          intValue.ToString()
-        ),
-        _ => new IntegerFieldValue(
-          fieldId,
-          intValue
         ),
       };
     }
