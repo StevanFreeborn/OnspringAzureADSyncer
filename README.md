@@ -21,6 +21,7 @@ _**Note:**_ This is an unofficial Onspring integration. It was not built in cons
   - [Activating and Deactivating Users](#activating-and-deactivating-users)
   - [Custom Mappings](#custom-mappings)
   - [Validating Mappings](#validating-mappings)
+- [Options](#options)
 - [Output](#output)
   - [Log](#log)
 - [Limitations](#limitations)
@@ -298,6 +299,16 @@ Prior to the app actually attempting to sync groups or users it will validate th
 | `Boolean`           | `List`              |
 | `DateTimeOffset`    | `Text`              |
 | `DateTimeOffset`    | `Date/Time`         |
+
+## Options
+
+This app currently has a number of options that can be passed as command-line arguments to alter the behavior of the app. Theres are detailed below and can also be viewed by passing the `-h` or `--help` option to the app.
+
+- **Log Level:** `--log` or `-l`
+  - Allows you to specify what the minimum level of event that will be written to the log file while the app is running.
+  - By default this will be set to the Verbose level.
+  - The valid levels are: Debug | Error | Fatal | Information | Verbose | Warning
+  - **Example usage:** `OnspringAzureADSyncer.exe -l warning`
 
 ## Output
 
