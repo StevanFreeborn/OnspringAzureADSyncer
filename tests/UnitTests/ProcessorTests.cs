@@ -6,7 +6,6 @@ public class ProcessorTests
   private readonly Mock<ISettings> _settingsMock;
   private readonly Mock<IOnspringService> _onspringServiceMock;
   private readonly Mock<IGraphService> _graphServiceMock;
-
   private readonly Processor _processor;
 
   public ProcessorTests()
@@ -175,6 +174,1148 @@ public class ProcessorTests
   }
 
   [Fact]
+  public void SetDefaultGroupsFieldMappings_WhenCalledAndDefaultFieldIsNotFound_ItShouldSetDefaultGroupsFieldMappingsWithFieldIdOfZero()
+  {
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      }
+    };
+
+    var configFile = new FileInfo("testData/testconfig.json");
+
+    var optionsMock = new Mock<IOptions<AppOptions>>();
+    optionsMock
+    .SetupGet(
+      x => x.Value
+    )
+    .Returns(
+      new AppOptions
+      {
+        ConfigFile = configFile
+      }
+    );
+
+    var settings = new Settings(optionsMock.Object)
+    {
+      Onspring = new OnspringSettings
+      {
+        GroupsFields = groupFields
+      }
+    };
+
+    var processor = new Processor(
+      _loggerMock.Object,
+      settings,
+      _onspringServiceMock.Object,
+      _graphServiceMock.Object
+    );
+
+    processor.SetDefaultGroupsFieldMappings();
+
+    settings.GroupsFieldMappings.Should().NotBeEmpty();
+    settings.GroupsFieldMappings.Should().HaveCount(2);
+    settings.GroupsFieldMappings.Should().ContainKey(1);
+    settings.GroupsFieldMappings.Should().ContainKey(0);
+    settings.GroupsFieldMappings[1].Should().Be("id");
+    settings.GroupsFieldMappings[0].Should().Be("description");
+  }
+
+  [Fact]
+  public void SetDefaultGroupsFieldMappings_WhenCalledAndNameFieldIsAlreadyMapped_ItShouldOverwriteTheExistingNameMapping()
+  {
+
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      }
+    };
+
+    var configFile = new FileInfo("testData/testconfig.json");
+
+    var optionsMock = new Mock<IOptions<AppOptions>>();
+    optionsMock
+    .SetupGet(
+      x => x.Value
+    )
+    .Returns(
+      new AppOptions
+      {
+        ConfigFile = configFile
+      }
+    );
+
+    var settings = new Settings(optionsMock.Object)
+    {
+      Onspring = new OnspringSettings
+      {
+        GroupsFields = groupFields
+      },
+      GroupsFieldMappings = new Dictionary<int, string>
+      {
+        { 1, "someProperty" }
+      }
+    };
+
+    var processor = new Processor(
+      _loggerMock.Object,
+      settings,
+      _onspringServiceMock.Object,
+      _graphServiceMock.Object
+    );
+
+    processor.SetDefaultGroupsFieldMappings();
+
+    settings.GroupsFieldMappings.Should().NotBeEmpty();
+    settings.GroupsFieldMappings.Should().HaveCount(2);
+    settings.GroupsFieldMappings.Should().ContainKey(1);
+    settings.GroupsFieldMappings.Should().ContainKey(2);
+    settings.GroupsFieldMappings[1].Should().Be("id");
+    settings.GroupsFieldMappings[2].Should().Be("description");
+  }
+
+  [Fact]
+  public void SetDefaultGroupsFieldMappings_WhenCalledAndDescriptionFieldIsAlreadyMapped_ItShouldIgnoreTheDefaultMapping()
+  {
+
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      }
+    };
+
+    var configFile = new FileInfo("testData/testconfig.json");
+
+    var optionsMock = new Mock<IOptions<AppOptions>>();
+    optionsMock
+    .SetupGet(
+      x => x.Value
+    )
+    .Returns(
+      new AppOptions
+      {
+        ConfigFile = configFile
+      }
+    );
+
+    var settings = new Settings(optionsMock.Object)
+    {
+      Onspring = new OnspringSettings
+      {
+        GroupsFields = groupFields
+      },
+      GroupsFieldMappings = new Dictionary<int, string>
+      {
+        { 2, "someProperty" }
+      }
+    };
+
+    var processor = new Processor(
+      _loggerMock.Object,
+      settings,
+      _onspringServiceMock.Object,
+      _graphServiceMock.Object
+    );
+
+    processor.SetDefaultGroupsFieldMappings();
+
+    settings.GroupsFieldMappings.Should().NotBeEmpty();
+    settings.GroupsFieldMappings.Should().HaveCount(2);
+    settings.GroupsFieldMappings.Should().ContainKey(1);
+    settings.GroupsFieldMappings.Should().ContainKey(2);
+    settings.GroupsFieldMappings[1].Should().Be("id");
+    settings.GroupsFieldMappings[2].Should().Be("someProperty");
+  }
+
+  [Fact]
+  public async Task GetOnspringUserFields_WhenCalled_ItShouldSetTheOnspringUserFields()
+  {
+    var userFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "First Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Last Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      }
+    };
+
+    var onspringSettings = new OnspringSettings
+    {
+      UsersFields = new List<Field>()
+    };
+
+    _settingsMock
+    .SetupGet(x => x.Onspring)
+    .Returns(onspringSettings);
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetUserFields().Result
+    )
+    .Returns(userFields);
+
+    await _processor.GetOnspringUserFields();
+
+    _onspringServiceMock.Verify(
+      x => x.GetUserFields(),
+      Times.Once
+    );
+
+    onspringSettings.UsersFields.Should().NotBeEmpty();
+    onspringSettings.UsersFields.Should().HaveCount(2);
+    onspringSettings.UsersFields.Should().BeEquivalentTo(userFields);
+  }
+
+  [Fact]
+  public async Task GetOnspringGroupsFields_WhenCalled_ItShouldSetTheOnspringGroupsFields()
+  {
+
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      }
+    };
+
+    var onspringSettings = new OnspringSettings
+    {
+      GroupsFields = new List<Field>()
+    };
+
+    _settingsMock
+    .SetupGet(x => x.Onspring)
+    .Returns(onspringSettings);
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(groupFields);
+
+    await _processor.GetOnspringGroupFields();
+
+    _onspringServiceMock.Verify(
+      x => x.GetGroupFields(),
+      Times.Once
+    );
+
+    onspringSettings.GroupsFields.Should().NotBeEmpty();
+    onspringSettings.GroupsFields.Should().HaveCount(2);
+    onspringSettings.GroupsFields.Should().BeEquivalentTo(groupFields);
+  }
+
+  [Fact]
+  public async Task GetUsersGroupMappings_WhenCalled_ItShouldSetTheUsersGroupMappings()
+  {
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Record Id",
+        Type = FieldType.AutoNumber,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+    };
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(groupFields);
+
+    var azureGroups = new List<DirectoryObject>
+    {
+      new Group
+      {
+        Id = "1",
+        DisplayName = "Group 1",
+        Description = "Group 1 Description",
+      },
+      new Group
+      {
+        Id = "2",
+        DisplayName = "Group 2",
+        Description = "Group 2 Description",
+      },
+      null!,
+      new  Group
+      {
+        Id = null,
+        DisplayName = "Group 3",
+        Description = "Group 3 Description",
+      },
+    };
+
+    var onspringGroup = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>(),
+    };
+
+    _onspringServiceMock
+    .SetupSequence(
+      x => x.GetGroup(It.IsAny<string>()).Result
+    )
+    .Returns(onspringGroup)
+    .Returns((ResultRecord?) null);
+
+    var usersGroupMappings = await _processor.GetUsersGroupMappings(azureGroups);
+
+    usersGroupMappings.Should().NotBeEmpty();
+    usersGroupMappings.Should().HaveCount(1);
+    usersGroupMappings.Should().ContainKey("1");
+    usersGroupMappings["1"].Should().Be(1);
+
+    _onspringServiceMock.Verify(
+      x => x.GetGroupFields(),
+      Times.Once
+    );
+
+    _onspringServiceMock.Verify(
+      x => x.GetGroup(It.IsAny<string>()),
+      Times.Exactly(2)
+    );
+  }
+
+  [Fact]
+  public void SetStatusListValues_WhenCalledAndStatusListValuesAreFound_ItShouldSetTheUsersStatusListValues()
+  {
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    var statusListField = new ListField
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Status",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Values = new List<ListValue>
+      {
+        new ListValue
+        {
+          Id = activeListValueId,
+          Name = "Active",
+        },
+        new ListValue
+        {
+          Id = inactiveListValueId,
+          Name = "Inactive",
+        },
+      },
+    };
+
+    var onspringSettings = new OnspringSettings();
+
+    _settingsMock
+    .SetupGet(x => x.Onspring)
+    .Returns(onspringSettings);
+
+    _processor.SetStatusListValues(statusListField);
+
+    onspringSettings.UserActiveStatusListValue.Should().Be(activeListValueId);
+    onspringSettings.UserInactiveStatusListValue.Should().Be(inactiveListValueId);
+  }
+
+  [Fact]
+  public void SetStatusListValues_WhenCalledAndActiveStatusListValueIsNotFound_ItShouldThrowAnException()
+  {
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    var statusListField = new ListField
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Status",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Values = new List<ListValue>
+      {
+        new ListValue
+        {
+          Id = activeListValueId,
+          Name = "Enabled",
+        },
+        new ListValue
+        {
+          Id = inactiveListValueId,
+          Name = "Inactive",
+        },
+      },
+    };
+
+    var act = () => _processor.SetStatusListValues(statusListField);
+
+    act.Should().Throw<Exception>();
+  }
+
+  [Fact]
+  public void SetStatusListValues_WhenCalledAndInactiveStatusListValueIsNotFound_ItShouldThrowAnException()
+  {
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    var statusListField = new ListField
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Status",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Values = new List<ListValue>
+      {
+        new ListValue
+        {
+          Id = activeListValueId,
+          Name = "Active",
+        },
+        new ListValue
+        {
+          Id = inactiveListValueId,
+          Name = "Disabled",
+        },
+      },
+    };
+
+    var act = () => _processor.SetStatusListValues(statusListField);
+
+    act.Should().Throw<Exception>();
+  }
+
+  [Fact]
+  public void HasValidAzureProperties_WhenCalledAndHasValidProperties_ItShouldReturnTrue()
+  {
+    _settingsMock
+    .SetupGet(
+      x => x.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "displayName" },
+        { 2, "description" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "givenName" },
+        { 2, "surname" },
+        { 3, "mail" },
+        { 4, "userPrincipalName" },
+      }
+    );
+
+    var hasValidAzureProperties = _processor.HasValidAzureProperties();
+
+    hasValidAzureProperties.Should().BeTrue();
+  }
+
+  [Fact]
+  public void HasValidAzureProperties_WhenCalledAndHasInvalidProperties_ItShouldReturnFalse()
+  {
+    _settingsMock
+    .SetupGet(
+      x => x.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "displayName" },
+        { 2, "description" },
+        { 3, "invalid" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "givenName" },
+        { 2, "surname" },
+        { 3, "mail" },
+        { 4, "userPrincipalName" },
+        { 5, "invalid" },
+      }
+    );
+
+    var hasValidAzureProperties = _processor.HasValidAzureProperties();
+
+    hasValidAzureProperties.Should().BeFalse();
+  }
+
+  [Fact]
+  public void HasValidOnspringFields_WhenCalledAndHasValidFields_ItShouldReturnTrue()
+  {
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = false,
+        IsUnique = false,
+      },
+    };
+
+    var userFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "First Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Last Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 3,
+        AppId = 1,
+        Name = "Email Address",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 4,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+    };
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        GroupsFields = groupFields,
+        UsersFields = userFields,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "displayName" },
+        { 2, "description" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "givenName" },
+        { 2, "surname" },
+        { 3, "mail" },
+        { 4, "userPrincipalName" },
+      }
+    );
+
+    var hasValidOnspringFields = _processor.HasValidOnspringFields();
+
+    hasValidOnspringFields.Should().BeTrue();
+  }
+
+  [Fact]
+  public void HasValidOnspringFields_WhenCalledAndHasInvalidFields_ItShouldReturnFalse()
+  {
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = false,
+        IsUnique = false,
+      },
+    };
+
+    var userFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "First Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Last Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 3,
+        AppId = 1,
+        Name = "Email Address",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 4,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+    };
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        GroupsFields = groupFields,
+        UsersFields = userFields,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "displayName" },
+        { 2, "description" },
+        { 3, "invalid" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "givenName" },
+        { 2, "surname" },
+        { 3, "mail" },
+        { 4, "userPrincipalName" },
+        { 5, "invalid" },
+      }
+    );
+
+    var hasValidOnspringFields = _processor.HasValidOnspringFields();
+
+    hasValidOnspringFields.Should().BeFalse();
+  }
+
+  [Fact]
+  public void HasRequiredOnspringFields_WhenCalledAndAllRequiredFieldsAreMapped_ItShouldReturnTrue()
+  {
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = false,
+        IsUnique = false,
+      },
+    };
+
+    var usersFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "First Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Last Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 3,
+        AppId = 1,
+        Name = "Email Address",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 4,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+    };
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        GroupsFields = groupFields,
+        UsersFields = usersFields,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "displayName" },
+        { 2, "description" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "givenName" },
+        { 2, "surname" },
+        { 3, "mail" },
+        { 4, "userPrincipalName" },
+      }
+    );
+
+    var hasRequiredOnspringFields = _processor.HasRequiredOnspringFields();
+
+    hasRequiredOnspringFields.Should().BeTrue();
+  }
+
+  [Fact]
+  public void HasRequiredOnspringFields_WhenCalledAndRequiredFieldsAreNotMapped_ItShouldReturnFalse()
+  {
+    var groupFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Description",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = false,
+        IsUnique = false,
+      },
+    };
+
+    var usersFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "First Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 2,
+        AppId = 1,
+        Name = "Last Name",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 3,
+        AppId = 1,
+        Name = "Email Address",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+      new Field
+      {
+        Id = 4,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = false,
+      },
+    };
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        GroupsFields = groupFields,
+        UsersFields = usersFields,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.GroupsFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 2, "description" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "givenName" },
+        { 2, "surname" },
+        { 3, "mail" },
+      }
+    );
+
+    var hasRequiredOnspringFields = _processor.HasRequiredOnspringFields();
+
+    hasRequiredOnspringFields.Should().BeFalse();
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsStringAndFieldTypeIsText_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsStringAndFieldTypeIsList_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsStringAndFieldTypeIsNotListOrText_ItShouldReturnFalse()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsBooleanAndFieldTypeIsText_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsBooleanAndFieldTypeIsList_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsBooleanAndFieldTypeIsNotListOrText_ItShouldReturnFalse()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeAndFieldTypeIsDate_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeAndFieldTypeIsText_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeAndFieldTypeIsNotDateOrText_ItShouldReturnFalse()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeOffsetAndFieldTypeIsDate_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeOffsetAndFieldTypeIsText_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeOffsetAndFieldTypeIsNotDateOrText_ItShouldReturnFalse()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsMultiSelectList_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsText_ItShouldReturnTrue()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsSingleSelectList_ItShouldReturnFalse()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsNotMultiSelectListOrText_ItShouldReturnFalse()
+  {
+
+  }
+
+  [Fact]
+  public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsNotSupported_ItShouldReturnFalse()
+  {
+
+  }
+
+
+  [Fact]
   public async Task SyncGroups_WhenCalledAndNoGroupsAreFound_ItShouldNotSyncGroupsToOnspring()
   {
     var groups = new List<Group>();
@@ -289,7 +1430,42 @@ public class ProcessorTests
     ).Returns(
       new OnspringSettings
       {
-        GroupsFields = new List<Field>()
+        GroupsFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            AppId = 1,
+            Name = "Name",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+          new ListField
+          {
+            Id = 2,
+            AppId = 1,
+            Name = "Description",
+            Type = FieldType.List,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+            Values = new List<ListValue>
+            {
+              new ListValue
+              {
+                Id = Guid.NewGuid(),
+                Name = "Needs updated"
+              },
+              new ListValue
+              {
+                Id = Guid.NewGuid(),
+                Name = "Updated"
+              }
+            }
+          }
+        }
       }
     );
 
