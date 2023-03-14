@@ -369,19 +369,19 @@ public class Processor : IProcessor
     .ToList();
 
     var propertiesMappedToListFields = fieldMappings
-    .Where(kvp => listFieldIds.Contains(kvp.Key))
-    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    .Where(
+      kvp => listFieldIds.Contains(kvp.Key)
+    )
+    .ToDictionary(
+      kvp => kvp.Key,
+      kvp => kvp.Value
+    );
 
     var newListValues = new List<KeyValuePair<int, string>>();
 
     foreach (var kvp in propertiesMappedToListFields)
     {
       var field = listFields.FirstOrDefault(f => f.Id == kvp.Key);
-
-      if (field is null)
-      {
-        continue;
-      }
 
       foreach (var azureObject in azureObjects)
       {
@@ -395,7 +395,7 @@ public class Processor : IProcessor
         .GetProperty(kvp.Value.Capitalize())
         ?.GetValue(azureObject);
 
-        var possibleNewListValues = new List<string>();
+        var possibleNewListValues = new List<string?>();
 
         if (propertyValue is null)
         {
@@ -406,20 +406,16 @@ public class Processor : IProcessor
         {
           possibleNewListValues.AddRange(propertyValueList);
         }
-
-        var propertyValueString = propertyValue.ToString();
-
-        if (propertyValueString is null)
+        else
         {
-          continue;
+          var propertyValueString = propertyValue.ToString();
+          possibleNewListValues.Add(propertyValueString);
         }
-
-        possibleNewListValues.Add(propertyValueString);
 
         foreach (var possibleNewListValue in possibleNewListValues)
         {
           if (
-            TryGetNewListValue(field, possibleNewListValue, out var newListValue)
+            TryGetNewListValue(field!, possibleNewListValue, out var newListValue)
           )
           {
             newListValues.Add(newListValue);
@@ -458,10 +454,16 @@ public class Processor : IProcessor
 
   internal static bool TryGetNewListValue(
     ListField listField,
-    string possibleNewListValue,
+    string? possibleNewListValue,
     out KeyValuePair<int, string> newListValue
   )
   {
+    if (possibleNewListValue is null)
+    {
+      newListValue = new KeyValuePair<int, string>();
+      return false;
+    }
+
     var existingListValues = listField.Values;
     var isNewListValue = existingListValues
     .Select(v => v.Name.ToLower())
