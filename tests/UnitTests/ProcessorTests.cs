@@ -707,9 +707,9 @@ public class ProcessorTests
       }
     );
 
-    var hasValidAzureProperties = _processor.HasValidAzureProperties();
+    var result = _processor.HasValidAzureProperties();
 
-    hasValidAzureProperties.Should().BeTrue();
+    result.Should().BeTrue();
   }
 
   [Fact]
@@ -751,9 +751,9 @@ public class ProcessorTests
       }
     );
 
-    var hasValidAzureProperties = _processor.HasValidAzureProperties();
+    var result = _processor.HasValidAzureProperties();
 
-    hasValidAzureProperties.Should().BeFalse();
+    result.Should().BeFalse();
   }
 
   [Fact]
@@ -865,9 +865,9 @@ public class ProcessorTests
       }
     );
 
-    var hasValidOnspringFields = _processor.HasValidOnspringFields();
+    var result = _processor.HasValidOnspringFields();
 
-    hasValidOnspringFields.Should().BeTrue();
+    result.Should().BeTrue();
   }
 
   [Fact]
@@ -981,9 +981,9 @@ public class ProcessorTests
       }
     );
 
-    var hasValidOnspringFields = _processor.HasValidOnspringFields();
+    var result = _processor.HasValidOnspringFields();
 
-    hasValidOnspringFields.Should().BeFalse();
+    result.Should().BeFalse();
   }
 
   [Fact]
@@ -1095,9 +1095,9 @@ public class ProcessorTests
       }
     );
 
-    var hasRequiredOnspringFields = _processor.HasRequiredOnspringFields();
+    var result = _processor.HasRequiredOnspringFields();
 
-    hasRequiredOnspringFields.Should().BeTrue();
+    result.Should().BeTrue();
   }
 
   [Fact]
@@ -1207,113 +1207,435 @@ public class ProcessorTests
       }
     );
 
-    var hasRequiredOnspringFields = _processor.HasRequiredOnspringFields();
+    var result = _processor.HasRequiredOnspringFields();
 
-    hasRequiredOnspringFields.Should().BeFalse();
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsStringAndFieldTypeIsText_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Text Field",
+      Type = FieldType.Text,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("DisplayName");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsStringAndFieldTypeIsList_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "List Field",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("DisplayName");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsStringAndFieldTypeIsNotListOrText_ItShouldReturnFalse()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Date Field",
+      Type = FieldType.Date,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("DisplayName");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsBooleanAndFieldTypeIsText_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Text Field",
+      Type = FieldType.Text,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(User).GetProperty("AccountEnabled");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsBooleanAndFieldTypeIsList_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "List Field",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(User).GetProperty("AccountEnabled");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsBooleanAndFieldTypeIsNotListOrText_ItShouldReturnFalse()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Date Field",
+      Type = FieldType.Date,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(User).GetProperty("AccountEnabled");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeAndFieldTypeIsDate_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Date Field",
+      Type = FieldType.Date,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var mockPropertyInfo = new Mock<PropertyInfo>();
+    mockPropertyInfo
+    .SetupGet(x => x.PropertyType)
+    .Returns(typeof(DateTime?));
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      mockPropertyInfo.Object
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeAndFieldTypeIsText_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Text Field",
+      Type = FieldType.Text,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var mockPropertyInfo = new Mock<PropertyInfo>();
+    mockPropertyInfo
+    .SetupGet(x => x.PropertyType)
+    .Returns(typeof(DateTime?));
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      mockPropertyInfo.Object
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeAndFieldTypeIsNotDateOrText_ItShouldReturnFalse()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "List Field",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var mockPropertyInfo = new Mock<PropertyInfo>();
+    mockPropertyInfo
+    .SetupGet(x => x.PropertyType)
+    .Returns(typeof(DateTime?));
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      mockPropertyInfo.Object
+    );
+
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeOffsetAndFieldTypeIsDate_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Date Field",
+      Type = FieldType.Date,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(User).GetProperty("CreatedDateTime");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeOffsetAndFieldTypeIsText_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Text Field",
+      Type = FieldType.Text,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(User).GetProperty("CreatedDateTime");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsDateTimeOffsetAndFieldTypeIsNotDateOrText_ItShouldReturnFalse()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "List Field",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(User).GetProperty("CreatedDateTime");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsMultiSelectList_ItShouldReturnTrue()
   {
+    var onspringField = new ListField
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "List Field",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.MultiSelect,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("GroupTypes");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsText_ItShouldReturnTrue()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Text Field",
+      Type = FieldType.Text,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("GroupTypes");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeTrue();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsSingleSelectList_ItShouldReturnFalse()
   {
+    var onspringField = new ListField
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "List Field",
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("GroupTypes");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsAListOfStringsAndFieldTypeIsNotMultiSelectListOrText_ItShouldReturnFalse()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Date Field",
+      Type = FieldType.Date,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("GroupTypes");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeFalse();
   }
 
   [Fact]
   public void IsValidFieldTypeAndPropertyType_WhenCalledAndPropertyTypeIsNotSupported_ItShouldReturnFalse()
   {
+    var onspringField = new Field
+    {
+      Id = 1,
+      AppId = 1,
+      Name = "Text Field",
+      Type = FieldType.Text,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+    };
 
+    var azurePropertyInfo = typeof(Group).GetProperty("AssignedLabels");
+
+    var result = Processor.IsValidFieldTypeAndPropertyType(
+      onspringField,
+      azurePropertyInfo!
+    );
+
+    result.Should().BeFalse();
   }
 
+  [Fact]
+  public void HasValidFieldTypeToPropertyTypeMappings_WhenCalledAndFieldHasValidFieldTypeToPropertyTypeMappings_ItShouldReturnTrue()
+  {
+
+  }
 
   [Fact]
   public async Task SyncGroups_WhenCalledAndNoGroupsAreFound_ItShouldNotSyncGroupsToOnspring()
