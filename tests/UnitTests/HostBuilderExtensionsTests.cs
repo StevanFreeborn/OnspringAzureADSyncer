@@ -4,13 +4,15 @@ public class HostBuilderExtensionsTests
 {
   private readonly Mock<ISettings> _settingsMock;
   private readonly Mock<ILogger> _loggerMock;
-  private readonly Mock<IAzureGroupDestructuringPolicy> _azureDestructMock;
+  private readonly Mock<IAzureGroupDestructuringPolicy> _azureGroupDestructMock;
+  private readonly Mock<IAzureUserDestructuringPolicy> _azureUserDestructMock;
 
   public HostBuilderExtensionsTests()
   {
     _settingsMock = new Mock<ISettings>();
     _loggerMock = new Mock<ILogger>();
-    _azureDestructMock = new Mock<IAzureGroupDestructuringPolicy>();
+    _azureGroupDestructMock = new Mock<IAzureGroupDestructuringPolicy>();
+    _azureUserDestructMock = new Mock<IAzureUserDestructuringPolicy>();
   }
 
   [Fact]
@@ -162,7 +164,8 @@ public class HostBuilderExtensionsTests
     .ConfigureServices(
       (context, services) =>
       {
-        services.AddSingleton(_azureDestructMock.Object);
+        services.AddSingleton(_azureUserDestructMock.Object);
+        services.AddSingleton(_azureGroupDestructMock.Object);
         services.AddSingleton(_loggerMock.Object);
         services.AddSingleton(_settingsMock.Object);
       }

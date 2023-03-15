@@ -1,4 +1,5 @@
 global using System.Net;
+global using System.Reflection;
 
 global using Azure.Core;
 

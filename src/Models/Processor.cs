@@ -378,11 +378,6 @@ public class Processor : IProcessor
     {
       var field = listFields.FirstOrDefault(f => f.Id == kvp.Key);
 
-      if (field is null)
-      {
-        continue;
-      }
-
       foreach (var azureObject in azureObjects)
       {
         if (azureObject is null)
@@ -395,7 +390,7 @@ public class Processor : IProcessor
         .GetProperty(kvp.Value.Capitalize())
         ?.GetValue(azureObject);
 
-        var possibleNewListValues = new List<string>();
+        var possibleNewListValues = new List<string?>();
 
         if (propertyValue is null)
         {
@@ -406,15 +401,12 @@ public class Processor : IProcessor
         {
           possibleNewListValues.AddRange(propertyValueList);
         }
-
-        var propertyValueString = propertyValue.ToString();
-
-        if (propertyValueString is null)
+        else
         {
-          continue;
-        }
+          var propertyValueString = propertyValue.ToString();
 
-        possibleNewListValues.Add(propertyValueString);
+          possibleNewListValues.Add(propertyValueString);
+        }
 
         foreach (var possibleNewListValue in possibleNewListValues)
         {
@@ -457,11 +449,21 @@ public class Processor : IProcessor
   }
 
   internal static bool TryGetNewListValue(
-    ListField listField,
-    string possibleNewListValue,
+    ListField? listField,
+    string? possibleNewListValue,
     out KeyValuePair<int, string> newListValue
   )
   {
+
+    if (
+      possibleNewListValue is null ||
+      listField is null
+    )
+    {
+      newListValue = new KeyValuePair<int, string>();
+      return false;
+    }
+
     var existingListValues = listField.Values;
     var isNewListValue = existingListValues
     .Select(v => v.Name.ToLower())
@@ -602,8 +604,7 @@ public class Processor : IProcessor
         {
           var listField = (ListField) field;
 
-          return listField.Type is FieldType.List &&
-          listField.Multiplicity is Multiplicity.MultiSelect;
+          return listField.Multiplicity is Multiplicity.MultiSelect;
         }
 
         return field.Type is FieldType.Text;
