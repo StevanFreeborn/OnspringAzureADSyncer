@@ -1277,4 +1277,1253 @@ public class OnspringServiceTests
       Times.Once
     );
   }
+
+  [Fact]
+  public async Task UpdateUser_WhenCalledAndCannotBuildAnUpdatedRecord_ItShouldReturnNull()
+  {
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "User1"),
+        new StringFieldValue(2, "First Name"),
+      },
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>();
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = await _onspringService.UpdateUser(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Never
+    );
+  }
+
+  [Fact]
+  public async Task UpdateUser_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
+  {
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "User1"),
+        new StringFieldValue(2, "First Name"),
+      },
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "Updated First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.UpdateUser(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task UpdateUser_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "User1"),
+        new StringFieldValue(2, "First Name"),
+      },
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "Updated First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    var apiResponse = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.InternalServerError,
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(apiResponse);
+
+    var result = await _onspringService.UpdateUser(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task UpdateUser_WhenCalledAndHttpRequestExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "User1"),
+        new StringFieldValue(2, "First Name"),
+      },
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "Updated First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .SetupSequence(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new HttpRequestException());
+
+    var result = await _onspringService.UpdateUser(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+
+  [Fact]
+  public async Task CreateUser_WhenCalledAndCanBuildNewUserWithFieldDataAndRequestIsSuccessful_ItShouldReturnSaveRecordResponse()
+  {
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 1,
+      Warnings = new List<string>(),
+    };
+
+    var apiResponse = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = saveRecordResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(
+      apiResponse
+    );
+
+    var result = await _onspringService.CreateUser(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<SaveRecordResponse>();
+    result.Should().BeEquivalentTo(saveRecordResponse);
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task CreateUser_WhenCalledAndCannotBuildNewUserWithFieldData_ItShouldReturnNull()
+  {
+    var azureUser = new User();
+
+    var usersGroupMappings = new Dictionary<string, int>();
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>()
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = await _onspringService.CreateUser(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task CreateUser_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
+  {
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.CreateUser(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task CreateUser_WhenCalledAndAnHttpExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .SetupSequence(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new HttpRequestException());
+
+    var result = await _onspringService.CreateUser(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task CreateUser_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    var apiResponse = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.InternalServerError,
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(apiResponse);
+
+    var result = await _onspringService.CreateUser(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task GetUser_WhenCalledAndUserIsFound_ItShouldReturnAUser()
+  {
+    var users = new List<ResultRecord>
+    {
+      new ResultRecord()
+    };
+
+    var pagedResponse = new GetPagedRecordsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = users,
+    };
+
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pagedResponse,
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        UsersUsernameFieldId = 1,
+      }
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.GetUser(azureUser);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.Should().BeEquivalentTo(users[0]);
+
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUser_WhenCalledAndUserIsNotFound_ItShouldReturnNull()
+  {
+    var users = new List<ResultRecord>();
+
+    var pagedResponse = new GetPagedRecordsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = users,
+    };
+
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pagedResponse,
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        UsersUsernameFieldId = 1,
+      }
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.GetUser(azureUser);
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUser_WhenCalledAndPropertyMappedToUsernameIsNotValidAndUserIsNotFound_ItShouldReturnNull()
+  {
+    var users = new List<ResultRecord>();
+
+    var pagedResponse = new GetPagedRecordsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = users,
+    };
+
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pagedResponse,
+    };
+
+    var azureUser = new User();
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "invalidProperty" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        UsersUsernameFieldId = 1,
+      }
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.GetUser(azureUser);
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUser_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
+  {
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        UsersUsernameFieldId = 1,
+      }
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.GetUser(azureUser);
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUser_WhenCalledAndAnHttpExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        UsersUsernameFieldId = 1,
+      }
+    );
+
+    _onspringClientMock
+    .SetupSequence(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new HttpRequestException());
+
+    var result = await _onspringService.GetUser(azureUser);
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task GetUser_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var users = new List<ResultRecord>();
+
+    var pagedResponse = new GetPagedRecordsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = users,
+    };
+
+    var response = new ApiResponse<GetPagedRecordsResponse>
+    {
+      StatusCode = HttpStatusCode.BadRequest,
+      Value = pagedResponse,
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "First Name",
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Onspring
+    )
+    .Returns(
+      new OnspringSettings
+      {
+        UsersUsernameFieldId = 1,
+      }
+    );
+
+    _onspringClientMock
+    .SetupSequence(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(response)
+    .Returns(response)
+    .Returns(response);
+
+    var result = await _onspringService.GetUser(azureUser);
+
+    result.Should().BeNull();
+
+    _onspringClientMock.Verify(
+      m => m.QueryRecordsAsync(
+        It.IsAny<QueryRecordsRequest>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndOnePageOfFieldsAreFound_ItShouldReturnAListOfFields()
+  {
+    var listOfFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+    };
+
+    var pageOfFields = new GetPagedFieldsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = listOfFields,
+    };
+
+    var apiResponse = new ApiResponse<GetPagedFieldsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pageOfFields
+    };
+
+    _onspringClientMock
+    .Setup(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(apiResponse);
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().HaveCount(1);
+    result.Should().BeEquivalentTo(listOfFields);
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndMultiplePagesOfFieldsAreFound_ItShouldReturnAListOfFields()
+  {
+    var listOfFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+    };
+
+    var pageOneOfFields = new GetPagedFieldsResponse
+    {
+      TotalPages = 2,
+      TotalRecords = 2,
+      PageNumber = 1,
+      Items = listOfFields,
+    };
+
+    var pageTwoOfFields = new GetPagedFieldsResponse
+    {
+      TotalPages = 2,
+      TotalRecords = 2,
+      PageNumber = 2,
+      Items = listOfFields,
+    };
+
+    var pageOneResponse = new ApiResponse<GetPagedFieldsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pageOneOfFields
+    };
+
+    var pageTwoResponse = new ApiResponse<GetPagedFieldsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pageTwoOfFields
+    };
+
+    _onspringClientMock
+    .SetupSequence(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(pageOneResponse)
+    .Returns(pageTwoResponse);
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().HaveCount(2);
+    result.Should().BeEquivalentTo(new List<Field> { listOfFields[0], listOfFields[0] });
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(2)
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndFieldsAreNotFound_ItShouldReturnAnEmptyList()
+  {
+    var listOfFields = new List<Field>();
+
+    var pageOfFields = new GetPagedFieldsResponse
+    {
+      TotalPages = 1,
+      TotalRecords = 1,
+      PageNumber = 1,
+      Items = listOfFields,
+    };
+
+    var apiResponse = new ApiResponse<GetPagedFieldsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pageOfFields
+    };
+
+    _onspringClientMock
+    .Setup(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(apiResponse);
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().BeEmpty();
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndOnePageOfFieldsIsFoundAndExceptionIsThrown_ItShouldReturnAnEmptyList()
+  {
+    _onspringClientMock
+    .Setup(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().BeEmpty();
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndMultiplePagesOfFieldsAreFoundAndAnExceptionIsThrown_ItShouldReturnAListOfFieldsFromSuccessfulPages()
+  {
+    var listOfFields = new List<Field>
+    {
+      new Field
+      {
+        Id = 1,
+        AppId = 1,
+        Name = "Username",
+        Type = FieldType.Text,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+      },
+    };
+
+    var pageOneOfFields = new GetPagedFieldsResponse
+    {
+      TotalPages = 2,
+      TotalRecords = 2,
+      PageNumber = 1,
+      Items = listOfFields,
+    };
+
+    var pageOneResponse = new ApiResponse<GetPagedFieldsResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = pageOneOfFields
+    };
+
+    _onspringClientMock
+    .SetupSequence(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(pageOneResponse)
+    .Throws(new Exception());
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().HaveCount(1);
+    result.Should().BeEquivalentTo(new List<Field> { listOfFields[0], });
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(2)
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndAnHttpRequestExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnAnEmptyListAfterRetryingThreeTimes()
+  {
+    _onspringClientMock
+    .SetupSequence(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Throws(new HttpRequestException())
+    .Throws(new TaskCanceledException())
+    .Throws(new HttpRequestException());
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().BeEmpty();
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task GetUserFields_WhenCalledAndRequestIsUnsuccessful_ItShouldReturnAnEmptyListAfterRetryingThreeTimes()
+  {
+    var apiResponse = new ApiResponse<GetPagedFieldsResponse>
+    {
+      StatusCode = HttpStatusCode.InternalServerError,
+    };
+
+    _onspringClientMock
+    .Setup(m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ).Result
+    )
+    .Returns(apiResponse);
+
+    var result = await _onspringService.GetUserFields();
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<List<Field>>();
+    result.Should().BeEmpty();
+    _onspringClientMock.Verify(
+      m => m.GetFieldsForAppAsync(
+        It.IsAny<int>(),
+        It.IsAny<PagingRequest>()
+      ),
+      Times.Exactly(3)
+    );
+  }
 }
