@@ -17,7 +17,7 @@ public class OnspringSettings
     UsersUsernameField,
     UsersFirstNameField,
     UsersLastNameField,
-    UsersEmailField
+    UsersEmailField,
   };
   public readonly string[] GroupRequiredFields = new[]
   {
@@ -33,6 +33,6 @@ public class OnspringSettings
   public int UsersUsernameFieldId { get; set; } = 0;
   public int UsersStatusFieldId { get; set; } = 0;
   public int UsersGroupsFieldId { get; set; } = 0;
-  public Guid UserActiveStatusListValue { get; set; }
-  public Guid UserInactiveStatusListValue { get; set; }
+  public Guid UserActiveStatusListValue { get; set; } = Guid.Empty;
+  public Guid UserInactiveStatusListValue { get; set; } = Guid.Empty;
 }
