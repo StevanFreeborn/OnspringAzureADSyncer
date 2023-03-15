@@ -30,7 +30,7 @@ _**Note:**_ This is an unofficial Onspring integration. It was not built in cons
 
 ## Overview
 
-Many onspring customers who utilize the Onspring platform choose to leverage Onspring's existing SSO integration for authentication. This integration allows customers to setup a single sign-on experience for their users using their existing identity management provider. As part of this existing integration Onspring supports accepting claims for the user's username, email address, first name, last name, and optionally groups.
+Many Onspring customers who utilize the Onspring platform choose to leverage Onspring's existing SSO integration for authentication. This integration allows customers to setup a single sign-on experience for their users using their existing identity management provider. As part of this existing integration Onspring supports accepting claims for the user's username, email address, first name, last name, and optionally groups.
 
 It also allows for just-in-time provisioning of users and groups if they are not already present in Onspring. This integration also updates the user's username, email address, first name, last name, and groups in Onspring upon each login if they change in the identity management provider between logins. Many customers utilize this integration with Azure Active Directory (AAD) as their identity management provider
 
@@ -356,5 +356,7 @@ _**Note:**_ You can run the app multiple times with different configuration valu
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details
 
 ## Inspiration
+
+[![Hack Together: Microsoft Graph and .NET](https://img.shields.io/badge/Microsoft%20-Hack--Together-orange?style=for-the-badge&logo=microsoft)](https://github.com/microsoft/hack-together)
 
 This project was built as a submission for the [Microsoft Graph Hackathon 2023](https://devblogs.microsoft.com/dotnet/hack-together-microsoft-graph-dotnet/). The project was built using the [Microsoft Graph .NET SDK](https://github.com/microsoftgraph/msgraph-sdk-dotnet) and the [Onspring API .NET SDK](https://github.com/onspring-technologies/onspring-api-sdk). It illustrates a solution to a real world challenge that Onspring customers face when trying to find a way to leverage their existing identity management solution in Azure AD to also manage groups and users in [Onspring](https://onspring.com/).
