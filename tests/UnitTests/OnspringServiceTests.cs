@@ -2526,4 +2526,391 @@ public class OnspringServiceTests
       Times.Exactly(3)
     );
   }
+
+  [Fact]
+  public void BuildUpdatedOnspringUserRecord_WhenCalledAndUsersStatusIsNotNull_ItShouldAddUsersStatusToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>();
+
+    var azureUser = new User
+    {
+      Id = "1",
+      AccountEnabled = true,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Active"),
+      },
+    };
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+
+    _settingsMock
+    .Setup(m => m.Azure)
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = _onspringService.BuildUpdatedOnspringUserRecord(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.FieldData.Should().HaveCount(1);
+    result.FieldData[0].FieldId.Should().Be(1);
+  }
+
+  [Fact]
+  public void BuildUpdatedOnspringUserRecord_WhenCalledAndUsersStatusIsNull_ItShouldNotAddUsersStatusToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>();
+
+    var azureUser = new User
+    {
+      Id = "1",
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>(),
+    };
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+
+    _settingsMock
+    .Setup(m => m.Azure)
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = _onspringService.BuildUpdatedOnspringUserRecord(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.FieldData.Should().BeEmpty();
+  }
+
+  [Fact]
+  public void BuildUpdatedOnspringUserRecord_WhenCalledAndExistingUserHasNoGroups_ItShouldAddUpdatedGroupsFieldToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "1", 1 },
+    };
+
+    var azureUser = new User
+    {
+      Id = "1",
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>(),
+    };
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UsersGroupsFieldId = 2,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+  }
+
+  [Fact]
+  public void BuildUpdatedOnspringUserRecord_WhenCalledAndExistingUserNeedsGroupsUpdated_ItShouldAddUpdatedGroupsFieldToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "1", 1 },
+    };
+
+    var azureUser = new User
+    {
+      Id = "1",
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new IntegerListFieldValue(
+          2,
+          new List<int>
+          {
+            2,
+          }
+        ),
+      },
+    };
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UsersGroupsFieldId = 2,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+
+    _settingsMock
+    .Setup(m => m.Azure)
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = _onspringService.BuildUpdatedOnspringUserRecord(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.FieldData.Should().HaveCount(1);
+    result.FieldData[0].FieldId.Should().Be(2);
+  }
+
+  [Fact]
+  public void BuildUpdatedOnspringUserRecord_WhenCalledAndUsersGroupDoesNotNeedUpdated_ItShouldNotAddUpdatedGroupsFieldToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "1", 1 },
+    };
+
+    var azureUser = new User
+    {
+      Id = "1",
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new IntegerListFieldValue(
+          2,
+          new List<int>
+          {
+            1,
+          }
+        ),
+      },
+    };
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UsersGroupsFieldId = 2,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+
+    _settingsMock
+    .Setup(m => m.Azure)
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = _onspringService.BuildUpdatedOnspringUserRecord(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.FieldData.Should().BeEmpty();
+  }
+
+  [Fact]
+  public void BuildNewOnspringUserRecord_WhenCalledAndUsersStatusIsNotNull_ItShouldAddUsersStatusToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>();
+
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+
+    _settingsMock
+    .Setup(m => m.Azure)
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = _onspringService.BuildNewOnspringUserRecord(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.FieldData.Should().HaveCount(1);
+    result.FieldData[0].FieldId.Should().Be(1);
+  }
+
+  [Fact]
+  public void BuildNewOnspringUserRecord_WhenCalledAndUsersStatusIsNull_ItShouldNotAddUsersStatusToFieldData()
+  {
+    var usersGroupMappings = new Dictionary<string, int>();
+
+    var azureUser = new User();
+
+    _settingsMock
+    .Setup(m => m.UsersFieldMappings)
+    .Returns(new Dictionary<int, string>());
+
+    _settingsMock
+    .Setup(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = Guid.NewGuid(),
+        UserInactiveStatusListValue = Guid.NewGuid(),
+      }
+    );
+
+    _settingsMock
+    .Setup(m => m.Azure)
+    .Returns(
+      new AzureSettings()
+    );
+
+    var result = _onspringService.BuildNewOnspringUserRecord(
+      azureUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.FieldData.Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndAzureUserAccountEnabledPropertyIsNull_ItShouldReturnNull()
+  {
+
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNullAndAzureUserIsEnabledAndAMemberOfAnOnspringActiveGroup_ItShouldReturnActiveStatusFieldValue()
+  {
+
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNullAndAzureUserIsNotEnabled_ItShouldReturnInactiveStatusFieldValue()
+  {
+
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNullAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnInactiveStatusFieldValue()
+  {
+
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndAzureUserIsEnabledAndAMemberOfAnOnspringActiveGroup_ItShouldReturnActiveStatusFieldValue()
+  {
+
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndAzureUserIsNotEnabled_ItShouldReturnInactiveStatusFieldValue()
+  {
+
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnInactiveStatusFieldValue()
+  {
+
+  }
 }
