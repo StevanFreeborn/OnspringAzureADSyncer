@@ -558,16 +558,20 @@ public class OnspringService : IOnspringService
     );
 
     var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
-    var usersGroupsFieldValue = new IntegerListFieldValue(
-      groupsFieldId,
-      usersGroupMappings.Values.ToList()
-    );
 
-    newOnspringUser
-    .FieldData
-    .Add(
-      usersGroupsFieldValue
-    );
+    if (usersGroupMappings.Any() is true)
+    {
+      var usersGroupsFieldValue = new IntegerListFieldValue(
+        groupsFieldId,
+        usersGroupMappings.Values.ToList()
+      );
+
+      newOnspringUser
+      .FieldData
+      .Add(
+        usersGroupsFieldValue
+      );
+    }
 
     if (usersStatus is not null)
     {
@@ -587,6 +591,13 @@ public class OnspringService : IOnspringService
     List<string> usersGroupIds
   )
   {
+    if (
+      azureUser.AccountEnabled is null
+    )
+    {
+      return null;
+    }
+
     var statusFieldId = _settings.Onspring.UsersStatusFieldId;
     var statusValue = _settings.Onspring.UserInactiveStatusListValue;
     var statusValueName = OnspringSettings.UsersInactiveStatusListValueName;
@@ -604,7 +615,9 @@ public class OnspringService : IOnspringService
       statusValueName = OnspringSettings.UsersActiveStatusListValueName;
     }
 
-    if (onspringUser is null)
+    if (
+      onspringUser is null
+    )
     {
       return new StringFieldValue(
         statusFieldId,
