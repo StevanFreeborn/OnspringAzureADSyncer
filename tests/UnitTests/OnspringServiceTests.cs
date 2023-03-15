@@ -1195,4 +1195,86 @@ public class OnspringServiceTests
       Times.Exactly(3)
     );
   }
+
+  [Fact]
+  public async Task UpdateUserWhenCalledAndCanBuildAnUpdatedRecordAndRequestIsSuccessful_ItShouldReturnASaveRecordResponse()
+  {
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "User1"),
+        new StringFieldValue(2, "First Name"),
+      },
+    };
+
+    var azureUser = new User
+    {
+      UserPrincipalName = "User1",
+      GivenName = "Updated First Name",
+    };
+
+    var usersGroupMappings = new Dictionary<string, int>
+    {
+      { "Group Id 1", 1 },
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 123,
+    };
+
+    var response = new ApiResponse<SaveRecordResponse>
+    {
+      StatusCode = HttpStatusCode.OK,
+      Value = saveRecordResponse,
+    };
+
+    _settingsMock
+    .SetupGet(
+      m => m.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>
+      {
+        { 1, "userPrincipalName" },
+        { 2, "givenName" },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      m => m.Azure
+    )
+    .Returns(
+      new AzureSettings()
+    );
+
+    _onspringClientMock
+    .Setup(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ).Result
+    )
+    .Returns(response);
+
+    var result = await _onspringService.UpdateUser(
+      azureUser,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<SaveRecordResponse>();
+    result.Should().BeEquivalentTo(saveRecordResponse);
+
+    _onspringClientMock.Verify(
+      m => m.SaveRecordAsync(
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
 }
