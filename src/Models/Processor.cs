@@ -369,13 +369,8 @@ public class Processor : IProcessor
     .ToList();
 
     var propertiesMappedToListFields = fieldMappings
-    .Where(
-      kvp => listFieldIds.Contains(kvp.Key)
-    )
-    .ToDictionary(
-      kvp => kvp.Key,
-      kvp => kvp.Value
-    );
+    .Where(kvp => listFieldIds.Contains(kvp.Key))
+    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
     var newListValues = new List<KeyValuePair<int, string>>();
 
@@ -409,13 +404,14 @@ public class Processor : IProcessor
         else
         {
           var propertyValueString = propertyValue.ToString();
+
           possibleNewListValues.Add(propertyValueString);
         }
 
         foreach (var possibleNewListValue in possibleNewListValues)
         {
           if (
-            TryGetNewListValue(field!, possibleNewListValue, out var newListValue)
+            TryGetNewListValue(field, possibleNewListValue, out var newListValue)
           )
           {
             newListValues.Add(newListValue);
@@ -453,12 +449,16 @@ public class Processor : IProcessor
   }
 
   internal static bool TryGetNewListValue(
-    ListField listField,
+    ListField? listField,
     string? possibleNewListValue,
     out KeyValuePair<int, string> newListValue
   )
   {
-    if (possibleNewListValue is null)
+
+    if (
+      possibleNewListValue is null ||
+      listField is null
+    )
     {
       newListValue = new KeyValuePair<int, string>();
       return false;
@@ -604,7 +604,8 @@ public class Processor : IProcessor
         {
           var listField = (ListField) field;
 
-          return listField.Multiplicity is Multiplicity.MultiSelect;
+          return listField.Type is FieldType.List &&
+          listField.Multiplicity is Multiplicity.MultiSelect;
         }
 
         return field.Type is FieldType.Text;

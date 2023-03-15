@@ -17,7 +17,7 @@ public class OnspringSettings
     UsersUsernameField,
     UsersFirstNameField,
     UsersLastNameField,
-    UsersEmailField
+    UsersEmailField,
   };
   public readonly string[] GroupRequiredFields = new[]
   {
