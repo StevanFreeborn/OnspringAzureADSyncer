@@ -305,4 +305,206 @@ public class GraphServiceTests
       Times.Once
     );
   }
+
+  [Fact]
+  public async Task GetUserGroups_WhenCalledAndNoGroupsFound_ItShouldReturnEmptyList()
+  {
+    var user = new User
+    {
+      Id = "1",
+      UserPrincipalName = "User 1"
+    };
+
+    _msGraphMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<string>()
+      ).Result
+    )
+    .Returns<GroupCollectionResponse>(null);
+
+    var result = await _graphService.GetUserGroups(user);
+
+    result.Should().NotBeNull();
+    result.Should().BeEmpty();
+
+    _msGraphMock.Verify(
+      x => x.GetUserGroups(
+        It.IsAny<string>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUserGroups_WhenCalledAndGroupsFound_ItShouldReturnListOfGroups()
+  {
+    var user = new User
+    {
+      Id = "1",
+      UserPrincipalName = "User 1"
+    };
+
+    var groups = new DirectoryObjectCollectionResponse
+    {
+      Value = new List<DirectoryObject>
+      {
+        new Group
+        {
+          Id = "1",
+          Description = "Group 1"
+        },
+        new Group
+        {
+          Id = "2",
+          Description = "Group 2"
+        }
+      }
+    };
+
+    _msGraphMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<string>()
+      ).Result
+    )
+    .Returns(groups);
+
+    var result = await _graphService.GetUserGroups(user);
+
+    result.Should().NotBeNull();
+    result.Should().NotBeEmpty();
+    result.Should().HaveCount(2);
+
+    _msGraphMock.Verify(
+      x => x.GetUserGroups(
+        It.IsAny<string>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUserGroups_WhenCalledAndExceptionIsThrown_ItShouldReturnEmptyList()
+  {
+    var user = new User
+    {
+      Id = "1",
+      UserPrincipalName = "User 1"
+    };
+
+    _msGraphMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<string>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _graphService.GetUserGroups(user);
+
+    result.Should().NotBeNull();
+    result.Should().BeEmpty();
+
+    _msGraphMock.Verify(
+      x => x.GetUserGroups(
+        It.IsAny<string>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUsersIterator_WhenCalledAndNoUsersFound_ItShouldReturnNull()
+  {
+    var azureUsers = new List<User>();
+    var pageSize = 10;
+
+    _msGraphMock
+    .Setup(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
+    )
+    .Returns<UserCollectionResponse>(null);
+
+    var result = await _graphService.GetUsersIterator(azureUsers, pageSize);
+
+    result.Should().BeNull();
+    _msGraphMock.Verify(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUsersIterator_WhenCalledAndUsersFound_ItShouldReturnPageIterator()
+  {
+    var azureUsers = new List<User>();
+    var pageSize = 10;
+
+    var users = new UserCollectionResponse
+    {
+      Value = new List<User>
+      {
+        new User
+        {
+          Id = "1",
+          UserPrincipalName = "User 1"
+        },
+        new User
+        {
+          Id = "2",
+          UserPrincipalName = "User 2"
+        }
+      }
+    };
+
+    _msGraphMock
+    .Setup(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
+    )
+    .Returns(users);
+
+    var result = await _graphService.GetUsersIterator(azureUsers, pageSize);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<PageIterator<User, UserCollectionResponse>>();
+
+    _msGraphMock.Verify(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task GetUsersIterator_WhenCalledAndExceptionIsThrown_ItShouldReturnNull()
+  {
+    var azureUsers = new List<User>();
+    var pageSize = 10;
+
+    _msGraphMock
+    .Setup(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
+    )
+    .Throws(new Exception());
+
+    var result = await _graphService.GetUsersIterator(azureUsers, pageSize);
+
+    result.Should().BeNull();
+    _msGraphMock.Verify(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ),
+      Times.Once
+    );
+  }
 }
