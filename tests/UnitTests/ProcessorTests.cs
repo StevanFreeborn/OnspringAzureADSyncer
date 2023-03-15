@@ -3437,4 +3437,936 @@ public class ProcessorTests
       Times.Once
     );
   }
+
+  [Fact]
+  public async Task SyncUsers_WhenCalledAndNoUsersAreFound_ItShouldNotSyncUsersToOnspring()
+  {
+    var groups = new List<Group>();
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUsersIterator(
+        It.IsAny<List<User>>(),
+        It.IsAny<int>()
+      ).Result
+    )
+    .Returns<PageIterator<User, UserCollectionResponse>>(null);
+
+    await _processor.SyncUsers();
+
+    _graphServiceMock.Verify(
+      x => x.GetUsersIterator(
+        It.IsAny<List<User>>(),
+        It.IsAny<int>()
+      ),
+      Times.Once
+    );
+    _onspringServiceMock.Verify(
+      x => x.GetUser(It.IsAny<User>()),
+      Times.Never
+    );
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Never
+    );
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Never
+    );
+  }
+
+  // Note: This test is complicated by the fact
+  // we are using the page iterator class to iterator over users
+  // and then also using an wrapper class on the actual
+  // graphServiceClient to make unit testing possible
+  [Fact]
+  public async Task SyncUsers_WhenCalledAndUsersAreFoundAndNoUserGroupsAreFound_ItShouldSyncUsersToOnspring()
+  {
+    var azureUsers = new List<User>
+    {
+      new User // will create this user
+      {
+        Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
+        UserPrincipalName = "User1",
+        GivenName = "User",
+        Surname = "One",
+        Mail = "user.one@test.com",
+        AccountEnabled = true,
+      },
+      new User // will use this group to update onspring user
+      {
+        Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
+        UserPrincipalName = "User2",
+        GivenName = "User",
+        Surname = "Two",
+        Mail = "user.two@test.com",
+        AccountEnabled = true,
+      },
+    };
+
+    // setup azure users collection to return
+    // as initial users when creating page iterator
+    var azureUsersCollection = new UserCollectionResponse
+    {
+      Value = azureUsers
+    };
+
+    // setup onspring user that we will
+    // pretend was found by onspring service
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new()
+      {
+        new StringFieldValue(1, "User2"),
+        new StringFieldValue(2, "User"),
+        new StringFieldValue(3, "Two"),
+        new StringFieldValue(4, "user.two@test.com"),
+        new StringFieldValue(5, "Active"),
+      }
+    };
+
+    // setup msGraph that we can mock
+    // to return initial set of users
+    // to create page iterator
+    var msGraphMock = new Mock<IMsGraph>();
+
+    // mock to return collection of users
+    msGraphMock
+    .Setup(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
+    )
+    .Returns(azureUsersCollection);
+
+    // mock graph service client for msGraphMock
+    var tokenCredentialMock = new Mock<TokenCredential>();
+
+    msGraphMock
+    .SetupGet(
+      x => x.GraphServiceClient
+    )
+    .Returns(
+      new GraphServiceClient(
+        tokenCredentialMock.Object,
+        null,
+        null
+      )
+    );
+
+    // create new graph service using 
+    // the test specific msGraphMock
+    var graphService = new GraphService(
+      _loggerMock.Object,
+      _settingsMock.Object,
+      msGraphMock.Object
+    );
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<User>()
+      ).Result
+    )
+    .Returns<List<DirectoryObject>?>(null);
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    ).Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            AppId = 1,
+            Name = "Username",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+          new Field
+          {
+            Id = 2,
+            AppId = 1,
+            Name = "First Name",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+          new Field
+          {
+            Id = 3,
+            AppId = 1,
+            Name = "Last Name",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+          new Field
+          {
+            Id = 4,
+            AppId = 1,
+            Name = "Email Address",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+          new ListField
+          {
+            Id = 5,
+            AppId = 1,
+            Name = "Status",
+            Type = FieldType.List,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+            Values = new List<ListValue>
+            {
+              new ListValue
+              {
+                Id = Guid.NewGuid(),
+                Name = "Active"
+              },
+              new ListValue
+              {
+                Id = Guid.NewGuid(),
+                Name = "Inactive"
+              }
+            }
+          }
+        }
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>()
+    );
+
+    // setup onspring service
+    // to mock returning null for first
+    // azure user and a found onspring
+    // user for the second azure user
+    _onspringServiceMock
+    .SetupSequence(
+      x => x.GetUser(It.IsAny<User>()).Result
+    )
+    .Returns((ResultRecord?) null)
+    .Returns(onspringUser);
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(
+      new List<Field>
+      {
+        new Field
+        {
+          Id = 1,
+          AppId = 1,
+          Name = "Record Id",
+          Type = FieldType.AutoNumber,
+          Status = FieldStatus.Enabled,
+          IsRequired = true,
+          IsUnique = true,
+        },
+      }
+    );
+
+    // create new instance of processor
+    // for this specific test to use
+    // the test specific graph service
+    var processor = new Processor(
+      _loggerMock.Object,
+      _settingsMock.Object,
+      _onspringServiceMock.Object,
+      graphService
+    );
+
+    await processor.SyncUsers();
+
+    _onspringServiceMock.Verify(
+      x => x.GetUser(It.IsAny<User>()),
+      Times.Exactly(2)
+    );
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+  }
+
+  // Note: This test is complicated by the fact
+  // we are using the page iterator class to iterator over users
+  // and then also using an wrapper class on the actual
+  // graphServiceClient to make unit testing possible
+  [Fact]
+  public async Task SyncUsers_WhenCalledAndUsersAreFoundAndUserGroupsAreFound_ItShouldSyncUsersToOnspring()
+  {
+    var azureUsers = new List<User>
+    {
+      new User // will create this user
+      {
+        Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
+        UserPrincipalName = "User1",
+        GivenName = "User",
+        Surname = "One",
+        Mail = "user.one@test.com",
+        AccountEnabled = true,
+      },
+      new User // will use this group to update onspring user
+      {
+        Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
+        UserPrincipalName = "User2",
+        GivenName = "User",
+        Surname = "Two",
+        Mail = "user.two@test.com",
+        AccountEnabled = true,
+      },
+    };
+
+    // setup azure users collection to return
+    // as initial users when creating page iterator
+    var azureUsersCollection = new UserCollectionResponse
+    {
+      Value = azureUsers
+    };
+
+    // setup onspring user that we will
+    // pretend was found by onspring service
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new()
+      {
+        new StringFieldValue(1, "User2"),
+        new StringFieldValue(2, "User"),
+        new StringFieldValue(3, "Two"),
+        new StringFieldValue(4, "user.two@test.com"),
+        new StringFieldValue(5, "Active"),
+      }
+    };
+
+    // setup msGraph that we can mock
+    // to return initial set of users
+    // to create page iterator
+    var msGraphMock = new Mock<IMsGraph>();
+
+    // mock to return collection of users
+    msGraphMock
+    .Setup(
+      x => x.GetUsersForIterator(
+        It.IsAny<Dictionary<int, string>>()
+      ).Result
+    )
+    .Returns(azureUsersCollection);
+
+    // mock graph service client for msGraphMock
+    var tokenCredentialMock = new Mock<TokenCredential>();
+
+    msGraphMock
+    .SetupGet(
+      x => x.GraphServiceClient
+    )
+    .Returns(
+      new GraphServiceClient(
+        tokenCredentialMock.Object,
+        null,
+        null
+      )
+    );
+
+    // create new graph service using 
+    // the test specific msGraphMock
+    var graphService = new GraphService(
+      _loggerMock.Object,
+      _settingsMock.Object,
+      msGraphMock.Object
+    );
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<User>()
+      ).Result
+    )
+    .Returns(
+      new List<DirectoryObject>
+      {
+        new Group
+        {
+          Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
+          Description = "Group 1 Description",
+        },
+        new Group
+        {
+          Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
+          Description = "Group 2 Description",
+        },
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.Onspring
+    ).Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            AppId = 1,
+            Name = "Username",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+          new Field
+          {
+            Id = 2,
+            AppId = 1,
+            Name = "First Name",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+          new Field
+          {
+            Id = 3,
+            AppId = 1,
+            Name = "Last Name",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+          new Field
+          {
+            Id = 4,
+            AppId = 1,
+            Name = "Email Address",
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+          new ListField
+          {
+            Id = 5,
+            AppId = 1,
+            Name = "Status",
+            Type = FieldType.List,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+            Values = new List<ListValue>
+            {
+              new ListValue
+              {
+                Id = Guid.NewGuid(),
+                Name = "Active"
+              },
+              new ListValue
+              {
+                Id = Guid.NewGuid(),
+                Name = "Inactive"
+              }
+            }
+          }
+        }
+      }
+    );
+
+    _settingsMock
+    .SetupGet(
+      x => x.UsersFieldMappings
+    )
+    .Returns(
+      new Dictionary<int, string>()
+    );
+
+    // setup onspring service
+    // to mock returning null for first
+    // azure user and a found onspring
+    // user for the second azure user
+    _onspringServiceMock
+    .SetupSequence(
+      x => x.GetUser(It.IsAny<User>()).Result
+    )
+    .Returns((ResultRecord?) null)
+    .Returns(onspringUser);
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(
+      new List<Field>
+      {
+        new Field
+        {
+          Id = 1,
+          AppId = 1,
+          Name = "Record Id",
+          Type = FieldType.AutoNumber,
+          Status = FieldStatus.Enabled,
+          IsRequired = true,
+          IsUnique = true,
+        },
+      }
+    );
+
+    // create new instance of processor
+    // for this specific test to use
+    // the test specific graph service
+    var processor = new Processor(
+      _loggerMock.Object,
+      _settingsMock.Object,
+      _onspringServiceMock.Object,
+      graphService
+    );
+
+    await processor.SyncUsers();
+
+    _onspringServiceMock.Verify(
+      x => x.GetUser(It.IsAny<User>()),
+      Times.Exactly(2)
+    );
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task SyncUser_WhenCalledAndUserIsNotFound_ItShouldCreateUserInOnspring()
+  {
+    var azureUser = new User
+    {
+      Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
+      UserPrincipalName = "User2",
+      GivenName = "User",
+      Surname = "Two",
+      Mail = "user.two@test.com",
+      AccountEnabled = true,
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 1,
+      Warnings = new List<string>()
+    };
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(
+      new List<Field>
+      {
+        new Field
+        {
+          Id = 1,
+          AppId = 1,
+          Name = "Record Id",
+          Type = FieldType.AutoNumber,
+          Status = FieldStatus.Enabled,
+          IsRequired = true,
+          IsUnique = true,
+        },
+      }
+    );
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<User>()
+      ).Result
+    )
+    .Returns(
+      new List<DirectoryObject>()
+    );
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetUser(It.IsAny<User>()).Result
+    )
+    .Returns<ResultRecord?>(null);
+
+    _onspringServiceMock
+    .Setup(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ).Result
+    )
+    .Returns(
+      saveRecordResponse
+    );
+
+    await _processor.SyncUser(azureUser);
+
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Never
+    );
+  }
+
+  [Fact]
+  public async Task SyncUser_WhenCalledAndUserIsNotFoundInOnspringButUserIsNotCreatedInOnspring_ItShouldLogWarning()
+  {
+    var azureUser = new User
+    {
+      Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
+      UserPrincipalName = "User2",
+      GivenName = "User",
+      Surname = "Two",
+      Mail = "user.two@test.com",
+      AccountEnabled = true,
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 1,
+      Warnings = new List<string>()
+    };
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(
+      new List<Field>
+      {
+        new Field
+        {
+          Id = 1,
+          AppId = 1,
+          Name = "Record Id",
+          Type = FieldType.AutoNumber,
+          Status = FieldStatus.Enabled,
+          IsRequired = true,
+          IsUnique = true,
+        },
+      }
+    );
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<User>()
+      ).Result
+    )
+    .Returns(
+      new List<DirectoryObject>
+      {
+        new Group
+        {
+          Id = "1",
+          DisplayName = "Group 1",
+        },
+      }
+    );
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetUser(It.IsAny<User>()).Result
+    )
+    .Returns<ResultRecord?>(null);
+
+    _onspringServiceMock
+    .Setup(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ).Result
+    )
+    .Returns<SaveRecordResponse?>(null);
+
+    await _processor.SyncUser(azureUser);
+
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Never
+    );
+
+    _loggerMock.Verify(
+      x => x.Warning(
+        It.IsAny<string>(),
+        It.IsAny<User>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task SyncUser_WhenCalledAndUserIsFoundInOnspring_ItShouldUpdateUserInOnspring()
+  {
+    var azureUser = new User
+    {
+      Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
+      UserPrincipalName = "User2",
+      GivenName = "User",
+      Surname = "Two",
+      Mail = "user.two@test.com",
+      AccountEnabled = true,
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 1,
+      Warnings = new List<string>()
+    };
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(
+      new List<Field>
+      {
+        new Field
+        {
+          Id = 1,
+          AppId = 1,
+          Name = "Record Id",
+          Type = FieldType.AutoNumber,
+          Status = FieldStatus.Enabled,
+          IsRequired = true,
+          IsUnique = true,
+        },
+      }
+    );
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<User>()
+      ).Result
+    )
+    .Returns(
+      new List<DirectoryObject>()
+    );
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetUser(It.IsAny<User>()).Result
+    )
+    .Returns(
+      new ResultRecord
+      {
+        AppId = 1,
+        RecordId = 1,
+        FieldData = new List<RecordFieldValue>(),
+      }
+    );
+
+    _onspringServiceMock
+    .Setup(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ).Result
+    )
+    .Returns(
+      saveRecordResponse
+    );
+
+    await _processor.SyncUser(azureUser);
+
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Never
+    );
+
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+  }
+
+  [Fact]
+  public async Task SyncUser_WhenCalledAndUserIsFoundInOnspringAndUserIsNotUpdated_ItShouldLogWarning()
+  {
+    var azureUser = new User
+    {
+      Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
+      UserPrincipalName = "User2",
+      GivenName = "User",
+      Surname = "Two",
+      Mail = "user.two@test.com",
+      AccountEnabled = true,
+    };
+
+    var saveRecordResponse = new SaveRecordResponse
+    {
+      Id = 1,
+      Warnings = new List<string>()
+    };
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetGroupFields().Result
+    )
+    .Returns(
+      new List<Field>
+      {
+        new Field
+        {
+          Id = 1,
+          AppId = 1,
+          Name = "Record Id",
+          Type = FieldType.AutoNumber,
+          Status = FieldStatus.Enabled,
+          IsRequired = true,
+          IsUnique = true,
+        },
+      }
+    );
+
+    _graphServiceMock
+    .Setup(
+      x => x.GetUserGroups(
+        It.IsAny<User>()
+      ).Result
+    )
+    .Returns(
+      new List<DirectoryObject>
+      {
+        new Group
+        {
+          Id = "1",
+          DisplayName = "Group 1",
+        },
+      }
+    );
+
+    _onspringServiceMock
+    .Setup(
+      x => x.GetUser(It.IsAny<User>()).Result
+    )
+    .Returns(
+      new ResultRecord
+      {
+        AppId = 1,
+        RecordId = 1,
+        FieldData = new List<RecordFieldValue>(),
+      }
+    );
+
+    _onspringServiceMock
+    .Setup(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ).Result
+    )
+    .Returns<SaveRecordResponse?>(null);
+
+    await _processor.SyncUser(azureUser);
+
+    _onspringServiceMock.Verify(
+      x => x.CreateUser(
+        It.IsAny<User>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Never
+    );
+
+    _onspringServiceMock.Verify(
+      x => x.UpdateUser(
+        It.IsAny<User>(),
+        It.IsAny<ResultRecord>(),
+        It.IsAny<Dictionary<string, int>>()
+      ),
+      Times.Once
+    );
+
+    _loggerMock.Verify(
+      x => x.Warning(
+        It.IsAny<string>(),
+        It.IsAny<ResultRecord>()
+      ),
+      Times.Once
+    );
+  }
 }
