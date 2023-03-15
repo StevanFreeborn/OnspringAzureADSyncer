@@ -1,0 +1,28 @@
+{
+  "Settings": {
+    "Onspring": {
+      "BaseUrl": "https://api.onspring.com",
+      "ApiKey": "000000ffffff000000ffffff/00000000-ffff-0000-ffff-000000000000",
+      "UsersAppId": 1,
+      "GroupsAppId": 1
+    },
+    "Azure": {
+      "TenantId": "00000000-0000-0000-0000-000000000000",
+      "ClientId": "0a000aa0-1b11-2222-3c33-444444d44d44",
+      "ClientSecret": "00000~00000--000000000-00000000000000000",
+      "OnspringActiveGroups": [
+        "00000000-0000-0000-0000-000000000000",
+        "00000000-0000-0000-0000-000000000000"
+      ]
+    },
+    "GroupsFieldMappings": {
+      "4933": "displayName"
+    },
+    "UsersFieldMappings": {
+      "9": "streetAddress",
+      "2": "city",
+      "4934": "state",
+      "11": "postalCode"
+    }
+  }
+}
