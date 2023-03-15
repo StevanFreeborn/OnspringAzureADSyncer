@@ -604,8 +604,7 @@ public class Processor : IProcessor
         {
           var listField = (ListField) field;
 
-          return listField.Type is FieldType.List &&
-          listField.Multiplicity is Multiplicity.MultiSelect;
+          return listField.Multiplicity is Multiplicity.MultiSelect;
         }
 
         return field.Type is FieldType.Text;
