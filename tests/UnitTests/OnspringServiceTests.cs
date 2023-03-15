@@ -3558,4 +3558,152 @@ public class OnspringServiceTests
     result!.FieldId.Should().Be(1);
     result.AsString().Should().Be(inactiveListValueId.ToString());
   }
+
+  [Fact]
+  public void BuildUpdatedRecord_WhenCalled_ItShouldBuildUpdatedRecord()
+  {
+    var azureObject = new User
+    {
+      AccountEnabled = true,
+      GivenName = "John",
+      Surname = "Doe",
+      Mail = null,
+    };
+
+    var onspringRecord = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Active"),
+        new StringFieldValue(2, "Jim"),
+        new StringFieldValue(3, "Doe"),
+        new StringFieldValue(4, "invalid"),
+      },
+    };
+
+    var fieldMappings = new Dictionary<int, string>
+    {
+      { 1, "accountEnabled" },
+      { 2, "givenName" },
+      { 3, "surname" },
+      { 4, "mail" },
+      { 5, "memberOf" },
+      { 6, "invalid" },
+    };
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersGroupsFieldId = 5,
+        UsersStatusFieldId = 1,
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 2,
+            Name = "givenName",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+        },
+      }
+    );
+
+    var result = _onspringService.BuildUpdatedRecord(
+      azureObject,
+      onspringRecord,
+      fieldMappings
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.AppId.Should().Be(1);
+    result.RecordId.Should().Be(1);
+    result.FieldData.Should().NotBeNull();
+    result.FieldData.Should().HaveCount(1);
+    result.FieldData[0].Should().BeOfType<StringFieldValue>();
+    result.FieldData[0].FieldId.Should().Be(2);
+    result.FieldData[0].AsString().Should().Be("John");
+  }
+
+  [Fact]
+  public void BuildNewRecord_WhenCalled_ItShouldBuildNewRecord()
+  {
+    var azureObject = new User
+    {
+      AccountEnabled = true,
+      GivenName = "John",
+      Surname = "Doe",
+      Mail = null,
+    };
+
+    var fieldMappings = new Dictionary<int, string>
+    {
+      { 1, "accountEnabled" },
+      { 2, "givenName" },
+      { 3, "surname" },
+      { 4, "mail" },
+      { 5, "memberOf" },
+      { 6, "invalid" },
+    };
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersGroupsFieldId = 5,
+        UsersStatusFieldId = 1,
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 2,
+            Name = "givenName",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+          new Field
+          {
+            Id = 3,
+            Name = "surname",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = false,
+          },
+        },
+      }
+    );
+
+    var result = _onspringService.BuildNewRecord(
+      azureObject,
+      fieldMappings,
+      1
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<ResultRecord>();
+    result.AppId.Should().Be(1);
+    result.RecordId.Should().Be(0);
+    result.FieldData.Should().NotBeNull();
+    result.FieldData.Should().HaveCount(2);
+    result.FieldData[0].Should().BeOfType<StringFieldValue>();
+    result.FieldData[0].FieldId.Should().Be(2);
+    result.FieldData[0].AsString().Should().Be("John");
+    result.FieldData[1].Should().BeOfType<StringFieldValue>();
+    result.FieldData[1].FieldId.Should().Be(3);
+    result.FieldData[1].AsString().Should().Be("Doe");
+  }
 }
