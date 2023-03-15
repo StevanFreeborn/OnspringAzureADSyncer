@@ -631,13 +631,23 @@ public class OnspringService : IOnspringService
       f => f.FieldId == statusFieldId
     );
 
-    return existingStatusValue is not null &&
-      existingStatusValue.AsString() != statusValueName
-      ? new StringFieldValue(
+    if (existingStatusValue is null)
+    {
+      return new StringFieldValue(
         statusFieldId,
         statusValue.ToString()
-      )
-      : (RecordFieldValue?) null;
+      );
+    }
+
+    if (existingStatusValue.AsString().ToLower() == statusValueName.ToLower())
+    {
+      return null;
+    }
+
+    return new StringFieldValue(
+      statusFieldId,
+      statusValue.ToString()
+    );
   }
 
   internal ResultRecord BuildUpdatedOnspringGroupRecord(

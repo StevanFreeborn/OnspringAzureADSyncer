@@ -2875,42 +2875,687 @@ public class OnspringServiceTests
   [Fact]
   public void GetUsersStatus_WhenCalledAndAzureUserAccountEnabledPropertyIsNull_ItShouldReturnNull()
   {
+    var azureUser = new User();
+    var userGroupIds = new List<string>();
 
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      null,
+      userGroupIds
+    );
+
+    result.Should().BeNull();
   }
 
   [Fact]
   public void GetUsersStatus_WhenCalledAndOnspringUserIsNullAndAzureUserIsEnabledAndAMemberOfAnOnspringActiveGroup_ItShouldReturnActiveStatusFieldValue()
   {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
 
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      null,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(activeListValueId.ToString());
   }
 
   [Fact]
   public void GetUsersStatus_WhenCalledAndOnspringUserIsNullAndAzureUserIsNotEnabled_ItShouldReturnInactiveStatusFieldValue()
   {
+    var azureUser = new User
+    {
+      AccountEnabled = false,
+    };
 
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      null,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(inactiveListValueId.ToString());
   }
 
   [Fact]
   public void GetUsersStatus_WhenCalledAndOnspringUserIsNullAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnInactiveStatusFieldValue()
   {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
 
+    var userGroupIds = new List<string>();
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      null,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(inactiveListValueId.ToString());
   }
 
   [Fact]
   public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndAzureUserIsEnabledAndAMemberOfAnOnspringActiveGroup_ItShouldReturnActiveStatusFieldValue()
   {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
 
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Inactive")
+      },
+    };
+
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(activeListValueId.ToString());
   }
 
   [Fact]
   public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndAzureUserIsNotEnabled_ItShouldReturnInactiveStatusFieldValue()
   {
+    var azureUser = new User
+    {
+      AccountEnabled = false,
+    };
 
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Active")
+      },
+    };
+
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(inactiveListValueId.ToString());
   }
 
   [Fact]
   public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnInactiveStatusFieldValue()
   {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
 
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Active")
+      },
+    };
+
+    var userGroupIds = new List<string>();
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(inactiveListValueId.ToString());
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndExistingStatusIsInactiveAndAzureUserIsNotEnabled_ItShouldReturnNull()
+  {
+    var azureUser = new User
+    {
+      AccountEnabled = false,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Inactive")
+      },
+    };
+
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+      .Returns(
+        new OnspringSettings
+        {
+          UsersStatusFieldId = 1,
+          UserActiveStatusListValue = activeListValueId,
+          UserInactiveStatusListValue = inactiveListValueId,
+        }
+      );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndExistingStatusIsInactiveAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnNull()
+  {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Inactive")
+      },
+    };
+
+    var userGroupIds = new List<string>();
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullAndExistingStatusIsActiveAndAzureUserIsEnabledAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnNull()
+  {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>
+      {
+        new StringFieldValue(1, "Active")
+      },
+    };
+
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullButExistingStatusIsNullAndAzureUserIsEnabledAndAMemberOfAnOnspringActiveGroup_ItShouldReturnActiveStatusFieldValue()
+  {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>(),
+    };
+
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(activeListValueId.ToString());
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullButExistingStatusIsNullAndAzureUserIsNotEnabled_ItShouldReturnInactiveStatusFieldValue()
+  {
+    var azureUser = new User
+    {
+      AccountEnabled = false,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>(),
+    };
+
+    var userGroupIds = new List<string>
+    {
+      "1",
+    };
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(inactiveListValueId.ToString());
+  }
+
+  [Fact]
+  public void GetUsersStatus_WhenCalledAndOnspringUserIsNotNullButExistingStatusIsNullAndAzureUserIsNotPartOfAnOnspringActiveGroup_ItShouldReturnInactiveStatusFieldValue()
+  {
+    var azureUser = new User
+    {
+      AccountEnabled = true,
+    };
+
+    var onspringUser = new ResultRecord
+    {
+      AppId = 1,
+      RecordId = 1,
+      FieldData = new List<RecordFieldValue>(),
+    };
+
+    var userGroupIds = new List<string>();
+
+    var activeListValueId = Guid.NewGuid();
+    var inactiveListValueId = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersStatusFieldId = 1,
+        UserActiveStatusListValue = activeListValueId,
+        UserInactiveStatusListValue = inactiveListValueId,
+      }
+    );
+
+    _settingsMock
+    .SetupGet(m => m.Azure)
+    .Returns(
+      new AzureSettings
+      {
+        OnspringActiveGroups = new string[]
+        {
+          "1",
+        },
+      }
+    );
+
+    var result = _onspringService.GetUsersStatus(
+      azureUser,
+      onspringUser,
+      userGroupIds
+    );
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result!.FieldId.Should().Be(1);
+    result.AsString().Should().Be(inactiveListValueId.ToString());
   }
 }
