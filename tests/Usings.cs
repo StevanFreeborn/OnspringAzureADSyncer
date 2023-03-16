@@ -13,6 +13,8 @@ global using Microsoft.Graph.Models;
 
 global using Moq;
 
+global using Newtonsoft.Json;
+
 global using Onspring.API.SDK;
 global using Onspring.API.SDK.Enums;
 global using Onspring.API.SDK.Models;

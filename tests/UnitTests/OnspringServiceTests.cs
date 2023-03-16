@@ -3706,4 +3706,849 @@ public class OnspringServiceTests
     result.FieldData[1].FieldId.Should().Be(3);
     result.FieldData[1].AsString().Should().Be("Doe");
   }
+
+  [Fact]
+  public void ValuesAreEqual_WhenCalledAndOnspringRecordValueAndAzureObjectValueAreNull_ItShouldReturnTrue()
+  {
+    var result = OnspringService.ValuesAreEqual(
+      null,
+      null
+    );
+
+    result.Should().BeTrue();
+  }
+
+  [Fact]
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueIsAnEmptyListOfStringsAndOnspringRecordValueIsNull_ItShouldReturnTrue()
+  {
+    var result = OnspringService.ValuesAreEqual(
+      null,
+      new List<string>()
+    );
+
+    result.Should().BeTrue();
+  }
+
+  [Fact]
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueIsAnEmptyListOfStringsAndOnspringRecordValueIsAnEmptyListOfStrings_ItShouldReturnTrue()
+  {
+    var result = OnspringService.ValuesAreEqual(
+      new List<string>(),
+      new List<string>()
+    );
+
+    result.Should().BeTrue();
+  }
+
+  [Fact]
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueIsAListOfStringsAndOnspringRecordValueIsAListOfStringsWithSameValues_ItShouldReturnTrue()
+  {
+    var result = OnspringService.ValuesAreEqual(
+      new List<string> { "1", "2" },
+      new List<string> { "1", "2" }
+    );
+
+    result.Should().BeTrue();
+  }
+
+  [Fact]
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueIsAListOfStringsAndOnspringRecordValueIsNotAListOfStringsAndIsNotNull_ItShouldReturnFalse()
+  {
+    var result = OnspringService.ValuesAreEqual(
+      "1",
+      new List<string> { "1", "2" }
+    );
+
+    result.Should().BeFalse();
+  }
+
+  [Theory]
+  [InlineData("1", "1")]
+  [InlineData(1, 1)]
+  [InlineData(true, true)]
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueAndOnspringRecordValueAreEqual_ItShouldReturnTrue(object onspringRecordValue, object azureObjectValue)
+  {
+    var result = OnspringService.ValuesAreEqual(
+      onspringRecordValue,
+      azureObjectValue
+    );
+
+    result.Should().BeTrue();
+  }
+
+  [Theory]
+  [InlineData("1", "2")]
+  [InlineData(1, 2)]
+  [InlineData(true, false)]
+  [InlineData(null, "1")]
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueAndOnspringRecordValueAreNotEqual_ItShouldReturnFalse(object onspringRecordValue, object azureObjectValue)
+  {
+    var result = OnspringService.ValuesAreEqual(
+      onspringRecordValue,
+      azureObjectValue
+    );
+
+    result.Should().BeFalse();
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndFieldCanNotBeFound_ItShouldReturnAStringFieldValueWithFieldIdOfZeroAndAValueOfASerializedObject()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>(),
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = "1";
+    var valueSerialized = JsonConvert.SerializeObject(value);
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(0);
+    result.AsString().Should().Be(valueSerialized);
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsAStringAndFieldIsATextField_ItSHouldReturnAStringFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            Name = "Text Field",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = "Active";
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(value);
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsAStringAndFieldIsAListField_ItShouldReturnAStringFieldValue()
+  {
+    var listValue = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+              new ListField
+              {
+                Id = 1,
+                Name = "Text Field",
+                AppId = 1,
+                Type = FieldType.List,
+                Status = FieldStatus.Enabled,
+                IsRequired = true,
+                IsUnique = true,
+                Multiplicity = Multiplicity.SingleSelect,
+                Values = new List<ListValue>
+                {
+                  new ListValue
+                  {
+                    Id = listValue,
+                    Name = "Active",
+                  },
+                }
+              },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = "Active";
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(listValue.ToString());
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsABooleanAndFieldIsATextField_ItShouldReturnAStringFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            Name = "Text Field",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = true;
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(value.ToString());
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsABooleanAndFieldIsAListField_ItShouldReturnAStringFieldValue()
+  {
+    var listValue = Guid.NewGuid();
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+              new ListField
+              {
+                Id = 1,
+                Name = "Text Field",
+                AppId = 1,
+                Type = FieldType.List,
+                Status = FieldStatus.Enabled,
+                IsRequired = true,
+                IsUnique = true,
+                Multiplicity = Multiplicity.SingleSelect,
+                Values = new List<ListValue>
+                {
+                  new ListValue
+                  {
+                    Id = listValue,
+                    Name = "true",
+                  },
+                }
+              },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = true;
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(listValue.ToString());
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsADateTimeAndFieldIsATextField_ItShouldReturnAStringFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            Name = "Text Field",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = DateTime.Now;
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"));
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsADateTimeAndFieldIsADateField_ItShouldReturnADateFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+              new Field
+              {
+                Id = 1,
+                Name = "Date Field",
+                AppId = 1,
+                Type = FieldType.Date,
+                Status = FieldStatus.Enabled,
+                IsRequired = true,
+                IsUnique = true,
+              },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = DateTime.Now;
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<DateFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsNullableDateTime().Should().Be(value.ToUniversalTime());
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsADateTimeOffsetAndFieldIsATextField_ItShouldReturnAStringFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+              new Field
+              {
+                Id = 1,
+                Name = "Text Field",
+                AppId = 1,
+                Type = FieldType.Text,
+                Status = FieldStatus.Enabled,
+                IsRequired = true,
+                IsUnique = true,
+              },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = DateTimeOffset.Now;
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(value.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsADateTimeOffsetAndFieldIsADateField_ItShouldReturnADateFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+                  new Field
+                  {
+                    Id = 1,
+                    Name = "Date Field",
+                    AppId = 1,
+                    Type = FieldType.Date,
+                    Status = FieldStatus.Enabled,
+                    IsRequired = true,
+                    IsUnique = true,
+                  },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = DateTimeOffset.Now;
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<DateFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsNullableDateTime().Should().Be(value.UtcDateTime);
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsAListOfStringsAndFieldIsATextField_ItShouldReturnAStringFieldValue()
+  {
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            Name = "Text Field",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = new List<string> { "value1", "value2" };
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(string.Join(",", value));
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsAListOfStringsAndFieldIsAListField_ItShouldReturnAStringListFieldValue()
+  {
+    var listValues = new List<ListValue>
+    {
+      new ListValue
+      {
+        Id = Guid.NewGuid(),
+        Name = "value1",
+      },
+      new ListValue
+      {
+        Id = Guid.NewGuid(),
+        Name = "value2",
+      },
+    };
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new ListField
+          {
+            Id = 1,
+            Name = "List Field",
+            AppId = 1,
+            Type = FieldType.List,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+            Multiplicity = Multiplicity.SingleSelect,
+            Values = listValues,
+          },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var value = new List<string> { "value1", "value2" };
+
+    var result = _onspringService.GetRecordFieldValue(1, value);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringListFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsStringList().Should().BeEquivalentTo(listValues.Select(v => v.Id.ToString()));
+  }
+
+  [Fact]
+  public void GetRecordFieldValue_WhenCalledAndValueIsAComplexObject_ItShouldReturnAStringFieldValue()
+  {
+    var complexObject = new
+    {
+      value1 = "value1",
+      value2 = new
+      {
+        value3 = "value3",
+      },
+    };
+
+    _settingsMock
+    .SetupGet(m => m.Onspring)
+    .Returns(
+      new OnspringSettings
+      {
+        UsersFields = new List<Field>
+        {
+          new Field
+          {
+            Id = 1,
+            Name = "Text Field",
+            AppId = 1,
+            Type = FieldType.Text,
+            Status = FieldStatus.Enabled,
+            IsRequired = true,
+            IsUnique = true,
+          },
+        },
+        GroupsFields = new List<Field>()
+      }
+    );
+
+    var result = _onspringService.GetRecordFieldValue(1, complexObject);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(JsonConvert.SerializeObject(complexObject));
+  }
+
+  [Fact]
+  public void GetListValues_WhenCalledAndFieldIsNull_ItShouldReturnAStringListFieldValue()
+  {
+    var result = OnspringService.GetListValues(null, new List<string>());
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringListFieldValue>();
+    result.FieldId.Should().Be(0);
+    result.AsStringList().Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetListValues_WhenCalledAndListValuesAreNull_ItShouldReturnAStringListFieldValue()
+  {
+    var listField = new ListField
+    {
+      Id = 1,
+      Name = "List Field",
+      AppId = 1,
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+      Values = new List<ListValue>(),
+    };
+
+    var result = OnspringService.GetListValues(listField, null);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringListFieldValue>();
+    result.FieldId.Should().Be(0);
+    result.AsStringList().Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetListValues_WhenCalledAndListValuesAreEmpty_ItShouldReturnAStringListFieldValue()
+  {
+    var listField = new ListField
+    {
+      Id = 1,
+      Name = "List Field",
+      AppId = 1,
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+      Values = new List<ListValue>(),
+    };
+
+    var result = OnspringService.GetListValues(listField, new List<string>());
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringListFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsStringList().Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetListValues_WhenCalledAndListValuesAreNotEmpty_ItShouldReturnAStringListFieldValue()
+  {
+    var listField = new ListField
+    {
+      Id = 1,
+      Name = "List Field",
+      AppId = 1,
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+      Values = new List<ListValue>
+      {
+        new ListValue
+        {
+          Id = Guid.NewGuid(),
+          Name = "value1",
+        },
+        new ListValue
+        {
+          Id = Guid.NewGuid(),
+          Name = "value2",
+        },
+      },
+    };
+
+    var result = OnspringService.GetListValues(listField, new List<string> { "value1", "value2" });
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringListFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsStringList().Should().BeEquivalentTo(listField.Values.Select(v => v.Id.ToString()));
+  }
+
+  [Fact]
+  public void GetListValue_WhenCalledAndFieldIsNull_ItShouldReturnAStringFieldValue()
+  {
+    var result = OnspringService.GetListValue(null, "value");
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(0);
+    result.AsString().Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetListValue_WhenCalledAndListValueIsNull_ItShouldReturnAStringFieldValue()
+  {
+    var listField = new ListField
+    {
+      Id = 1,
+      Name = "List Field",
+      AppId = 1,
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+      Values = new List<ListValue>(),
+    };
+
+    var result = OnspringService.GetListValue(listField, null);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(0);
+    result.AsString().Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetListValue_WhenCalledAndListValueIsNotFound_ItShouldReturnAStringFieldValue()
+  {
+    var listField = new ListField
+    {
+      Id = 1,
+      Name = "List Field",
+      AppId = 1,
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+      Values = new List<ListValue>
+      {
+        new ListValue
+        {
+          Id = Guid.NewGuid(),
+          Name = "value1",
+        },
+        new ListValue
+        {
+          Id = Guid.NewGuid(),
+          Name = "value2",
+        },
+      },
+    };
+
+    var result = OnspringService.GetListValue(listField, "value3");
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().BeEmpty();
+  }
+
+  [Fact]
+  public void GetListValue_WhenCalledAndListValueIsFound_ItShouldReturnAStringFieldValue()
+  {
+    var listField = new ListField
+    {
+      Id = 1,
+      Name = "List Field",
+      AppId = 1,
+      Type = FieldType.List,
+      Status = FieldStatus.Enabled,
+      IsRequired = true,
+      IsUnique = true,
+      Multiplicity = Multiplicity.SingleSelect,
+      Values = new List<ListValue>
+      {
+        new ListValue
+        {
+          Id = Guid.NewGuid(),
+          Name = "value1",
+        },
+        new ListValue
+        {
+          Id = Guid.NewGuid(),
+          Name = "value2",
+        },
+      },
+    };
+
+    var result = OnspringService.GetListValue(listField, "value1");
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<StringFieldValue>();
+    result.FieldId.Should().Be(1);
+    result.AsString().Should().Be(listField.Values.First(v => v.Name == "value1").Id.ToString());
+  }
+
+  [Fact]
+  public async Task AddListValue_WhenCalledAndRequestIsSuccessful_ItShouldReturnASaveListItemResponse()
+  {
+    var saveResponse = new SaveListItemResponse(Guid.NewGuid());
+
+    var apiResponse = new ApiResponse<SaveListItemResponse>
+    {
+      StatusCode = HttpStatusCode.Created,
+      Value = saveResponse,
+    };
+
+    _onspringClientMock
+    .Setup(
+      c => c.SaveListItemAsync(
+        It.IsAny<SaveListItemRequest>()
+      ).Result
+    )
+    .Returns(
+      apiResponse
+    );
+
+    var result = await _onspringService.AddListValue(1, "value");
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<SaveListItemResponse>();
+    result!.Id.Should().Be(saveResponse.Id);
+  }
+
+  [Fact]
+  public async Task AddListValue_WhenCalledAndRequestIsNotSuccessful_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    var apiResponse = new ApiResponse<SaveListItemResponse>
+    {
+      StatusCode = HttpStatusCode.BadRequest,
+    };
+
+    _onspringClientMock
+    .Setup(
+      c => c.SaveListItemAsync(
+        It.IsAny<SaveListItemRequest>()
+      ).Result
+    )
+    .Returns(
+      apiResponse
+    );
+
+    var result = await _onspringService.AddListValue(1, "value");
+
+    result.Should().BeNull();
+
+    _onspringClientMock
+    .Verify(
+      c => c.SaveListItemAsync(
+        It.IsAny<SaveListItemRequest>()
+      ).Result,
+      Times.Exactly(3)
+    );
+  }
+
+  [Fact]
+  public async Task AddListValue_WhenCalledAndExceptionIsThrown_ItShouldReturnNull()
+  {
+    _onspringClientMock
+    .Setup(
+      c => c.SaveListItemAsync(
+        It.IsAny<SaveListItemRequest>()
+      ).Result
+    )
+    .Throws(
+      new Exception()
+    );
+
+    var result = await _onspringService.AddListValue(1, "value");
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task AddListValue_WhenCalledAndHttpRequestExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
+  {
+    _onspringClientMock
+    .SetupSequence(
+      c => c.SaveListItemAsync(
+        It.IsAny<SaveListItemRequest>()
+      ).Result
+    )
+    .Throws(
+      new HttpRequestException()
+    )
+    .Throws(
+      new TaskCanceledException()
+    )
+    .Throws(
+      new TaskCanceledException()
+    );
+
+    var result = await _onspringService.AddListValue(1, "value");
+
+    result.Should().BeNull();
+
+    _onspringClientMock
+    .Verify(
+      c => c.SaveListItemAsync(
+        It.IsAny<SaveListItemRequest>()
+      ).Result,
+      Times.Exactly(3)
+    );
+  }
 }
