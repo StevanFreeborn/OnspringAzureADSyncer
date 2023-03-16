@@ -8,11 +8,11 @@ on:
       - '**/.gitmodules'
       - '**/.editorconfig'
       - '**/OnspringAzureADSyncer.sln'
-      - .github/
-      - .vscode/
-      - notes/
-      - planning/
-      - tests/
+      - .github/**
+      - .vscode/**
+      - notes/**
+      - planning/**
+      - tests/**
       - src/OnspringAzureADSyncer.csproj
     branches:
       - main
