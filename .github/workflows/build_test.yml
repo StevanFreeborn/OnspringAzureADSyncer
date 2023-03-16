@@ -8,10 +8,10 @@ on:
       - '**/.gitmodules'
       - '**/.editorconfig'
       - '**/OnspringAzureADSyncer.sln'
-      - .github/
-      - .vscode/
-      - notes/
-      - planning/
+      - .github/**
+      - .vscode/**
+      - notes/**
+      - planning/**
     branches:
       - main
       - beta
