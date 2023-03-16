@@ -13,6 +13,7 @@ on:
       - notes/
       - planning/
       - tests/
+      - src/OnspringAzureADSyncer.csproj
     branches:
       - main
       - beta
@@ -24,7 +25,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        fetch: 0
+        fetch-depth: 0
         token: ${{ secrets.ACTIONS_PAT }}
         submodules: 'recursive'
     - name: Setup .NET 7
@@ -151,7 +152,7 @@ jobs:
       uses: kzrnm/get-net-sdk-project-versions-action@v1
       id: get-version
       with:
-        proj-path: src/OnspringAttachmentReporter.csproj
+        proj-path: src/OnspringAzureADSyncer.csproj
     - name: Download changlog
       uses: actions/download-artifact@v3
       with:
