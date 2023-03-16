@@ -144,7 +144,7 @@ jobs:
     - name: Publish for windows-os
       run: dotnet publish src/OnspringAzureADSyncer.csproj -c Release -r win-x64 --self-contained -o dist/windows-os
     - name: Rename windows-os binary
-      run: mv dist/windows-os/OnspringAzureADSyncer.exe dist/OnspringAzureADSyncer.exe
+      run: mv dist/windows-os/OnspringAzureADSyncer.exe dist/OnspringAzureADSyncer_windows_x64.exe
     - name: Get branch name
       id: branch-name
       uses: tj-actions/branch-names@v6
