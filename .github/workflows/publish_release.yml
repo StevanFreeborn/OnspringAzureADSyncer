@@ -119,7 +119,7 @@ jobs:
       is_new_version: ${{ steps.versionize-main.outcome == 'success' || steps.versionize-beta.outcome == 'success' }}
   publish:
     needs: [ version ]
-    # if: needs.version.outputs.is_new_version == 'true'
+    if: needs.version.outputs.is_new_version == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
