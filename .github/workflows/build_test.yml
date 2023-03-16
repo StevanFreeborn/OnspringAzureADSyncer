@@ -10,7 +10,8 @@ on:
       - '**/OnspringAzureADSyncer.sln'
       - .github/
       - .vscode/
-      - README/
+      - notes/
+      - planning/
     branches:
       - main
       - beta
