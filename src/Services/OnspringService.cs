@@ -1019,32 +1019,46 @@ public class OnspringService : IOnspringService
     string listValueName
   )
   {
-    var saveListItemRequest = new SaveListItemRequest
+    try
     {
-      ListId = listId,
-      Name = listValueName
-    };
+      var saveListItemRequest = new SaveListItemRequest
+      {
+        ListId = listId,
+        Name = listValueName
+      };
 
-    var res = await ExecuteRequest(
-      async () => await _onspringClient.SaveListItemAsync(
-        saveListItemRequest
-      )
-    );
+      var res = await ExecuteRequest(
+        async () => await _onspringClient.SaveListItemAsync(
+          saveListItemRequest
+        )
+      );
 
-    if (res.IsSuccessful is false)
+      if (res.IsSuccessful is false)
+      {
+        _logger.Error(
+          "Unable to add list value {ListValue} for list {ListId}. {StatusCode} - {Message}",
+          listValueName,
+          listId,
+          res.StatusCode,
+          res.Message
+        );
+
+        return null;
+      }
+
+      return res.Value;
+    }
+    catch (Exception ex)
     {
       _logger.Error(
-        "Unable to add list value {ListValue} for list {ListId}. {StatusCode} - {Message}",
+        ex,
+        "Unable to add list value {ListValue} for list {ListId}.",
         listValueName,
-        listId,
-        res.StatusCode,
-        res.Message
+        listId
       );
 
       return null;
     }
-
-    return res.Value;
   }
 
   [ExcludeFromCodeCoverage]
