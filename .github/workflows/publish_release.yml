@@ -162,7 +162,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         token: ${{ secrets.ACTIONS_PAT }}
-        name: Onspring Attachment Reporter v${{ steps.get-version.outputs.version }}
+        name: Onspring Azure AD Syncer v${{ steps.get-version.outputs.version }}
         tag_name: v${{ steps.get-version.outputs.version }}
         draft: false
         prerelease: ${{ steps.branch-name.outputs.ref_branch == 'beta' }}
