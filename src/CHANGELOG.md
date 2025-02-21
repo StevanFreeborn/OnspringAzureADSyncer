@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.1.0"></a>
+## [1.1.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.1.0) (2025-02-21)
+
+### Features
+
+* upgrade to .NET 9 ([f717ab5](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/f717ab5ef346529185f6f68a72f130e9cb39964a))
+
+### Bug Fixes
+
+* use proper actionv version ([a4e8cd3](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/a4e8cd3b8a0d8da435b00057c165454d700e24cd))
+
 <a name="1.0.0"></a>
 ## [1.0.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.0.0) (2023-3-16)
 
