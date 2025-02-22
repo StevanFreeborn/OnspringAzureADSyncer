@@ -907,7 +907,7 @@ public class ProcessorTests
   public void FieldMappingsAreValid_WhenCalledAndFieldMappingsAreValid_ItShouldReturnTrue()
   {
     _settingsMock
-      .SetupGet(x => x.Onspring)
+      .SetupGet(static x => x.Onspring)
       .Returns(new OnspringSettings
       {
         GroupsFields = [
@@ -2670,20 +2670,16 @@ public class ProcessorTests
     var onspringSettings = new OnspringSettings();
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(
-      onspringSettings
-    );
+      .SetupGet(static x => x.Onspring)
+      .Returns(onspringSettings);
 
     _settingsMock
-    .SetupGet(x => x.Azure)
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     var listFields = new List<ListField>
     {
-      new ListField
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2694,16 +2690,15 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.MultiSelect,
         ListId = 1,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
             Name = "LastName"
           }
-        },
+        ],
       },
-      new ListField
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2714,9 +2709,9 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>(),
+        Values = [],
       },
-      new ListField
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -2727,7 +2722,7 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>(),
+        Values = [],
       },
     };
 
@@ -2740,15 +2735,14 @@ public class ProcessorTests
 
     var users = new List<User?>
     {
-      new User
+      new()
       {
         Id = "user id",
         Surname = "NewName",
         AccountEnabled = true,
       },
       null,
-      new User
-      {
+      new() {
         Id = "user id",
         Surname = "LastName",
         AccountEnabled = null,
@@ -2756,13 +2750,8 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.AddListValue(
-        It.IsAny<int>(),
-        It.IsAny<string>()
-      ).Result
-    )
-    .Returns<SaveListItemResponse?>(null);
+      .Setup(static x => x.AddListValue(It.IsAny<int>(), It.IsAny<string>()))
+      .ReturnsAsync(null as SaveListItemResponse);
 
     await _processor.SyncListValues(
       listFields,
@@ -2770,21 +2759,12 @@ public class ProcessorTests
       users
     );
 
-    _onspringServiceMock.Verify(
-      x => x.AddListValue(
-        It.IsAny<int>(),
-        It.IsAny<string>()
-      ),
-      Times.Exactly(2)
-    );
+    _onspringServiceMock.Verify(static x => x.AddListValue(It.IsAny<int>(), It.IsAny<string>()), Times.Exactly(2));
 
-    _onspringServiceMock.Verify(
-      x => x.GetUserFields(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetUserFields(), Times.Once);
 
     _loggerMock.Verify(
-      x => x.Warning(
+      static x => x.Warning(
         It.IsAny<string>(),
         It.IsAny<string>(),
         It.IsAny<int>()
@@ -2799,29 +2779,15 @@ public class ProcessorTests
     var groups = new List<Group>();
 
     _graphServiceMock
-    .Setup(
-      x => x.GetGroupsIterator(It.IsAny<List<Group>>(), It.IsAny<int>()).Result
-    )
-    .Returns<PageIterator<Group, GroupCollectionResponse>>(null);
+      .Setup(static x => x.GetGroupsIterator(It.IsAny<List<Group>>(), It.IsAny<int>()))
+      .ReturnsAsync(null as PageIterator<Group, GroupCollectionResponse>);
 
     await _processor.SyncGroups();
 
-    _graphServiceMock.Verify(
-      x => x.GetGroupsIterator(It.IsAny<List<Group>>(), It.IsAny<int>()),
-      Times.Once
-    );
-    _onspringServiceMock.Verify(
-      x => x.GetGroup(It.IsAny<string>()),
-      Times.Never
-    );
-    _onspringServiceMock.Verify(
-      x => x.CreateGroup(It.IsAny<Group>()),
-      Times.Never
-    );
-    _onspringServiceMock.Verify(
-      x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()),
-      Times.Never
-    );
+    _graphServiceMock.Verify(static x => x.GetGroupsIterator(It.IsAny<List<Group>>(), It.IsAny<int>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<string>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Never);
   }
 
   // Note: This test is complicated by the fact
@@ -2834,12 +2800,12 @@ public class ProcessorTests
     // setup azure groups to sync
     var azureGroups = new List<Group>
     {
-      new Group // will create this group
+      new()
       {
         Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
         Description = "Test Group 1",
       },
-      new Group // will use this group to update onspring group
+      new()
       {
         Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
         Description = "Test Group 2",
@@ -2859,11 +2825,10 @@ public class ProcessorTests
     {
       AppId = 1,
       RecordId = 1,
-      FieldData = new()
-      {
+      FieldData = [
         new StringFieldValue(1, "1f01a3d4-7142-4210-b54d-9aadf98ce929"),
         new StringFieldValue(2, "Needs updated")
-      }
+      ]
     };
 
     // setup msGraph that we can mock
@@ -2873,26 +2838,18 @@ public class ProcessorTests
 
     // mock to return collection of groups
     msGraphMock
-    .Setup(
-      x => x.GetGroupsForIterator(
-        It.IsAny<Dictionary<int, string>>()
-      ).Result
-    )
-    .Returns(azureGroupCollection);
+      .Setup(static x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(azureGroupCollection);
 
     // mock graph service client for msGraphMock
     var tokenCredentialMock = new Mock<TokenCredential>();
     msGraphMock
-    .SetupGet(
-      x => x.GraphServiceClient
-    )
-    .Returns(
-      new GraphServiceClient(
+      .SetupGet(static x => x.GraphServiceClient)
+      .Returns(new GraphServiceClient(
         tokenCredentialMock.Object,
         null,
         null
-      )
-    );
+      ));
 
     // create new graph service using 
     // the test specific msGraphMock
@@ -2903,13 +2860,10 @@ public class ProcessorTests
     );
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    ).Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
-        GroupsFields = new List<Field>
-        {
+        GroupsFields = [
           new Field
           {
             Id = 1,
@@ -2929,8 +2883,7 @@ public class ProcessorTests
             Status = FieldStatus.Enabled,
             IsRequired = true,
             IsUnique = true,
-            Values = new List<ListValue>
-            {
+            Values = [
               new ListValue
               {
                 Id = Guid.NewGuid(),
@@ -2941,30 +2894,24 @@ public class ProcessorTests
                 Id = Guid.NewGuid(),
                 Name = "Updated"
               }
-            }
+            ]
           }
-        }
+        ]
       }
     );
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>()
-    );
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns([]);
 
     // setup onspring service
     // to mock returning nul for first
     // azure group and a found onspring
     // group for the second azure group
     _onspringServiceMock
-    .SetupSequence(
-      x => x.GetGroup(It.IsAny<string>()).Result
-    )
-    .Returns((ResultRecord?) null)
-    .Returns(onspringGroup);
+      .SetupSequence(static x => x.GetGroup(It.IsAny<string>()))
+      .ReturnsAsync(null as ResultRecord)
+      .ReturnsAsync(onspringGroup);
 
     // create new instance of processor
     // for this specific test to use
@@ -2978,21 +2925,9 @@ public class ProcessorTests
 
     await processor.SyncGroups();
 
-    _onspringServiceMock.Verify(
-      x => x.GetGroup(It.IsAny<string>()),
-      Times.Exactly(2)
-    );
-    _onspringServiceMock.Verify(
-      x => x.CreateGroup(It.IsAny<Group>()),
-      Times.Once
-    );
-    _onspringServiceMock.Verify(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<string>()), Times.Exactly(2));
+    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Once);
   }
 
   [Fact]
@@ -3007,37 +2942,21 @@ public class ProcessorTests
     var saveRecordResponse = new SaveRecordResponse
     {
       Id = 1,
-      Warnings = new List<string>()
+      Warnings = []
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroup(It.IsAny<string>()).Result
-    )
-    .Returns<ResultRecord?>(null);
+      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .ReturnsAsync(null as ResultRecord);
 
     _onspringServiceMock
-    .Setup(
-      x => x.CreateGroup(It.IsAny<Group>()).Result
-    )
-    .Returns(
-      saveRecordResponse
-    );
+      .Setup(static x => x.CreateGroup(It.IsAny<Group>()))
+      .ReturnsAsync(saveRecordResponse);
 
     await _processor.SyncGroup(azureGroup);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateGroup(It.IsAny<Group>()),
-      Times.Once
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Never
-    );
+    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Never);
   }
 
   [Fact]
@@ -3050,39 +2969,20 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroup(It.IsAny<string>()).Result
-    )
-    .Returns<ResultRecord?>(null);
+      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .ReturnsAsync(null as ResultRecord);
 
     _onspringServiceMock
-    .Setup(
-      x => x.CreateGroup(It.IsAny<Group>()).Result
-    )
-    .Returns<SaveRecordResponse?>(null);
+    .Setup(static x => x.CreateGroup(It.IsAny<Group>()))
+    .ReturnsAsync(null as SaveRecordResponse);
 
     await _processor.SyncGroup(azureGroup);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateGroup(It.IsAny<Group>()),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Once);
 
-    _loggerMock.Verify(
-      x => x.Warning(
-        It.IsAny<string>(),
-        It.IsAny<Group>()
-      ),
-      Times.Once
-    );
+    _loggerMock.Verify(static x => x.Warning(It.IsAny<string>(), It.IsAny<Group>()), Times.Once);
 
-    _onspringServiceMock.Verify(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Never
-    );
+    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Never);
   }
 
   [Fact]
@@ -3098,50 +2998,30 @@ public class ProcessorTests
     {
       AppId = 1,
       RecordId = 1,
-      FieldData = new List<RecordFieldValue>
-      {
+      FieldData = [
         new StringFieldValue(1, "98e58dab-9f2c-4216-bc91-70d7dabe227e"),
         new StringFieldValue(2, "Group that needs updating"),
-      }
+      ]
     };
 
     var saveRecordResponse = new SaveRecordResponse
     {
       Id = 1,
-      Warnings = new List<string>()
+      Warnings = []
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroup(It.IsAny<string>()).Result
-    )
-    .Returns(resultRecord);
+      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .ReturnsAsync(resultRecord);
 
     _onspringServiceMock
-    .Setup(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ).Result
-    )
-    .Returns(
-      saveRecordResponse
-    );
+      .Setup(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()))
+      .ReturnsAsync(saveRecordResponse);
 
     await _processor.SyncGroup(azureGroup);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateGroup(It.IsAny<Group>()),
-      Times.Never
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Once);
   }
 
   [Fact]
@@ -3157,50 +3037,25 @@ public class ProcessorTests
     {
       AppId = 1,
       RecordId = 1,
-      FieldData = new List<RecordFieldValue>
-      {
+      FieldData = [
         new StringFieldValue(1, "98e58dab-9f2c-4216-bc91-70d7dabe227e"),
         new StringFieldValue(2, "Group that needs updating"),
-      }
+      ]
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroup(It.IsAny<string>()).Result
-    )
-    .Returns(resultRecord);
+      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .ReturnsAsync(resultRecord);
 
     _onspringServiceMock
-    .Setup(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ).Result
-    )
-    .Returns<ResultRecord?>(null);
+      .Setup(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()))
+      .ReturnsAsync(null as SaveRecordResponse);
 
     await _processor.SyncGroup(azureGroup);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateGroup(It.IsAny<Group>()),
-      Times.Never
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.UpdateGroup(
-        It.IsAny<Group>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Once
-    );
-
-    _loggerMock.Verify(
-      x => x.Warning(
-        It.IsAny<string>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Once);
+    _loggerMock.Verify(static x => x.Warning(It.IsAny<string>(), It.IsAny<ResultRecord>()), Times.Once);
   }
 
   [Fact]
@@ -3209,42 +3064,15 @@ public class ProcessorTests
     var groups = new List<Group>();
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUsersIterator(
-        It.IsAny<List<User>>(),
-        It.IsAny<int>()
-      ).Result
-    )
-    .Returns<PageIterator<User, UserCollectionResponse>>(null);
+      .Setup(static x => x.GetUsersIterator(It.IsAny<List<User>>(), It.IsAny<int>()))
+      .ReturnsAsync(null as PageIterator<User, UserCollectionResponse>);
 
     await _processor.SyncUsers();
 
-    _graphServiceMock.Verify(
-      x => x.GetUsersIterator(
-        It.IsAny<List<User>>(),
-        It.IsAny<int>()
-      ),
-      Times.Once
-    );
-    _onspringServiceMock.Verify(
-      x => x.GetUser(It.IsAny<User>()),
-      Times.Never
-    );
-    _onspringServiceMock.Verify(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Never
-    );
-    _onspringServiceMock.Verify(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Never
-    );
+    _graphServiceMock.Verify(static x => x.GetUsersIterator(It.IsAny<List<User>>(), It.IsAny<int>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()), Times.Never);
   }
 
   // Note: This test is complicated by the fact
@@ -3256,7 +3084,7 @@ public class ProcessorTests
   {
     var azureUsers = new List<User>
     {
-      new User // will create this user
+      new()
       {
         Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
         UserPrincipalName = "User1",
@@ -3265,7 +3093,7 @@ public class ProcessorTests
         Mail = "user.one@test.com",
         AccountEnabled = true,
       },
-      new User // will use this group to update onspring user
+      new()
       {
         Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
         UserPrincipalName = "User2",
@@ -3289,14 +3117,13 @@ public class ProcessorTests
     {
       AppId = 1,
       RecordId = 1,
-      FieldData = new()
-      {
+      FieldData = [
         new StringFieldValue(1, "User2"),
         new StringFieldValue(2, "User"),
         new StringFieldValue(3, "Two"),
         new StringFieldValue(4, "user.two@test.com"),
         new StringFieldValue(5, "Active"),
-      }
+      ]
     };
 
     // setup msGraph that we can mock
@@ -3306,27 +3133,19 @@ public class ProcessorTests
 
     // mock to return collection of users
     msGraphMock
-    .Setup(
-      x => x.GetUsersForIterator(
-        It.IsAny<Dictionary<int, string>>()
-      ).Result
-    )
-    .Returns(azureUsersCollection);
+      .Setup(static x => x.GetUsersForIterator(It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(azureUsersCollection);
 
     // mock graph service client for msGraphMock
     var tokenCredentialMock = new Mock<TokenCredential>();
 
     msGraphMock
-    .SetupGet(
-      x => x.GraphServiceClient
-    )
-    .Returns(
-      new GraphServiceClient(
+      .SetupGet(static x => x.GraphServiceClient)
+      .Returns(new GraphServiceClient(
         tokenCredentialMock.Object,
         null,
         null
-      )
-    );
+      ));
 
     // create new graph service using 
     // the test specific msGraphMock
@@ -3337,21 +3156,14 @@ public class ProcessorTests
     );
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<User>()
-      ).Result
-    )
-    .Returns<List<DirectoryObject>?>(null);
+      .Setup(static x => x.GetUserGroups(It.IsAny<User>()))
+      .Returns<List<DirectoryObject>>(null!);
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    ).Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
-        UsersFields = new List<Field>
-        {
+        UsersFields = [
           new Field
           {
             Id = 1,
@@ -3401,8 +3213,7 @@ public class ProcessorTests
             Status = FieldStatus.Enabled,
             IsRequired = true,
             IsUnique = true,
-            Values = new List<ListValue>
-            {
+            Values = [
               new ListValue
               {
                 Id = Guid.NewGuid(),
@@ -3413,38 +3224,27 @@ public class ProcessorTests
                 Id = Guid.NewGuid(),
                 Name = "Inactive"
               }
-            }
+            ]
           }
-        }
-      }
-    );
+        ]
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>()
-    );
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns([]);
 
     // setup onspring service
     // to mock returning null for first
     // azure user and a found onspring
     // user for the second azure user
     _onspringServiceMock
-    .SetupSequence(
-      x => x.GetUser(It.IsAny<User>()).Result
-    )
-    .Returns((ResultRecord?) null)
-    .Returns(onspringUser);
+      .SetupSequence(static x => x.GetUser(It.IsAny<User>()))
+      .ReturnsAsync(null as ResultRecord)
+      .ReturnsAsync(onspringUser);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(
-      new List<Field>
-      {
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync([
         new Field
         {
           Id = 1,
@@ -3455,8 +3255,7 @@ public class ProcessorTests
           IsRequired = true,
           IsUnique = true,
         },
-      }
-    );
+      ]);
 
     // create new instance of processor
     // for this specific test to use
@@ -3470,25 +3269,9 @@ public class ProcessorTests
 
     await processor.SyncUsers();
 
-    _onspringServiceMock.Verify(
-      x => x.GetUser(It.IsAny<User>()),
-      Times.Exactly(2)
-    );
-    _onspringServiceMock.Verify(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
-    _onspringServiceMock.Verify(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Exactly(2));
+    _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
   }
 
   // Note: This test is complicated by the fact
@@ -3500,7 +3283,7 @@ public class ProcessorTests
   {
     var azureUsers = new List<User>
     {
-      new User // will create this user
+      new()
       {
         Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
         UserPrincipalName = "User1",
@@ -3509,7 +3292,7 @@ public class ProcessorTests
         Mail = "user.one@test.com",
         AccountEnabled = true,
       },
-      new User // will use this group to update onspring user
+      new()
       {
         Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
         UserPrincipalName = "User2",
@@ -3533,14 +3316,13 @@ public class ProcessorTests
     {
       AppId = 1,
       RecordId = 1,
-      FieldData = new()
-      {
+      FieldData = [
         new StringFieldValue(1, "User2"),
         new StringFieldValue(2, "User"),
         new StringFieldValue(3, "Two"),
         new StringFieldValue(4, "user.two@test.com"),
         new StringFieldValue(5, "Active"),
-      }
+      ]
     };
 
     // setup msGraph that we can mock
@@ -3550,27 +3332,19 @@ public class ProcessorTests
 
     // mock to return collection of users
     msGraphMock
-    .Setup(
-      x => x.GetUsersForIterator(
-        It.IsAny<Dictionary<int, string>>()
-      ).Result
-    )
-    .Returns(azureUsersCollection);
+      .Setup(static x => x.GetUsersForIterator(It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(azureUsersCollection);
 
     // mock graph service client for msGraphMock
     var tokenCredentialMock = new Mock<TokenCredential>();
 
     msGraphMock
-    .SetupGet(
-      x => x.GraphServiceClient
-    )
-    .Returns(
-      new GraphServiceClient(
+      .SetupGet(static x => x.GraphServiceClient)
+      .Returns(new GraphServiceClient(
         tokenCredentialMock.Object,
         null,
         null
-      )
-    );
+      ));
 
     // create new graph service using 
     // the test specific msGraphMock
@@ -3581,14 +3355,8 @@ public class ProcessorTests
     );
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<User>()
-      ).Result
-    )
-    .Returns(
-      new List<DirectoryObject>
-      {
+      .Setup(static x => x.GetUserGroups(It.IsAny<User>()))
+      .ReturnsAsync([
         new Group
         {
           Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
@@ -3599,17 +3367,13 @@ public class ProcessorTests
           Id = "1f01a3d4-7142-4210-b54d-9aadf98ce929",
           Description = "Group 2 Description",
         },
-      }
-    );
+      ]);
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    ).Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
-        UsersFields = new List<Field>
-        {
+        UsersFields = [
           new Field
           {
             Id = 1,
@@ -3659,8 +3423,7 @@ public class ProcessorTests
             Status = FieldStatus.Enabled,
             IsRequired = true,
             IsUnique = true,
-            Values = new List<ListValue>
-            {
+            Values = [
               new ListValue
               {
                 Id = Guid.NewGuid(),
@@ -3671,38 +3434,27 @@ public class ProcessorTests
                 Id = Guid.NewGuid(),
                 Name = "Inactive"
               }
-            }
+            ]
           }
-        }
-      }
-    );
+        ]
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>()
-    );
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns([]);
 
     // setup onspring service
     // to mock returning null for first
     // azure user and a found onspring
     // user for the second azure user
     _onspringServiceMock
-    .SetupSequence(
-      x => x.GetUser(It.IsAny<User>()).Result
-    )
-    .Returns((ResultRecord?) null)
-    .Returns(onspringUser);
+      .SetupSequence(static x => x.GetUser(It.IsAny<User>()))
+      .ReturnsAsync(null as ResultRecord)
+      .ReturnsAsync(onspringUser);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(
-      new List<Field>
-      {
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync([
         new Field
         {
           Id = 1,
@@ -3713,8 +3465,7 @@ public class ProcessorTests
           IsRequired = true,
           IsUnique = true,
         },
-      }
-    );
+      ]);
 
     // create new instance of processor
     // for this specific test to use
@@ -3728,25 +3479,9 @@ public class ProcessorTests
 
     await processor.SyncUsers();
 
-    _onspringServiceMock.Verify(
-      x => x.GetUser(It.IsAny<User>()),
-      Times.Exactly(2)
-    );
-    _onspringServiceMock.Verify(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
-    _onspringServiceMock.Verify(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Exactly(2));
+    _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
   }
 
   [Fact]
@@ -3765,16 +3500,12 @@ public class ProcessorTests
     var saveRecordResponse = new SaveRecordResponse
     {
       Id = 1,
-      Warnings = new List<string>()
+      Warnings = []
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(
-      new List<Field>
-      {
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync([
         new Field
         {
           Id = 1,
@@ -3785,54 +3516,24 @@ public class ProcessorTests
           IsRequired = true,
           IsUnique = true,
         },
-      }
-    );
+      ]);
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<User>()
-      ).Result
-    )
-    .Returns(
-      new List<DirectoryObject>()
-    );
+      .Setup(static x => x.GetUserGroups(It.IsAny<User>()))
+      .ReturnsAsync([]);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetUser(It.IsAny<User>()).Result
-    )
-    .Returns<ResultRecord?>(null);
+      .Setup(static x => x.GetUser(It.IsAny<User>()))
+      .ReturnsAsync(null as ResultRecord);
 
     _onspringServiceMock
-    .Setup(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ).Result
-    )
-    .Returns(
-      saveRecordResponse
-    );
+      .Setup(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()))
+      .ReturnsAsync(saveRecordResponse);
 
     await _processor.SyncUser(azureUser);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Never
-    );
+    _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()), Times.Never);
   }
 
   [Fact]
@@ -3851,16 +3552,12 @@ public class ProcessorTests
     var saveRecordResponse = new SaveRecordResponse
     {
       Id = 1,
-      Warnings = new List<string>()
+      Warnings = []
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(
-      new List<Field>
-      {
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync([
         new Field
         {
           Id = 1,
@@ -3871,67 +3568,31 @@ public class ProcessorTests
           IsRequired = true,
           IsUnique = true,
         },
-      }
-    );
+      ]);
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<User>()
-      ).Result
-    )
-    .Returns(
-      new List<DirectoryObject>
-      {
+      .Setup(static x => x.GetUserGroups(It.IsAny<User>()))
+      .ReturnsAsync([
         new Group
         {
           Id = "1",
           DisplayName = "Group 1",
         },
-      }
-    );
+      ]);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetUser(It.IsAny<User>()).Result
-    )
-    .Returns<ResultRecord?>(null);
+      .Setup(static x => x.GetUser(It.IsAny<User>()))
+      .ReturnsAsync(null as ResultRecord);
 
     _onspringServiceMock
-    .Setup(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ).Result
-    )
-    .Returns<SaveRecordResponse?>(null);
+      .Setup(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()))
+      .ReturnsAsync(null as SaveRecordResponse);
 
     await _processor.SyncUser(azureUser);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Never
-    );
-
-    _loggerMock.Verify(
-      x => x.Warning(
-        It.IsAny<string>(),
-        It.IsAny<User>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
+    _onspringServiceMock.Verify(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()), Times.Never);
+    _loggerMock.Verify(static x => x.Warning(It.IsAny<string>(), It.IsAny<User>()), Times.Once);
   }
 
   [Fact]
@@ -3982,35 +3643,13 @@ public class ProcessorTests
       });
 
     _onspringServiceMock
-    .Setup(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ).Result
-    )
-    .Returns(
-      saveRecordResponse
-    );
+      .Setup(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()))
+      .ReturnsAsync(saveRecordResponse);
 
     await _processor.SyncUser(azureUser);
 
-    _onspringServiceMock.Verify(
-      x => x.CreateUser(
-        It.IsAny<User>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Never
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.UpdateUser(It.IsAny<User>(), It.IsAny<ResultRecord>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
   }
 
   [Fact]
