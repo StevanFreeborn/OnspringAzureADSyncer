@@ -808,8 +808,7 @@ public class ProcessorTests
       Status = FieldStatus.Enabled,
       IsRequired = true,
       IsUnique = true,
-      Values = new List<ListValue>
-      {
+      Values = [
         new ListValue
         {
           Id = activeListValueId,
@@ -820,14 +819,14 @@ public class ProcessorTests
           Id = inactiveListValueId,
           Name = "Inactive",
         },
-      },
+      ],
     };
 
     var onspringSettings = new OnspringSettings();
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(onspringSettings);
+      .SetupGet(static x => x.Onspring)
+      .Returns(onspringSettings);
 
     _processor.SetStatusListValues(statusListField);
 
@@ -850,8 +849,7 @@ public class ProcessorTests
       Status = FieldStatus.Enabled,
       IsRequired = true,
       IsUnique = true,
-      Values = new List<ListValue>
-      {
+      Values = [
         new ListValue
         {
           Id = activeListValueId,
@@ -862,7 +860,7 @@ public class ProcessorTests
           Id = inactiveListValueId,
           Name = "Inactive",
         },
-      },
+      ],
     };
 
     var act = () => _processor.SetStatusListValues(statusListField);
@@ -885,8 +883,8 @@ public class ProcessorTests
       Status = FieldStatus.Enabled,
       IsRequired = true,
       IsUnique = true,
-      Values = new List<ListValue>
-      {
+      Values =
+      [
         new ListValue
         {
           Id = activeListValueId,
@@ -897,7 +895,7 @@ public class ProcessorTests
           Id = inactiveListValueId,
           Name = "Disabled",
         },
-      },
+      ],
     };
 
     var act = () => _processor.SetStatusListValues(statusListField);
@@ -909,14 +907,10 @@ public class ProcessorTests
   public void FieldMappingsAreValid_WhenCalledAndFieldMappingsAreValid_ItShouldReturnTrue()
   {
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    )
-    .Returns(
-      new OnspringSettings
+      .SetupGet(x => x.Onspring)
+      .Returns(new OnspringSettings
       {
-        GroupsFields = new List<Field>
-        {
+        GroupsFields = [
           new Field
           {
             Id = 1,
@@ -937,9 +931,8 @@ public class ProcessorTests
             IsRequired = true,
             IsUnique = true,
           },
-        },
-        UsersFields = new List<Field>
-        {
+        ],
+        UsersFields = [
           new Field
           {
             Id = 1,
@@ -980,43 +973,31 @@ public class ProcessorTests
             IsRequired = true,
             IsUnique = true,
           },
-        },
+        ],
       }
     );
 
     _settingsMock
-    .SetupGet(
-      x => x.Azure
-    )
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "description" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "userPrincipalName" },
         { 2, "givenName" },
         { 3, "surname" },
         { 4, "mail" },
-      }
-    );
+      });
 
     var result = _processor.FieldMappingsAreValid();
 
@@ -1027,14 +1008,10 @@ public class ProcessorTests
   public void FieldMappingsAreValid_WhenCalledAndFieldMappingsAreNotValid_ItShouldReturnFalse()
   {
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    )
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
-        GroupsFields = new List<Field>
-        {
+        GroupsFields = [
           new Field
           {
             Id = 1,
@@ -1055,9 +1032,8 @@ public class ProcessorTests
             IsRequired = true,
             IsUnique = true,
           },
-        },
-        UsersFields = new List<Field>
-        {
+        ],
+        UsersFields = [
           new Field
           {
             Id = 1,
@@ -1098,43 +1074,31 @@ public class ProcessorTests
             IsRequired = true,
             IsUnique = true,
           },
-        },
+        ],
       }
     );
 
     _settingsMock
-    .SetupGet(
-      x => x.Azure
-    )
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "invalid" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "userPrincipalName" },
         { 2, "givenName" },
         { 3, "surname" },
         { 4, "mail" },
-      }
-    );
+      });
 
     var result = _processor.FieldMappingsAreValid();
 
@@ -1145,38 +1109,26 @@ public class ProcessorTests
   public void HasValidAzureProperties_WhenCalledAndHasValidProperties_ItShouldReturnTrue()
   {
     _settingsMock
-    .SetupGet(
-      x => x.Azure
-    )
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "description" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "givenName" },
         { 2, "surname" },
         { 3, "mail" },
         { 4, "userPrincipalName" },
-      }
-    );
+      });
 
     var result = _processor.HasValidAzureProperties();
 
@@ -1187,40 +1139,28 @@ public class ProcessorTests
   public void HasValidAzureProperties_WhenCalledAndHasInvalidProperties_ItShouldReturnFalse()
   {
     _settingsMock
-    .SetupGet(
-      x => x.Azure
-    )
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "description" },
         { 3, "invalid" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "givenName" },
         { 2, "surname" },
         { 3, "mail" },
         { 4, "userPrincipalName" },
         { 5, "invalid" },
-      }
-    );
+      });
 
     var result = _processor.HasValidAzureProperties();
 
@@ -1232,7 +1172,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1242,7 +1182,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1256,7 +1196,7 @@ public class ProcessorTests
 
     var userFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1266,7 +1206,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1276,7 +1216,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -1286,7 +1226,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -1299,42 +1239,30 @@ public class ProcessorTests
     };
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    )
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
         GroupsFields = groupFields,
         UsersFields = userFields,
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "description" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "givenName" },
         { 2, "surname" },
         { 3, "mail" },
         { 4, "userPrincipalName" },
-      }
-    );
+      });
 
     var result = _processor.HasValidOnspringFields();
 
@@ -1346,7 +1274,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1356,7 +1284,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1370,7 +1298,7 @@ public class ProcessorTests
 
     var userFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1380,7 +1308,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1390,7 +1318,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -1400,7 +1328,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -1413,44 +1341,32 @@ public class ProcessorTests
     };
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    )
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
         GroupsFields = groupFields,
         UsersFields = userFields,
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "description" },
         { 3, "invalid" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "givenName" },
         { 2, "surname" },
         { 3, "mail" },
         { 4, "userPrincipalName" },
         { 5, "invalid" },
-      }
-    );
+      });
 
     var result = _processor.HasValidOnspringFields();
 
@@ -1462,7 +1378,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1472,7 +1388,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1486,7 +1402,7 @@ public class ProcessorTests
 
     var usersFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1496,7 +1412,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1506,7 +1422,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -1516,7 +1432,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -1529,42 +1445,30 @@ public class ProcessorTests
     };
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    )
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
         GroupsFields = groupFields,
         UsersFields = usersFields,
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "displayName" },
         { 2, "description" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "givenName" },
         { 2, "surname" },
         { 3, "mail" },
         { 4, "userPrincipalName" },
-      }
-    );
+      });
 
     var result = _processor.HasRequiredOnspringFields();
 
@@ -1576,7 +1480,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1586,7 +1490,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1600,7 +1504,7 @@ public class ProcessorTests
 
     var usersFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -1610,7 +1514,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -1620,7 +1524,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -1630,7 +1534,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = false,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -1643,40 +1547,28 @@ public class ProcessorTests
     };
 
     _settingsMock
-    .SetupGet(
-      x => x.Onspring
-    )
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
         GroupsFields = groupFields,
         UsersFields = usersFields,
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.GroupsFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 2, "description" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(
-      x => x.UsersFieldMappings
-    )
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "givenName" },
         { 2, "surname" },
         { 3, "mail" },
-      }
-    );
+      });
 
     var result = _processor.HasRequiredOnspringFields();
 
@@ -1843,8 +1735,8 @@ public class ProcessorTests
 
     var mockPropertyInfo = new Mock<PropertyInfo>();
     mockPropertyInfo
-    .SetupGet(x => x.PropertyType)
-    .Returns(typeof(DateTime?));
+      .SetupGet(static x => x.PropertyType)
+      .Returns(typeof(DateTime?));
 
     var result = Processor.IsValidFieldTypeAndPropertyType(
       onspringField,
@@ -1870,8 +1762,8 @@ public class ProcessorTests
 
     var mockPropertyInfo = new Mock<PropertyInfo>();
     mockPropertyInfo
-    .SetupGet(x => x.PropertyType)
-    .Returns(typeof(DateTime?));
+      .SetupGet(static x => x.PropertyType)
+      .Returns(typeof(DateTime?));
 
     var result = Processor.IsValidFieldTypeAndPropertyType(
       onspringField,
@@ -1897,8 +1789,8 @@ public class ProcessorTests
 
     var mockPropertyInfo = new Mock<PropertyInfo>();
     mockPropertyInfo
-    .SetupGet(x => x.PropertyType)
-    .Returns(typeof(DateTime?));
+      .SetupGet(static x => x.PropertyType)
+      .Returns(typeof(DateTime?));
 
     var result = Processor.IsValidFieldTypeAndPropertyType(
       onspringField,
@@ -2106,12 +1998,12 @@ public class ProcessorTests
   public void HasValidFieldTypeToPropertyTypeMappings_WhenCalledAndFieldHasValidFieldTypeToPropertyTypeMappings_ItShouldReturnTrue()
   {
     _settingsMock
-    .SetupGet(x => x.Azure)
-    .Returns(new AzureSettings());
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     var groupsFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2121,7 +2013,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2135,7 +2027,7 @@ public class ProcessorTests
 
     var usersFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2145,7 +2037,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2155,7 +2047,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -2165,7 +2057,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -2178,38 +2070,32 @@ public class ProcessorTests
     };
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
         GroupsFields = groupsFields,
         UsersFields = usersFields
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(x => x.GroupsFieldMappings)
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "DisplayName" },
         { 2, "Description" },
         { -1, "invalid" },
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(x => x.UsersFieldMappings)
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "UserPrincipalName" },
         { 2, "GivenName" },
         { 3, "Surname" },
         { 4, "Mail" },
         { -1, "invalid" },
-      }
-    );
+      });
 
     var result = _processor.HasValidFieldTypeToPropertyTypeMappings();
 
@@ -2220,12 +2106,12 @@ public class ProcessorTests
   public void HasValidFieldTypeToPropertyTypeMappings_WhenCalledAndFieldHasInvalidFieldTypeToPropertyTypeMappings_ItShouldReturnFalse()
   {
     _settingsMock
-    .SetupGet(x => x.Azure)
-    .Returns(new AzureSettings());
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     var groupsFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2235,7 +2121,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2245,7 +2131,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -2259,7 +2145,7 @@ public class ProcessorTests
 
     var usersFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2269,7 +2155,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2279,7 +2165,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -2289,7 +2175,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -2299,7 +2185,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 5,
         AppId = 1,
@@ -2312,31 +2198,26 @@ public class ProcessorTests
     };
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(
-      new OnspringSettings
+      .SetupGet(static x => x.Onspring)
+      .Returns(new OnspringSettings
       {
         GroupsFields = groupsFields,
         UsersFields = usersFields
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(x => x.GroupsFieldMappings)
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "DisplayName" },
         { 2, "Description" },
         { 0, "invalid" },
         { 3, "createdDateTime" }
-      }
-    );
+      });
 
     _settingsMock
-    .SetupGet(x => x.UsersFieldMappings)
-    .Returns(
-      new Dictionary<int, string>
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
       {
         { 1, "UserPrincipalName" },
         { 2, "GivenName" },
@@ -2344,8 +2225,7 @@ public class ProcessorTests
         { 4, "Mail" },
         { 0, "invalid" },
         { 5, "createdDateTime" }
-      }
-    );
+      });
 
     var result = _processor.HasValidFieldTypeToPropertyTypeMappings();
 
@@ -2367,7 +2247,7 @@ public class ProcessorTests
       IsRequired = true,
       IsUnique = true,
       Multiplicity = Multiplicity.SingleSelect,
-      Values = new List<ListValue>(),
+      Values = [],
       ListId = listId,
     };
 
@@ -2397,14 +2277,13 @@ public class ProcessorTests
       IsRequired = true,
       IsUnique = true,
       Multiplicity = Multiplicity.SingleSelect,
-      Values = new List<ListValue>
-      {
+      Values = [
         new ListValue
         {
           Id = Guid.NewGuid(),
           Name = existingValue
         }
-      },
+      ],
       ListId = listId,
     };
 
@@ -2427,14 +2306,13 @@ public class ProcessorTests
       IsRequired = true,
       IsUnique = true,
       Multiplicity = Multiplicity.SingleSelect,
-      Values = new List<ListValue>
-      {
+      Values = [
         new ListValue
         {
           Id = Guid.NewGuid(),
           Name = "name"
         }
-      },
+      ],
       ListId = 1,
     };
 
@@ -2459,20 +2337,16 @@ public class ProcessorTests
     var onspringSettings = new OnspringSettings();
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(
-      onspringSettings
-    );
+    .SetupGet(static x => x.Onspring)
+    .Returns(onspringSettings);
 
     _settingsMock
-    .SetupGet(x => x.Azure)
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     var listFields = new List<ListField>
     {
-      new ListField
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2483,16 +2357,15 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.MultiSelect,
         ListId = 1,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
             Name = "group type 1"
           }
-        },
+        ],
       },
-      new ListField
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2503,9 +2376,9 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>(),
+        Values = [],
       },
-      new ListField
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -2516,7 +2389,7 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 3,
-        Values = new List<ListValue>(),
+        Values = [],
       },
     };
 
@@ -2529,31 +2402,30 @@ public class ProcessorTests
 
     var groups = new List<Group?>
     {
-      new Group
+      new()
       {
         Id = "group id",
         DisplayName = "group display name",
         Description = "group description",
-        GroupTypes = new List<string>
-        {
+        GroupTypes = [
           "group type 1",
           "group type 2",
-        }
+        ]
       },
       null,
-      new Group
+      new()
       {
         Id = "group id",
         DisplayName = null,
         Description = "group description",
         GroupTypes = null,
       },
-      new Group
+      new()
       {
         Id = "group id",
         DisplayName = "group display name",
         Description = "group description",
-        GroupTypes = new List<string>(),
+        GroupTypes = [],
       },
     };
 
@@ -2570,8 +2442,7 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.MultiSelect,
         ListId = 1,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
@@ -2582,7 +2453,7 @@ public class ProcessorTests
             Id = Guid.NewGuid(),
             Name = "group type 2"
           }
-        },
+        ],
       },
       new ListField
       {
@@ -2595,33 +2466,23 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
             Name = "group display name"
           }
-        },
+        ],
       },
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.AddListValue(
-        It.IsAny<int>(),
-        It.IsAny<string>()
-      ).Result
-    )
-    .Returns(
-      new SaveListItemResponse(Guid.NewGuid())
-    );
+      .Setup(static x => x.AddListValue(It.IsAny<int>(), It.IsAny<string>()))
+      .ReturnsAsync(new SaveListItemResponse(Guid.NewGuid()));
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(updatedListFields);
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync(updatedListFields);
 
     await _processor.SyncListValues(
       listFields,
@@ -2630,17 +2491,14 @@ public class ProcessorTests
     );
 
     _onspringServiceMock.Verify(
-      x => x.AddListValue(
+      static x => x.AddListValue(
         It.IsAny<int>(),
         It.IsAny<string>()
       ),
       Times.Exactly(2)
     );
 
-    _onspringServiceMock.Verify(
-      x => x.GetGroupFields(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
 
     onspringSettings.GroupsFields.Should().BeEquivalentTo(updatedListFields);
   }
@@ -2651,20 +2509,16 @@ public class ProcessorTests
     var onspringSettings = new OnspringSettings();
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(
-      onspringSettings
-    );
+      .SetupGet(static x => x.Onspring)
+      .Returns(onspringSettings);
 
     _settingsMock
-    .SetupGet(x => x.Azure)
-    .Returns(
-      new AzureSettings()
-    );
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
 
     var listFields = new List<ListField>
     {
-      new ListField
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -2675,16 +2529,15 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.MultiSelect,
         ListId = 1,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
             Name = "LastName"
           }
-        },
+        ],
       },
-      new ListField
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -2695,9 +2548,9 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>(),
+        Values = [],
       },
-      new ListField
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -2708,7 +2561,7 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>(),
+        Values = [],
       },
     };
 
@@ -2721,14 +2574,14 @@ public class ProcessorTests
 
     var users = new List<User?>
     {
-      new User
+      new()
       {
         Id = "user id",
         Surname = "NewName",
         AccountEnabled = true,
       },
       null,
-      new User
+      new()
       {
         Id = "user id",
         Surname = "LastName",
@@ -2749,8 +2602,7 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.MultiSelect,
         ListId = 1,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
@@ -2761,7 +2613,7 @@ public class ProcessorTests
             Id = Guid.NewGuid(),
             Name = "NewName"
           }
-        },
+        ],
       },
       new ListField
       {
@@ -2774,33 +2626,23 @@ public class ProcessorTests
         IsUnique = true,
         Multiplicity = Multiplicity.SingleSelect,
         ListId = 2,
-        Values = new List<ListValue>
-        {
+        Values = [
           new ListValue
           {
             Id = Guid.NewGuid(),
             Name = "true"
           }
-        },
+        ],
       },
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.AddListValue(
-        It.IsAny<int>(),
-        It.IsAny<string>()
-      ).Result
-    )
-    .Returns(
-      new SaveListItemResponse(Guid.NewGuid())
-    );
+      .Setup(static x => x.AddListValue(It.IsAny<int>(), It.IsAny<string>()))
+      .ReturnsAsync(new SaveListItemResponse(Guid.NewGuid()));
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetUserFields().Result
-    )
-    .Returns(updatedListFields);
+      .Setup(static x => x.GetUserFields())
+      .ReturnsAsync(updatedListFields);
 
     await _processor.SyncListValues(
       listFields,
@@ -2809,17 +2651,14 @@ public class ProcessorTests
     );
 
     _onspringServiceMock.Verify(
-      x => x.AddListValue(
+      static x => x.AddListValue(
         It.IsAny<int>(),
         It.IsAny<string>()
       ),
       Times.Exactly(2)
     );
 
-    _onspringServiceMock.Verify(
-      x => x.GetUserFields(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetUserFields(), Times.Once);
 
     onspringSettings.UsersFields.Should().BeEquivalentTo(updatedListFields);
   }
