@@ -1168,6 +1168,36 @@ public class ProcessorTests
   }
 
   [Fact]
+  public void HasValidAzureProperties_WhenCalledAndAzurePropertiesHaveDifferentCasing_ItShouldReturnTrue()
+  {
+    _settingsMock
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
+
+    _settingsMock
+      .SetupGet(static x => x.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "DisplayName" },
+        { 2, "DescRiptIon" },
+      });
+
+    _settingsMock
+      .SetupGet(static x => x.UsersFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "givenname" },
+        { 2, "SURNAME" },
+        { 3, "mAil" },
+        { 4, "UserPrincipalName" },
+      });
+
+    var result = _processor.HasValidAzureProperties();
+
+    result.Should().BeTrue();
+  }
+
+  [Fact]
   public void HasValidOnspringFields_WhenCalledAndHasValidFields_ItShouldReturnTrue()
   {
     var groupFields = new List<Field>
