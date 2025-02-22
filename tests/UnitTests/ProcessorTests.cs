@@ -27,84 +27,54 @@ public class ProcessorTests
   public async Task VerifyConnection_WhenCalledAndOnspringServiceAndGraphServiceAreConnected_ItShouldReturnTrue()
   {
     _onspringServiceMock
-    .Setup(
-      x => x.IsConnected()
-    )
-    .ReturnsAsync(true);
+      .Setup(static x => x.IsConnected())
+      .ReturnsAsync(true);
 
     _graphServiceMock
-    .Setup(
-      x => x.IsConnected().Result
-    )
-    .Returns(true);
+      .Setup(static x => x.IsConnected())
+      .ReturnsAsync(true);
 
     var result = await _processor.VerifyConnections();
 
     result.Should().BeTrue();
-    _onspringServiceMock.Verify(
-      x => x.IsConnected(),
-      Times.Once
-    );
-    _graphServiceMock.Verify(
-      x => x.IsConnected(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.IsConnected(), Times.Once);
+    _graphServiceMock.Verify(static x => x.IsConnected(), Times.Once);
   }
 
   [Fact]
   public async Task VerifyConnection_WhenCalledAndOnspringServiceIsNotConnected_ItShouldReturnFalse()
   {
     _onspringServiceMock
-    .Setup(
-      x => x.IsConnected().Result
-    )
-    .Returns(false);
+      .Setup(static x => x.IsConnected())
+      .ReturnsAsync(false);
 
     _graphServiceMock
-    .Setup(
-      x => x.IsConnected().Result
-    )
-    .Returns(true);
+      .Setup(static x => x.IsConnected())
+      .ReturnsAsync(true);
 
     var result = await _processor.VerifyConnections();
 
     result.Should().BeFalse();
-    _onspringServiceMock.Verify(
-      x => x.IsConnected(),
-      Times.Once
-    );
-    _graphServiceMock.Verify(
-      x => x.IsConnected(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.IsConnected(), Times.Once);
+    _graphServiceMock.Verify(static x => x.IsConnected(), Times.Once);
   }
 
   [Fact]
   public async Task VerifyConnection_WhenCalledAndGraphServiceIsNotConnected_ItShouldReturnFalse()
   {
     _onspringServiceMock
-    .Setup(
-      x => x.IsConnected().Result
-    )
-    .Returns(true);
+      .Setup(static x => x.IsConnected())
+      .ReturnsAsync(true);
 
     _graphServiceMock
-    .Setup(
-      x => x.IsConnected().Result
-    )
-    .Returns(false);
+      .Setup(static x => x.IsConnected())
+      .ReturnsAsync(false);
 
     var result = await _processor.VerifyConnections();
 
     result.Should().BeFalse();
-    _onspringServiceMock.Verify(
-      x => x.IsConnected(),
-      Times.Once
-    );
-    _graphServiceMock.Verify(
-      x => x.IsConnected(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.IsConnected(), Times.Once);
+    _graphServiceMock.Verify(static x => x.IsConnected(), Times.Once);
   }
 
   [Fact]
@@ -112,7 +82,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -122,7 +92,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -137,16 +107,13 @@ public class ProcessorTests
     var configFile = new FileInfo("testData/testconfig.json");
 
     var optionsMock = new Mock<IOptions<AppOptions>>();
+
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -178,7 +145,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -193,16 +160,13 @@ public class ProcessorTests
     var configFile = new FileInfo("testData/testconfig.json");
 
     var optionsMock = new Mock<IOptions<AppOptions>>();
+
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -235,7 +199,7 @@ public class ProcessorTests
 
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -245,7 +209,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -261,15 +225,11 @@ public class ProcessorTests
 
     var optionsMock = new Mock<IOptions<AppOptions>>();
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -306,7 +266,7 @@ public class ProcessorTests
 
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -316,7 +276,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -331,16 +291,13 @@ public class ProcessorTests
     var configFile = new FileInfo("testData/testconfig.json");
 
     var optionsMock = new Mock<IOptions<AppOptions>>();
+
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -379,7 +336,7 @@ public class ProcessorTests
 
     var userFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -389,7 +346,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -399,7 +356,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -409,7 +366,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -430,8 +387,8 @@ public class ProcessorTests
         IsUnique = true,
         ListId = 1,
         Multiplicity = Multiplicity.SingleSelect,
-        Values = new List<ListValue>
-        {
+        Values =
+        [
           new ListValue
           {
             Id = activeListValueId,
@@ -442,9 +399,9 @@ public class ProcessorTests
             Id = inactiveListValueId,
             Name = "Inactive",
           }
-        }
+        ]
       },
-      new Field
+      new()
       {
         Id = 6,
         AppId = 1,
@@ -459,16 +416,13 @@ public class ProcessorTests
     var configFile = new FileInfo("testData/testconfig.json");
 
     var optionsMock = new Mock<IOptions<AppOptions>>();
+
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -520,15 +474,12 @@ public class ProcessorTests
     var optionsMock = new Mock<IOptions<AppOptions>>();
 
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
+
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -558,7 +509,7 @@ public class ProcessorTests
   {
     var userFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -568,7 +519,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -578,7 +529,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 3,
         AppId = 1,
@@ -588,7 +539,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 4,
         AppId = 1,
@@ -598,7 +549,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 5,
         AppId = 1,
@@ -608,7 +559,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 6,
         AppId = 1,
@@ -625,15 +576,12 @@ public class ProcessorTests
     var optionsMock = new Mock<IOptions<AppOptions>>();
 
     optionsMock
-    .SetupGet(
-      x => x.Value
-    )
-    .Returns(
-      new AppOptions
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
       {
         ConfigFile = configFile
-      }
-    );
+      });
+
 
     var settings = new Settings(optionsMock.Object)
     {
@@ -685,7 +633,7 @@ public class ProcessorTests
   {
     var userFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -695,7 +643,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -709,25 +657,20 @@ public class ProcessorTests
 
     var onspringSettings = new OnspringSettings
     {
-      UsersFields = new List<Field>()
+      UsersFields = []
     };
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(onspringSettings);
+      .SetupGet(static x => x.Onspring)
+      .Returns(onspringSettings);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetUserFields().Result
-    )
-    .Returns(userFields);
+      .Setup(static x => x.GetUserFields())
+      .ReturnsAsync(userFields);
 
     await _processor.GetOnspringUserFields();
 
-    _onspringServiceMock.Verify(
-      x => x.GetUserFields(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetUserFields(), Times.Once);
 
     onspringSettings.UsersFields.Should().NotBeEmpty();
     onspringSettings.UsersFields.Should().HaveCount(2);
@@ -737,10 +680,9 @@ public class ProcessorTests
   [Fact]
   public async Task GetOnspringGroupsFields_WhenCalled_ItShouldSetTheOnspringGroupsFields()
   {
-
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -750,7 +692,7 @@ public class ProcessorTests
         IsRequired = true,
         IsUnique = true,
       },
-      new Field
+      new()
       {
         Id = 2,
         AppId = 1,
@@ -764,25 +706,20 @@ public class ProcessorTests
 
     var onspringSettings = new OnspringSettings
     {
-      GroupsFields = new List<Field>()
+      GroupsFields = []
     };
 
     _settingsMock
-    .SetupGet(x => x.Onspring)
-    .Returns(onspringSettings);
+      .SetupGet(static x => x.Onspring)
+      .Returns(onspringSettings);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(groupFields);
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync(groupFields);
 
     await _processor.GetOnspringGroupFields();
 
-    _onspringServiceMock.Verify(
-      x => x.GetGroupFields(),
-      Times.Once
-    );
+    _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
 
     onspringSettings.GroupsFields.Should().NotBeEmpty();
     onspringSettings.GroupsFields.Should().HaveCount(2);
@@ -794,7 +731,7 @@ public class ProcessorTests
   {
     var groupFields = new List<Field>
     {
-      new Field
+      new()
       {
         Id = 1,
         AppId = 1,
@@ -807,10 +744,8 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(groupFields);
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync(groupFields);
 
     var azureGroups = new List<DirectoryObject>
     {
@@ -839,15 +774,13 @@ public class ProcessorTests
     {
       AppId = 1,
       RecordId = 1,
-      FieldData = new List<RecordFieldValue>(),
+      FieldData = [],
     };
 
     _onspringServiceMock
-    .SetupSequence(
-      x => x.GetGroup(It.IsAny<string>()).Result
-    )
-    .Returns(onspringGroup)
-    .Returns((ResultRecord?) null);
+      .SetupSequence(static x => x.GetGroup(It.IsAny<string>()))
+      .ReturnsAsync(onspringGroup)
+      .ReturnsAsync((ResultRecord?) null);
 
     var usersGroupMappings = await _processor.GetUsersGroupMappings(azureGroups);
 
@@ -856,15 +789,8 @@ public class ProcessorTests
     usersGroupMappings.Should().ContainKey("1");
     usersGroupMappings["1"].Should().Be(1);
 
-    _onspringServiceMock.Verify(
-      x => x.GetGroupFields(),
-      Times.Once
-    );
-
-    _onspringServiceMock.Verify(
-      x => x.GetGroup(It.IsAny<string>()),
-      Times.Exactly(2)
-    );
+    _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
+    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<string>()), Times.Exactly(2));
   }
 
   [Fact]
@@ -4185,16 +4111,12 @@ public class ProcessorTests
     var saveRecordResponse = new SaveRecordResponse
     {
       Id = 1,
-      Warnings = new List<string>()
+      Warnings = []
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(
-      new List<Field>
-      {
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync([
         new Field
         {
           Id = 1,
@@ -4205,31 +4127,20 @@ public class ProcessorTests
           IsRequired = true,
           IsUnique = true,
         },
-      }
-    );
+      ]);
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<User>()
-      ).Result
-    )
-    .Returns(
-      new List<DirectoryObject>()
-    );
+      .Setup(static x => x.GetUserGroups(It.IsAny<User>()))
+      .ReturnsAsync([]);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetUser(It.IsAny<User>()).Result
-    )
-    .Returns(
-      new ResultRecord
+      .Setup(static x => x.GetUser(It.IsAny<User>()))
+      .ReturnsAsync(new ResultRecord
       {
         AppId = 1,
         RecordId = 1,
-        FieldData = new List<RecordFieldValue>(),
-      }
-    );
+        FieldData = [],
+      });
 
     _onspringServiceMock
     .Setup(
@@ -4279,16 +4190,12 @@ public class ProcessorTests
     var saveRecordResponse = new SaveRecordResponse
     {
       Id = 1,
-      Warnings = new List<string>()
+      Warnings = []
     };
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetGroupFields().Result
-    )
-    .Returns(
-      new List<Field>
-      {
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync([
         new Field
         {
           Id = 1,
@@ -4299,53 +4206,41 @@ public class ProcessorTests
           IsRequired = true,
           IsUnique = true,
         },
-      }
-    );
+      ]);
 
     _graphServiceMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<User>()
-      ).Result
-    )
-    .Returns(
-      new List<DirectoryObject>
-      {
+      .Setup(static x => x.GetUserGroups(It.IsAny<User>()))
+      .ReturnsAsync([
         new Group
         {
           Id = "1",
           DisplayName = "Group 1",
         },
-      }
-    );
+      ]);
 
     _onspringServiceMock
-    .Setup(
-      x => x.GetUser(It.IsAny<User>()).Result
-    )
-    .Returns(
-      new ResultRecord
+      .Setup(static x => x.GetUser(It.IsAny<User>()))
+      .ReturnsAsync(new ResultRecord
       {
         AppId = 1,
         RecordId = 1,
-        FieldData = new List<RecordFieldValue>(),
-      }
-    );
+        FieldData = [],
+      });
 
     _onspringServiceMock
-    .Setup(
-      x => x.UpdateUser(
-        It.IsAny<User>(),
-        It.IsAny<ResultRecord>(),
-        It.IsAny<Dictionary<string, int>>()
-      ).Result
-    )
-    .Returns<SaveRecordResponse?>(null);
+      .Setup(
+        static x => x.UpdateUser(
+          It.IsAny<User>(),
+          It.IsAny<ResultRecord>(),
+          It.IsAny<Dictionary<string, int>>()
+        )
+      )
+      .ReturnsAsync(null as SaveRecordResponse);
 
     await _processor.SyncUser(azureUser);
 
     _onspringServiceMock.Verify(
-      x => x.CreateUser(
+      static x => x.CreateUser(
         It.IsAny<User>(),
         It.IsAny<Dictionary<string, int>>()
       ),
@@ -4353,7 +4248,7 @@ public class ProcessorTests
     );
 
     _onspringServiceMock.Verify(
-      x => x.UpdateUser(
+      static x => x.UpdateUser(
         It.IsAny<User>(),
         It.IsAny<ResultRecord>(),
         It.IsAny<Dictionary<string, int>>()
@@ -4361,12 +4256,6 @@ public class ProcessorTests
       Times.Once
     );
 
-    _loggerMock.Verify(
-      x => x.Warning(
-        It.IsAny<string>(),
-        It.IsAny<ResultRecord>()
-      ),
-      Times.Once
-    );
+    _loggerMock.Verify(static x => x.Warning(It.IsAny<string>(), It.IsAny<ResultRecord>()), Times.Once);
   }
 }
