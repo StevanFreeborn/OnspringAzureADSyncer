@@ -309,6 +309,8 @@ public class OnspringService : IOnspringService
   {
     try
     {
+      // TODO: how does allowing different azure
+      // property affect this
       var groupNameFieldId = _settings.Onspring.GroupsNameFieldId;
       var requestFieldIds = _settings.GroupsFieldMappings.Keys.ToList();
 

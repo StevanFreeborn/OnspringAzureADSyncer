@@ -264,11 +264,9 @@ public class Processor : IProcessor
     foreach (var kvp in Settings.DefaultGroupsFieldMappings)
     {
       var onspringField = _settings
-      .Onspring
-      .GroupsFields
-      .FirstOrDefault(
-        f => f.Name == kvp.Value
-      );
+        .Onspring
+        .GroupsFields
+        .FirstOrDefault(f => f.Name == kvp.Value);
 
       var fieldId = onspringField?.Id ?? 0;
 
@@ -285,21 +283,22 @@ public class Processor : IProcessor
       // mapped to a Azure Group property, override
       // the existing mapping. Azure Group id is always mapped
       // to the Onspring Group Name field
-      if (
-        _settings.GroupsFieldMappings.ContainsKey(fieldId) &&
-        kvp.Key == AzureSettings.GroupsNameKey
-      )
-      {
-        _logger.Warning(
-          "Overriding existing Azure Group id field mapping: {Key} - {Value}",
-          kvp.Key,
-          fieldId
-        );
-
-        _settings.GroupsFieldMappings[fieldId] = AzureSettings.GroupsNameKey;
-
-        continue;
-      }
+      /*if (*/
+      /*  _settings.GroupsFieldMappings.ContainsKey(fieldId) &&*/
+      /*  kvp.Key == AzureSettings.GroupsNameKey*/
+      /*)*/
+      /*{*/
+      /*  _logger.Warning(*/
+      /*    "Overriding existing Azure Group id field mapping: {Key} - {Value}",*/
+      /*    kvp.Key,*/
+      /*    fieldId*/
+      /*  );*/
+      /**/
+      /*  _settings.GroupsFieldMappings[fieldId] = AzureSettings.GroupsNameKey;*/
+      /**/
+      /*  continue;*/
+      /*}*/
+      /**/
 
       // if the Onspring Group field is already mapped to a
       // Azure Group property, skip it
@@ -315,11 +314,11 @@ public class Processor : IProcessor
       }
 
       _settings
-      .GroupsFieldMappings
-      .Add(
-        fieldId,
-        kvp.Key
-      );
+        .GroupsFieldMappings
+        .Add(
+          fieldId,
+          kvp.Key
+        );
     }
 
     _logger.Debug(
@@ -864,6 +863,9 @@ public class Processor : IProcessor
   {
     _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
+    // TODO: If we allow other azure
+    // properties to be mapped as the group namespace Name
+    // we need to change this
     var onspringGroup = await _onspringService.GetGroup(azureGroup.Id);
 
     if (onspringGroup is null)
@@ -956,6 +958,9 @@ public class Processor : IProcessor
         continue;
       }
 
+      // TODO: If we allow other azure
+      // properties to be mapped as the group name
+      // we need to change this
       var onspringGroup = await _onspringService.GetGroup(azureUserGroup.Id);
 
       if (onspringGroup is null)
