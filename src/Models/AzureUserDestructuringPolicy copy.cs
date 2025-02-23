@@ -23,18 +23,19 @@ public class AzureUserDestructuringPolicy : IAzureUserDestructuringPolicy
     }
 
     var mappedUserProperties = _settings
-    .UsersFieldMappings
-    .Values
-    .Select(p => p.Capitalize())
-    .ToList();
+      .UsersFieldMappings
+      .Values
+      .ToList();
 
     var props = value
-    .GetType()
-    .GetProperties()
-    .Where(
-      p => mappedUserProperties.Contains(p.Name) &&
-      p.GetIndexParameters().Any() == false
-    );
+      .GetType()
+      .GetProperties(
+        BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
+      )
+      .Where(
+        p => mappedUserProperties.Contains(p.Name) &&
+          p.GetIndexParameters().Length != 0
+      );
 
     var logEventProperties = new List<LogEventProperty>();
 

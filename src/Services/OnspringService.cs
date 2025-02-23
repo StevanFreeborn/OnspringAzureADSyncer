@@ -150,7 +150,8 @@ public class OnspringService : IOnspringService
       var lookupValue = azureUser
       .GetType()
       .GetProperty(
-        azurePropertyMappedToUserName.Capitalize()
+        azurePropertyMappedToUserName,
+        BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
       )
       ?.GetValue(azureUser);
 
@@ -158,7 +159,7 @@ public class OnspringService : IOnspringService
       {
         AppId = _settings.Onspring.UsersAppId,
         Filter = $"{userUsernameFieldId} eq '{lookupValue}'",
-        FieldIds = _settings.UsersFieldMappings.Keys.ToList(),
+        FieldIds = [.. _settings.UsersFieldMappings.Keys],
         DataFormat = DataFormat.Formatted
       };
 
@@ -691,14 +692,17 @@ public class OnspringService : IOnspringService
       }
 
       var azureObjectValue = azureObject
-      .GetType()
-      .GetProperty(kvp.Value.Capitalize())
-      ?.GetValue(azureObject);
+        .GetType()
+        .GetProperty(
+          kvp.Value,
+          BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
+        )
+        ?.GetValue(azureObject);
 
       var onspringRecordValue = onspringRecord
-      .FieldData
-      .FirstOrDefault(f => f.FieldId == kvp.Key)
-      ?.GetValue();
+        .FieldData
+        .FirstOrDefault(f => f.FieldId == kvp.Key)
+        ?.GetValue();
 
       if (
         ValuesAreEqual(
@@ -794,9 +798,12 @@ public class OnspringService : IOnspringService
     foreach (var kvp in fieldMappings)
     {
       var fieldValue = azureObject
-      .GetType()
-      .GetProperty(kvp.Value.Capitalize())
-      ?.GetValue(azureObject);
+        .GetType()
+        .GetProperty(
+          kvp.Value,
+          BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
+        )
+        ?.GetValue(azureObject);
 
       if (CanIgnoreFieldMapping(kvp.Key) is true)
       {
