@@ -243,6 +243,8 @@ The app can be configured to enable activating and deactivating users in Onsprin
 
 When this property is set the app will set Onspring users to active if they are a member of one of these groups and their account is `Enabled` in Azure Active Directory.
 
+_**Note:**_ The app will only manage the `Status` field for users in Onspring that match with a user in Azure Active Directory. If a user is in Onspring but not in Azure Active Directory the app will not change the `Status` field for that user.
+
 ### Custom Mappings
 
 The app can be configured to map custom properties from Azure Active Directory to Onspring by adding the `GroupsFieldMappings` and `UsersFieldMappings` properties to the `Settings` object. The properties in these objects should be the id of the field in Onspring and the name of the property for the Azure resource whose value you want to map to that field in Onspring. See below for an example:
@@ -271,6 +273,8 @@ A list of properties that can be mapped to Onspring fields can be found in the [
 - [User](https://docs.microsoft.com/graph/api/resources/user?view=graph-rest-1.0#properties)
 
 _**Note:**_ Only properties that are of primitive types can be mapped to Onspring fields. Complex types are not supported.
+
+_**Note:**_ Mapped property names are case insensitive.
 
 ### Validating Mappings
 
