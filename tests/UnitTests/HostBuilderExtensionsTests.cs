@@ -126,8 +126,8 @@ public class HostBuilderExtensionsTests
   [InlineData(" ", " ")]
   [InlineData("//api.onspring", "ApiKey")]
   public void AddOnspringClient_WhenCalledWithImproperSettings_ItShouldThrowException(
-    string baseUrl,
-    string apiKey
+    string? baseUrl,
+    string? apiKey
   )
   {
     _settingsMock
@@ -135,8 +135,8 @@ public class HostBuilderExtensionsTests
     .Returns(
       new OnspringSettings
       {
-        BaseUrl = baseUrl,
-        ApiKey = apiKey
+        BaseUrl = baseUrl!,
+        ApiKey = apiKey!
       }
     );
 

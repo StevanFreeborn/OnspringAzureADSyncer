@@ -194,7 +194,7 @@ public class ProcessorTests
   }
 
   [Fact]
-  public void SetDefaultGroupsFieldMappings_WhenCalledAndNameFieldIsAlreadyMapped_ItShouldOverwriteTheExistingNameMapping()
+  public void SetDefaultGroupsFieldMappings_WhenCalledAndNameFieldIsAlreadyMapped_ItShouldNotOverwriteTheExistingNameMapping()
   {
 
     var groupFields = new List<Field>
@@ -256,7 +256,7 @@ public class ProcessorTests
     settings.GroupsFieldMappings.Should().HaveCount(2);
     settings.GroupsFieldMappings.Should().ContainKey(1);
     settings.GroupsFieldMappings.Should().ContainKey(2);
-    settings.GroupsFieldMappings[1].Should().Be("id");
+    settings.GroupsFieldMappings[1].Should().Be("someProperty");
     settings.GroupsFieldMappings[2].Should().Be("description");
   }
 
@@ -747,22 +747,22 @@ public class ProcessorTests
       .Setup(static x => x.GetGroupFields())
       .ReturnsAsync(groupFields);
 
-    var azureGroups = new List<DirectoryObject>
+    var azureGroups = new List<Group>
     {
-      new Group
+      new()
       {
         Id = "1",
         DisplayName = "Group 1",
         Description = "Group 1 Description",
       },
-      new Group
+      new()
       {
         Id = "2",
         DisplayName = "Group 2",
         Description = "Group 2 Description",
       },
       null!,
-      new  Group
+      new()
       {
         Id = null,
         DisplayName = "Group 3",
@@ -778,7 +778,7 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-      .SetupSequence(static x => x.GetGroup(It.IsAny<string>()))
+      .SetupSequence(static x => x.GetGroup(It.IsAny<Group>()))
       .ReturnsAsync(onspringGroup)
       .ReturnsAsync((ResultRecord?) null);
 
@@ -790,7 +790,7 @@ public class ProcessorTests
     usersGroupMappings["1"].Should().Be(1);
 
     _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
-    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<string>()), Times.Exactly(2));
+    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Exactly(2));
   }
 
   [Fact]
@@ -2815,7 +2815,7 @@ public class ProcessorTests
     await _processor.SyncGroups();
 
     _graphServiceMock.Verify(static x => x.GetGroupsIterator(It.IsAny<List<Group>>(), It.IsAny<int>()), Times.Once);
-    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<string>()), Times.Never);
+    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Never);
     _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
     _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Never);
   }
@@ -2939,7 +2939,7 @@ public class ProcessorTests
     // azure group and a found onspring
     // group for the second azure group
     _onspringServiceMock
-      .SetupSequence(static x => x.GetGroup(It.IsAny<string>()))
+      .SetupSequence(static x => x.GetGroup(It.IsAny<Group>()))
       .ReturnsAsync(null as ResultRecord)
       .ReturnsAsync(onspringGroup);
 
@@ -2955,7 +2955,7 @@ public class ProcessorTests
 
     await processor.SyncGroups();
 
-    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<string>()), Times.Exactly(2));
+    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Exactly(2));
     _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Once);
     _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Once);
   }
@@ -2976,7 +2976,7 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
       .ReturnsAsync(null as ResultRecord);
 
     _onspringServiceMock
@@ -2999,7 +2999,7 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
       .ReturnsAsync(null as ResultRecord);
 
     _onspringServiceMock
@@ -3041,7 +3041,7 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
       .ReturnsAsync(resultRecord);
 
     _onspringServiceMock
@@ -3074,7 +3074,7 @@ public class ProcessorTests
     };
 
     _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<string>()))
+      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
       .ReturnsAsync(resultRecord);
 
     _onspringServiceMock
