@@ -114,10 +114,8 @@ public class GraphServiceTests
     var pageSize = 10;
 
     _msGraphMock
-    .Setup(
-      x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>()).Result
-    )
-    .Returns<GroupCollectionResponse>(null);
+      .Setup(static x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(null as GroupCollectionResponse);
 
     var result = await _graphService.GetGroupsIterator(azureGroups, pageSize);
 
@@ -316,12 +314,8 @@ public class GraphServiceTests
     };
 
     _msGraphMock
-    .Setup(
-      x => x.GetUserGroups(
-        It.IsAny<string>()
-      ).Result
-    )
-    .Returns<GroupCollectionResponse>(null);
+      .Setup(static x => x.GetUserGroups(It.IsAny<string>()))
+      .ReturnsAsync(null as DirectoryObjectCollectionResponse);
 
     var result = await _graphService.GetUserGroups(user);
 
@@ -421,12 +415,8 @@ public class GraphServiceTests
     var pageSize = 10;
 
     _msGraphMock
-    .Setup(
-      x => x.GetUsersForIterator(
-        It.IsAny<Dictionary<int, string>>()
-      ).Result
-    )
-    .Returns<UserCollectionResponse>(null);
+      .Setup(static x => x.GetUsersForIterator(It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(null as UserCollectionResponse);
 
     var result = await _graphService.GetUsersIterator(azureUsers, pageSize);
 

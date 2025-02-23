@@ -17,7 +17,7 @@ public class GraphService : IGraphService
     _msGraph = msGraph;
   }
 
-  public async Task<List<DirectoryObject>> GetUserGroups(User azureUser)
+  public async Task<List<Group>> GetUserGroups(User azureUser)
   {
     try
     {
@@ -33,10 +33,10 @@ public class GraphService : IGraphService
           azureUser
         );
 
-        return new List<DirectoryObject>();
+        return [];
       }
 
-      return groups.Value;
+      return [.. groups.Value.OfType<Group>()];
     }
     catch (Exception ex)
     {
@@ -47,7 +47,7 @@ public class GraphService : IGraphService
         ex.Message
       );
 
-      return new List<DirectoryObject>();
+      return [];
     }
   }
 
