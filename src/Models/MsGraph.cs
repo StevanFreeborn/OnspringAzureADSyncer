@@ -6,9 +6,9 @@ public class MsGraph : IMsGraph
   public async Task<DirectoryObjectCollectionResponse?> GetUserGroups(string? userId)
   {
     return await GraphServiceClient
-    .Users[userId]
-    .MemberOf
-    .GetAsync();
+      .Users[userId]
+      .MemberOf
+      .GetAsync();
   }
 
   public async Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<int, string> usersFieldMappings)
@@ -19,7 +19,7 @@ public class MsGraph : IMsGraph
       config =>
       config
       .QueryParameters
-      .Select = usersFieldMappings.Values.ToArray()
+      .Select = [.. usersFieldMappings.Values]
     );
   }
 

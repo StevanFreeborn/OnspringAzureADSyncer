@@ -142,18 +142,18 @@ public class OnspringService : IOnspringService
       var userUsernameFieldId = _settings.Onspring.UsersUsernameFieldId;
 
       var azurePropertyMappedToUserName = _settings
-      .UsersFieldMappings
-      .FirstOrDefault(
-        x => x.Key == userUsernameFieldId
-      ).Value;
+        .UsersFieldMappings
+        .FirstOrDefault(
+          x => x.Key == userUsernameFieldId
+        ).Value;
 
       var lookupValue = azureUser
-      .GetType()
-      .GetProperty(
-        azurePropertyMappedToUserName,
-        BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
-      )
-      ?.GetValue(azureUser);
+        .GetType()
+        .GetProperty(
+          azurePropertyMappedToUserName,
+          BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
+        )
+        ?.GetValue(azureUser);
 
       var request = new QueryRecordsRequest
       {
@@ -305,17 +305,31 @@ public class OnspringService : IOnspringService
     }
   }
 
-  public async Task<ResultRecord?> GetGroup(string? id)
+  public async Task<ResultRecord?> GetGroup(Group azureGroup)
   {
     try
     {
       var groupNameFieldId = _settings.Onspring.GroupsNameFieldId;
       var requestFieldIds = _settings.GroupsFieldMappings.Keys.ToList();
 
+      var azurePropertyMappedToGroupName = _settings
+        .GroupsFieldMappings
+        .FirstOrDefault(
+          x => x.Key == groupNameFieldId
+        ).Value;
+
+      var lookupValue = azureGroup
+        .GetType()
+        .GetProperty(
+          azurePropertyMappedToGroupName,
+          BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
+        )
+        ?.GetValue(azureGroup);
+
       var request = new QueryRecordsRequest
       {
         AppId = _settings.Onspring.GroupsAppId,
-        Filter = $"{groupNameFieldId} eq '{id}'",
+        Filter = $"{groupNameFieldId} eq '{lookupValue}'",
         FieldIds = requestFieldIds,
         DataFormat = DataFormat.Formatted
       };
@@ -340,8 +354,8 @@ public class OnspringService : IOnspringService
     {
       _logger.Error(
         ex,
-        "Unable to get group from Onspring: {Id}",
-        id
+        "Unable to get group from Onspring: {@AzureGroup}",
+        azureGroup
       );
 
       return null;
