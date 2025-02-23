@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.2.0"></a>
+## [1.2.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.2.0) (2025-02-23)
+
+### Features
+
+* make azure properties case insensitive ([025af95](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/025af95859eafb38dc3405ab9603b66254364031))
+
 <a name="1.1.0"></a>
 ## [1.1.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.1.0) (2025-02-21)
 
