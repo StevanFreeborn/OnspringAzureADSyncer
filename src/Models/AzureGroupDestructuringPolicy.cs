@@ -23,18 +23,19 @@ public class AzureGroupDestructuringPolicy : IAzureGroupDestructuringPolicy
     }
 
     var mappedGroupProperties = _settings
-    .GroupsFieldMappings
-    .Values
-    .Select(p => p.Capitalize())
-    .ToList();
+      .GroupsFieldMappings
+      .Values
+      .ToList();
 
     var props = value
-    .GetType()
-    .GetProperties()
-    .Where(
-      p => mappedGroupProperties.Contains(p.Name) &&
-      p.GetIndexParameters().Any() == false
-    );
+      .GetType()
+      .GetProperties(
+        BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
+      )
+      .Where(
+        p => mappedGroupProperties.Contains(p.Name) &&
+          p.GetIndexParameters().Length != 0
+      );
 
     var logEventProperties = new List<LogEventProperty>();
 

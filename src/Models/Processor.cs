@@ -386,9 +386,12 @@ public class Processor : IProcessor
         }
 
         var propertyValue = azureObject
-        .GetType()
-        .GetProperty(kvp.Value.Capitalize())
-        ?.GetValue(azureObject);
+          .GetType()
+          .GetProperty(
+            kvp.Value,
+            BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance
+          )
+          ?.GetValue(azureObject);
 
         var possibleNewListValues = new List<string?>();
 
@@ -492,18 +495,18 @@ public class Processor : IProcessor
     foreach (var kvp in _settings.GroupsFieldMappings)
     {
       var onspringField = _settings
-      .Onspring
-      .GroupsFields
-      .FirstOrDefault(
-        f => f.Id == kvp.Key
-      );
+        .Onspring
+        .GroupsFields
+        .FirstOrDefault(
+          f => f.Id == kvp.Key
+        );
 
       var azureGroupProperty = _settings
-      .Azure
-      .GroupsProperties
-      .FirstOrDefault(
-        p => p.Name == kvp.Value.Capitalize()
-      );
+        .Azure
+        .GroupsProperties
+        .FirstOrDefault(
+          p => string.Equals(p.Name, kvp.Value, StringComparison.OrdinalIgnoreCase)
+        );
 
       if (
         azureGroupProperty is null ||
@@ -536,18 +539,18 @@ public class Processor : IProcessor
       }
 
       var onspringField = _settings
-      .Onspring
-      .UsersFields
-      .FirstOrDefault(
-        f => f.Id == kvp.Key
-      );
+        .Onspring
+        .UsersFields
+        .FirstOrDefault(
+          f => f.Id == kvp.Key
+        );
 
       var azureUserProperty = _settings
-      .Azure
-      .UsersProperties
-      .FirstOrDefault(
-        p => p.Name == kvp.Value.Capitalize()
-      );
+        .Azure
+        .UsersProperties
+        .FirstOrDefault(
+          p => string.Equals(p.Name, kvp.Value, StringComparison.OrdinalIgnoreCase)
+        );
 
       if (
         azureUserProperty is null ||
@@ -569,7 +572,7 @@ public class Processor : IProcessor
       }
     }
 
-    if (invalidMappings.Any())
+    if (invalidMappings.Count != 0)
     {
       _logger.Error(
         "Invalid field type to property type mappings: {@InvalidMappings}",
@@ -720,32 +723,28 @@ public class Processor : IProcessor
   internal bool HasValidAzureProperties()
   {
     var azureGroupPropertyNames = _settings
-    .Azure
-    .GroupsProperties
-    .Select(p => p.Name)
-    .ToList();
+      .Azure
+      .GroupsProperties
+      .Select(p => p.Name)
+      .ToList();
 
     var azureUserPropertyNames = _settings
-    .Azure
-    .UsersProperties
-    .Select(p => p.Name)
-    .ToList();
+      .Azure
+      .UsersProperties
+      .Select(p => p.Name)
+      .ToList();
 
     var hasValidAzureGroupProperties = _settings
-    .GroupsFieldMappings
-    .All(
-      kvp =>
-        azureGroupPropertyNames
-        .Contains(kvp.Value.Capitalize())
-    );
+      .GroupsFieldMappings
+      .All(
+        kvp => azureGroupPropertyNames.Contains(kvp.Value, StringComparer.OrdinalIgnoreCase)
+      );
 
     var hasValidAzureUserProperties = _settings
-    .UsersFieldMappings
-    .All(
-      kvp =>
-        azureUserPropertyNames
-        .Contains(kvp.Value.Capitalize())
-    );
+      .UsersFieldMappings
+      .All(
+        kvp => azureUserPropertyNames.Contains(kvp.Value, StringComparer.OrdinalIgnoreCase)
+      );
 
     if (hasValidAzureGroupProperties is false)
     {
