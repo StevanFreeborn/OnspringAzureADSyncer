@@ -2,7 +2,7 @@ namespace OnspringAzureADSyncer.Interfaces;
 
 public interface IOnspringService
 {
-  Task<ResultRecord?> GetGroup(string? id);
+  Task<ResultRecord?> GetGroup(Group azureGroup);
   Task<List<Field>> GetGroupFields();
   Task<List<Field>> GetUserFields();
   Task<bool> IsConnected();

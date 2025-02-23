@@ -264,11 +264,9 @@ public class Processor : IProcessor
     foreach (var kvp in Settings.DefaultGroupsFieldMappings)
     {
       var onspringField = _settings
-      .Onspring
-      .GroupsFields
-      .FirstOrDefault(
-        f => f.Name == kvp.Value
-      );
+        .Onspring
+        .GroupsFields
+        .FirstOrDefault(f => f.Name == kvp.Value);
 
       var fieldId = onspringField?.Id ?? 0;
 
@@ -278,27 +276,6 @@ public class Processor : IProcessor
       )
       {
         _settings.Onspring.GroupsNameFieldId = fieldId;
-      }
-
-      // if the property being mapped is the Azure Group id
-      // property and the Onspring Group Name field is already
-      // mapped to a Azure Group property, override
-      // the existing mapping. Azure Group id is always mapped
-      // to the Onspring Group Name field
-      if (
-        _settings.GroupsFieldMappings.ContainsKey(fieldId) &&
-        kvp.Key == AzureSettings.GroupsNameKey
-      )
-      {
-        _logger.Warning(
-          "Overriding existing Azure Group id field mapping: {Key} - {Value}",
-          kvp.Key,
-          fieldId
-        );
-
-        _settings.GroupsFieldMappings[fieldId] = AzureSettings.GroupsNameKey;
-
-        continue;
       }
 
       // if the Onspring Group field is already mapped to a
@@ -315,11 +292,11 @@ public class Processor : IProcessor
       }
 
       _settings
-      .GroupsFieldMappings
-      .Add(
-        fieldId,
-        kvp.Key
-      );
+        .GroupsFieldMappings
+        .Add(
+          fieldId,
+          kvp.Key
+        );
     }
 
     _logger.Debug(
@@ -774,7 +751,7 @@ public class Processor : IProcessor
 
     var azureUserGroups = await _graphService.GetUserGroups(azureUser);
 
-    if (azureUserGroups.Any() == false)
+    if (azureUserGroups.Count == 0)
     {
       _logger.Warning(
         "No groups found for Azure User: {@AzureUser}",
@@ -864,7 +841,10 @@ public class Processor : IProcessor
   {
     _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
-    var onspringGroup = await _onspringService.GetGroup(azureGroup.Id);
+    // TODO: If we allow other azure
+    // properties to be mapped as the group namespace Name
+    // we need to change this
+    var onspringGroup = await _onspringService.GetGroup(azureGroup);
 
     if (onspringGroup is null)
     {
@@ -918,10 +898,7 @@ public class Processor : IProcessor
         onspringGroup
       );
 
-      return;
-    }
-
-    _logger.Debug(
+      return; } _logger.Debug(
       "Onspring Group {@OnspringGroup} updated: {@Response}",
       onspringGroup,
       updateResponse
@@ -934,15 +911,13 @@ public class Processor : IProcessor
   }
 
   internal async Task<Dictionary<string, int>> GetUsersGroupMappings(
-    List<DirectoryObject> azureUserGroups
+    List<Group> azureUserGroups
   )
   {
     var onspringGroupFields = await _onspringService.GetGroupFields();
 
     var recordIdField = onspringGroupFields
-    .FirstOrDefault(
-      f => f.Type is FieldType.AutoNumber
-    );
+      .FirstOrDefault(static f => f.Type is FieldType.AutoNumber);
 
     var groupMappings = new Dictionary<string, int>();
 
@@ -956,7 +931,7 @@ public class Processor : IProcessor
         continue;
       }
 
-      var onspringGroup = await _onspringService.GetGroup(azureUserGroup.Id);
+      var onspringGroup = await _onspringService.GetGroup(azureUserGroup);
 
       if (onspringGroup is null)
       {
@@ -979,16 +954,16 @@ public class Processor : IProcessor
     var activeListValue = statusListField
         .Values
         .FirstOrDefault(
-          v =>
+          static v =>
             v.Name == OnspringSettings.UsersActiveStatusListValueName
         );
 
     var inactiveListValue = statusListField
-    .Values
-    .FirstOrDefault(
-      v =>
-        v.Name == OnspringSettings.UsersInactiveStatusListValueName
-    );
+      .Values
+      .FirstOrDefault(
+        static v =>
+          v.Name == OnspringSettings.UsersInactiveStatusListValueName
+      );
 
     if (activeListValue is null)
     {

@@ -203,9 +203,7 @@ The app will map the following properties from Azure Active Directory to Onsprin
 | `id`                            | `Name`               |
 | `description`                   | `Description`        |
 
-_**Note:**_ The `id` property is used as the `Name` field in Onspring because the `Name` field is required and the `id` property is guaranteed to be unique.
-
-_**Note:**_ The `id` property to `Name` field mapping cannot be changed or overwritten.
+_**Note:**_ The `id` property is used as the `Name` field in Onspring because the `Name` field is required and the `id` property is guaranteed to be unique. This however can be changed by adding a custom mapping for the `Name` field in the configuration file. You will want to ensure that whatever property you map to the `Name` field is unique for each group otherwise you will get an error when trying to create the group in Onspring. It would also be worthy to note that if you are using this app in conjunction with the Onspring SSO integration you will want to ensure that the property you have mapped to the `Name` field is the same as the property for the `Group` claim that is being passed to Onspring.
 
 #### Users
 

@@ -30,8 +30,6 @@ public class Syncer : ISyncer
       return 2;
     }
 
-    // TODO: Validate field mappings
-
     Console.ForegroundColor = ConsoleColor.DarkBlue;
     Console.WriteLine("Connected successfully to Onspring and Azure AD");
     _logger.Information("Connected successfully to Onspring and Azure AD");

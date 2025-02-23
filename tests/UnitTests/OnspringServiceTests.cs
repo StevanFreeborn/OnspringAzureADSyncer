@@ -663,7 +663,7 @@ public class OnspringServiceTests
   {
     var groups = new List<ResultRecord>
     {
-      new ResultRecord()
+      new()
     };
 
     var pagedResponse = new GetPagedRecordsResponse
@@ -681,26 +681,36 @@ public class OnspringServiceTests
     };
 
     _onspringClientMock
-    .Setup(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ).Result
-    )
-    .Returns(response);
+      .Setup(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()))
+      .ReturnsAsync(response);
 
-    var result = await _onspringService.GetGroup(It.IsAny<string>());
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _settingsMock
+      .SetupGet(static m => m.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "id" },
+        { 2, "description" },
+      });
+
+    _settingsMock
+      .SetupGet(static m => m.Onspring)
+      .Returns(new OnspringSettings
+      {
+        GroupsNameFieldId = 1,
+      });
+
+    var result = await _onspringService.GetGroup(azureGroup);
 
     result.Should().NotBeNull();
     result.Should().BeOfType<ResultRecord>();
     result.Should().BeEquivalentTo(groups[0]);
-    _onspringClientMock.Verify(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ),
-      Times.Once
-    );
+    _onspringClientMock.Verify(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()), Times.Once);
   }
 
   [Fact]
@@ -723,74 +733,104 @@ public class OnspringServiceTests
     };
 
     _onspringClientMock
-    .Setup(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ).Result
-    )
-    .Returns(response);
+      .Setup(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()))
+      .ReturnsAsync(response);
 
-    var result = await _onspringService.GetGroup(It.IsAny<string>());
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _settingsMock
+      .SetupGet(static m => m.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "id" },
+        { 2, "description" },
+      });
+
+    _settingsMock
+      .SetupGet(static m => m.Onspring)
+      .Returns(new OnspringSettings
+      {
+        GroupsNameFieldId = 1,
+      });
+
+    var result = await _onspringService.GetGroup(azureGroup);
 
     result.Should().BeNull();
-    _onspringClientMock.Verify(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ),
-      Times.Once
-    );
+    _onspringClientMock.Verify(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()), Times.Once);
   }
 
   [Fact]
   public async Task GetGroup_WhenCalledAndAnExceptionIsThrown_ItShouldReturnNull()
   {
     _onspringClientMock
-    .Setup(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ).Result
-    )
-    .Throws(new Exception());
+      .Setup(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()))
+      .Throws(new Exception());
 
-    var result = await _onspringService.GetGroup(It.IsAny<string>());
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _settingsMock
+      .SetupGet(static m => m.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "id" },
+        { 2, "description" },
+      });
+
+    _settingsMock
+      .SetupGet(static m => m.Onspring)
+      .Returns(new OnspringSettings
+      {
+        GroupsNameFieldId = 1,
+      });
+
+    var result = await _onspringService.GetGroup(azureGroup);
 
     result.Should().BeNull();
-    _onspringClientMock.Verify(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ),
-      Times.Once
-    );
+    _onspringClientMock.Verify(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()), Times.Once);
   }
 
   [Fact]
   public async Task GetGroup_WhenCalledAndAnHttpExceptionOrTaskCanceledExceptionIsThrown_ItShouldReturnNullAfterRetryingThreeTimes()
   {
     _onspringClientMock
-    .SetupSequence(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ).Result
-    )
-    .Throws(new HttpRequestException())
-    .Throws(new TaskCanceledException())
-    .Throws(new HttpRequestException());
+      .SetupSequence(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()))
+      .ThrowsAsync(new HttpRequestException())
+      .ThrowsAsync(new TaskCanceledException())
+      .ThrowsAsync(new HttpRequestException());
 
-    var result = await _onspringService.GetGroup(It.IsAny<string>());
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _settingsMock
+      .SetupGet(static m => m.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "id" },
+        { 2, "description" },
+      });
+
+    _settingsMock
+      .SetupGet(static m => m.Onspring)
+      .Returns(new OnspringSettings
+      {
+        GroupsNameFieldId = 1,
+      });
+
+    var result = await _onspringService.GetGroup(azureGroup);
 
     result.Should().BeNull();
-    _onspringClientMock.Verify(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ),
-      Times.Exactly(3)
-    );
+    _onspringClientMock.Verify(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()), Times.Exactly(3));
   }
 
   [Fact]
@@ -802,24 +842,34 @@ public class OnspringServiceTests
     };
 
     _onspringClientMock
-    .Setup(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ).Result
-    )
-    .Returns(response);
+      .Setup(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()))
+      .ReturnsAsync(response);
 
-    var result = await _onspringService.GetGroup(It.IsAny<string>());
+    var azureGroup = new Group
+    {
+      Id = "464a535b-bbc8-4c18-bb12-9f1596464d43",
+      Description = "Test Group Description",
+    };
+
+    _settingsMock
+      .SetupGet(static m => m.GroupsFieldMappings)
+      .Returns(new Dictionary<int, string>
+      {
+        { 1, "id" },
+        { 2, "description" },
+      });
+
+    _settingsMock
+      .SetupGet(static m => m.Onspring)
+      .Returns(new OnspringSettings
+      {
+        GroupsNameFieldId = 1,
+      });
+
+    var result = await _onspringService.GetGroup(azureGroup);
 
     result.Should().BeNull();
-    _onspringClientMock.Verify(
-      m => m.QueryRecordsAsync(
-        It.IsAny<QueryRecordsRequest>(),
-        It.IsAny<PagingRequest>()
-      ),
-      Times.Exactly(3)
-    );
+    _onspringClientMock.Verify(static m => m.QueryRecordsAsync(It.IsAny<QueryRecordsRequest>(), It.IsAny<PagingRequest>()), Times.Exactly(3));
   }
 
   [Fact]
@@ -3781,7 +3831,7 @@ public class OnspringServiceTests
   [InlineData(1, 2)]
   [InlineData(true, false)]
   [InlineData(null, "1")]
-  public void ValuesAreEqual_WhenCalledAndAzureObjectValueAndOnspringRecordValueAreNotEqual_ItShouldReturnFalse(object onspringRecordValue, object azureObjectValue)
+  public void ValuesAreEqual_WhenCalledAndAzureObjectValueAndOnspringRecordValueAreNotEqual_ItShouldReturnFalse(object? onspringRecordValue, object azureObjectValue)
   {
     var result = OnspringService.ValuesAreEqual(
       onspringRecordValue,
