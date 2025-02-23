@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.3.0"></a>
+## [1.3.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.3.0) (2025-02-23)
+
+### Features
+
+* allow default group name mapping to be overwritten ([8084119](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/8084119eb669658298eb1e79c06040fa7d723955))
+
 <a name="1.2.0"></a>
 ## [1.2.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.2.0) (2025-02-23)
 
