@@ -6,6 +6,7 @@
 ![GitHub](https://img.shields.io/github/license/StevanFreeborn/OnspringAzureADSyncer)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/StevanFreeborn/OnspringAzureADSyncer)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/StevanFreeborn/OnspringAzureADSyncer/total)
 
 A .NET console application that can be run on a schedule or as a scheduled task that will synchronize users and groups between Azure Active Directory and [Onspring](https://onspring.com/) making Azure Active Directory the system of record.
 
