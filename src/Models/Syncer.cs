@@ -1,15 +1,9 @@
 namespace OnspringAzureADSyncer.Models;
 
-public class Syncer : ISyncer
+public class Syncer(ILogger logger, IProcessor processor) : ISyncer
 {
-  private readonly ILogger _logger;
-  private readonly IProcessor _processor;
-
-  public Syncer(ILogger logger, IProcessor processor)
-  {
-    _logger = logger;
-    _processor = processor;
-  }
+  private readonly ILogger _logger = logger;
+  private readonly IProcessor _processor = processor;
 
   public async Task<int> Run()
   {
@@ -18,6 +12,17 @@ public class Syncer : ISyncer
     var startMsg = "Starting syncer";
     Console.WriteLine(startMsg);
     _logger.Information(startMsg);
+
+    if (_processor.HasValidGroupFilters() is false)
+    {
+      Console.ForegroundColor = ConsoleColor.Red;
+
+      var invalidGroupFiltersMsg = "Group filters are invalid";
+      Console.WriteLine(invalidGroupFiltersMsg);
+      _logger.Fatal(invalidGroupFiltersMsg);
+
+      return 4;
+    }
 
     if (await _processor.VerifyConnections() is false)
     {
