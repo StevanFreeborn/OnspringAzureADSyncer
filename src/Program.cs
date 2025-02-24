@@ -1,7 +1,7 @@
 ﻿[ExcludeFromCodeCoverage]
-class Program
+internal class Program
 {
-  async static Task<int> Main(string[] args)
+  private static async Task<int> Main(string[] args)
   {
     return await BuildCommandLine()
     .UseDefaults()
@@ -9,10 +9,10 @@ class Program
     .InvokeAsync(args);
   }
 
-  static CommandLineBuilder BuildCommandLine()
+  private static CommandLineBuilder BuildCommandLine()
   {
     var configFileOption = new Option<FileInfo>(
-      aliases: new string[] { "--config", "-c" },
+      aliases: ["--config", "-c"],
       description: "The path to the file that specifies configuration for the syncer."
     )
     {
@@ -35,7 +35,7 @@ class Program
     );
 
     var logLevelOption = new Option<LogEventLevel>(
-      aliases: new string[] { "--log-level", "-l" },
+      aliases: ["--log-level", "-l"],
       description: "The level of logging to use.",
       getDefaultValue: () => LogEventLevel.Verbose
     );
@@ -65,7 +65,7 @@ class Program
     return new CommandLineBuilder(rootCommand);
   }
 
-  static async Task<int> StartUp(
+  private static async Task<int> StartUp(
     InvocationContext context,
     ModelBinder<AppOptions> modelBinder
   )

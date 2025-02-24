@@ -1,3 +1,5 @@
+using Group = Microsoft.Graph.Models.Group;
+
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]

@@ -28,6 +28,7 @@ _**Note:**_ This is an unofficial Onspring integration. It was not built in cons
   - [Activating and Deactivating Users](#activating-and-deactivating-users)
   - [Custom Mappings](#custom-mappings)
   - [Validating Mappings](#validating-mappings)
+  - [Group Filters](#group-filters)
 - [Options](#options)
 - [Output](#output)
   - [Log](#log)
@@ -243,6 +244,8 @@ When this property is set the app will set Onspring users to active if they are 
 
 _**Note:**_ The app will only manage the `Status` field for users in Onspring that match with a user in Azure Active Directory. If a user is in Onspring but not in Azure Active Directory the app will not change the `Status` field for that user.
 
+_**Note:**_ If you've configured group filters the app will only consider groups that match the filters when determining if a user should be active or inactive. So you'll want to ensure that the groups you've specified in the `OnspringActiveGroups` array will satisfy the group filters you've set.
+
 ### Custom Mappings
 
 The app can be configured to map custom properties from Azure Active Directory to Onspring by adding the `GroupsFieldMappings` and `UsersFieldMappings` properties to the `Settings` object. The properties in these objects should be the id of the field in Onspring and the name of the property for the Azure resource whose value you want to map to that field in Onspring. See below for an example:
@@ -277,6 +280,38 @@ _**Note:**_ Mapped property names are case insensitive.
 ### Validating Mappings
 
 Prior to the app actually attempting to sync groups or users it will validate the mappings that have been passed to it in the configuration file. Specifically it will check to make sure that all the required fields have a property mapped to them. It will also validate that the type of field a property is mapped to is compatible with the type of the property.
+
+### Group Filters
+
+The app can be configured to filter the groups that are synced from Azure Active Directory to Onspring by adding the `GroupFilters` property to the `Azure` section of the configuration file. The `GroupFilters` property should be an array of objects that contain a `Property` and `Pattern` property. The `Property` value should be the name of the property on the Azure Active Directory group that you want to filter on and the `Pattern` value should be a regular expression that the value of the property should match. See below for an example:
+
+```json
+{
+  ...,
+  "Azure": {
+    "TenantId": "00000000-0000-0000-0000-000000000000",
+    "ClientId": "0a000aa0-1b11-2222-3c33-444444d44d44",
+    "ClientSecret": "00000~00000--000000000-00000000000000000",
+    "GroupFilters": [
+      {
+        "Property": "displayName",
+        "Pattern": ".*-Onspring$"
+      }
+    ]
+  },
+  ...
+}
+```
+
+_**Note:**_ These filters are ANDed together. So a group must match all the filters to be synced to Onspring.
+
+_**Note:**_ The `Property` value is case insensitive, but it should be a property of type `String` on the Azure Active Directory group.
+
+_**Note:**_ The `Pattern` value is a regular expression that will be used to match the value of the property on the Azure Active Directory group. The regular expression should be a valid .NET regular expression pattern.
+
+_**Note:**_ The app will only sync groups from Azure Active Directory to Onspring that match the filters you've set. If you have not set any filters the app will sync all groups from Azure Active Directory to Onspring.
+
+_**Note:**_ Prior to running the syncer will validate the group filters to ensure the property is a valid property on the Azure Active Directory group with the type string and that the pattern is a valid regular expression. Note the regular expression uses the .NET regular expression engine. See the [Microsoft .NET Regular Expression Language](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) for more information.
 
 #### Required Fields
 
