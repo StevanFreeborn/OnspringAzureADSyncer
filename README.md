@@ -86,7 +86,7 @@ The app is published as a release on GitHub. You can download the latest release
   - Note after downloading the executable you may need to run `chmod +x` to give the executable execute permissions on your machine.
   - Note after downloading the executable you may need to provide permission for the application to run via the your systems settings.
 
-You are also welcome to clone this repository and run the app using the [.NET 8](https://dotnet.microsoft.com/en-us/download) tooling and runtime. As well as modify the app further for your specific needs.
+You are also welcome to clone this repository and run the app using the [.NET 9](https://dotnet.microsoft.com/en-us/download) tooling and runtime. As well as modify the app further for your specific needs.
 
 ## Onspring Setup
 
