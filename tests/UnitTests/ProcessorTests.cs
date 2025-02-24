@@ -804,7 +804,7 @@ public class ProcessorTests
     _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
     _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Exactly(2));
   }
-  
+
   [Fact]
   public async Task GetUsersGroupMappings_WhenCalledGroupIsFoundButDoesNotMatchFilter_ItdShouldNotAddTheGroupToTheMappings()
   {
@@ -3009,7 +3009,7 @@ public class ProcessorTests
 
     // mock to return collection of groups
     msGraphMock
-      .Setup(static x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>(), It.IsAny<List<GroupFilter>>()))
       .ReturnsAsync(azureGroupCollection);
 
     // mock graph service client for msGraphMock

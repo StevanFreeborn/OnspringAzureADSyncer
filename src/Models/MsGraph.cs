@@ -1,7 +1,7 @@
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
-public class MsGraph : IMsGraph
+public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
 {
   public async Task<DirectoryObjectCollectionResponse?> GetUserGroups(string? userId)
   {
@@ -23,31 +23,32 @@ public class MsGraph : IMsGraph
     );
   }
 
-  public GraphServiceClient GraphServiceClient { get; init; }
-
-  public MsGraph(GraphServiceClient graphServiceClient)
-  {
-    GraphServiceClient = graphServiceClient;
-  }
+  public GraphServiceClient GraphServiceClient { get; init; } = graphServiceClient;
 
   public async Task<GroupCollectionResponse?> GetGroupsForIterator(
-    Dictionary<int, string> groupFieldMappings
+    Dictionary<int, string> groupFieldMappings,
+    List<GroupFilter> groupFilters
   )
   {
+    List<string> properties = [
+      .. groupFieldMappings.Values,
+      .. groupFilters.Select(filter => filter.Property)
+    ];
+
     return await GraphServiceClient
     .Groups
     .GetAsync(
       config =>
       config
       .QueryParameters
-      .Select = groupFieldMappings.Values.ToArray()
+      .Select = [.. properties.Distinct()]
     );
   }
 
   public async Task<GroupCollectionResponse?> GetGroups()
   {
     return await GraphServiceClient.Groups.GetAsync(
-      config =>
+      static config =>
       {
         config.QueryParameters.Count = true;
         config.Headers.Add("ConsistencyLevel", "eventual");
@@ -58,7 +59,7 @@ public class MsGraph : IMsGraph
   public async Task<UserCollectionResponse?> GetUsers()
   {
     return await GraphServiceClient.Users.GetAsync(
-      config =>
+      static config =>
       {
         config.QueryParameters.Count = true;
         config.Headers.Add("ConsistencyLevel", "eventual");

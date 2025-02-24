@@ -18,10 +18,7 @@ public class GraphService(
     {
       var groups = await _msGraph.GetUserGroups(azureUser.Id);
 
-      if (
-        groups == null ||
-        groups.Value == null
-      )
+      if (groups is null || groups.Value is null)
       {
         _logger.Warning(
           "No groups found for user {@AzureUser}",
@@ -86,11 +83,11 @@ public class GraphService(
     }
   }
 
-  public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> azureGroups, int pageSize)
+  public async Task<PageIterator<Group, GroupCollectionResponse>?> GetGroupsIterator(List<Group> groups, int pageSize)
   {
     try
     {
-      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings);
+      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings, [.. _settings.Azure.GroupFilters]);
 
       if (
         initialGroups == null ||
@@ -108,8 +105,8 @@ public class GraphService(
         initialGroups,
         (g) =>
         {
-          azureGroups.Add(g);
-          return azureGroups.Count < pageSize;
+          groups.Add(g);
+          return groups.Count < pageSize;
         }
       );
 
