@@ -6,6 +6,7 @@ global using System.CommandLine.NamingConventionBinder;
 global using System.CommandLine.Parsing;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Reflection;
+global using System.Text.RegularExpressions;
 
 global using Azure.Identity;
 

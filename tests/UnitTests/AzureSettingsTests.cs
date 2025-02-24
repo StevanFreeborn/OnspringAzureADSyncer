@@ -1,3 +1,5 @@
+using GroupFilter = OnspringAzureADSyncer.Models.GroupFilter;
+
 namespace OnspringAzureADSyncerTests.UnitTests;
 
 public class AzureSettingsTests
@@ -7,6 +9,13 @@ public class AzureSettingsTests
   {
     AzureSettings.GroupsNameKey.Should().Be("id");
     AzureSettings.GroupsDescriptionKey.Should().Be("description");
+    AzureSettings.UsersIdPropertyKey.Should().Be("id");
+    AzureSettings.UsersUsernameKey.Should().Be("userPrincipalName");
+    AzureSettings.UsersFirstNameKey.Should().Be("givenName");
+    AzureSettings.UsersLastNameKey.Should().Be("surname");
+    AzureSettings.UsersEmailKey.Should().Be("mail");
+    AzureSettings.UsersStatusKey.Should().Be("accountEnabled");
+    AzureSettings.UsersGroupsKey.Should().Be("memberOf");
   }
 
   [Fact]
@@ -16,6 +25,10 @@ public class AzureSettingsTests
     settings.TenantId.Should().BeEmpty();
     settings.ClientId.Should().BeEmpty();
     settings.ClientSecret.Should().BeEmpty();
+    settings.OnspringActiveGroups.Should().BeEmpty();
+    settings.UsersProperties.Should().BeEquivalentTo(typeof(User).GetProperties());
+    settings.GroupsProperties.Should().BeEquivalentTo(typeof(Group).GetProperties());
+    settings.GroupFilters.Should().BeEmpty();
   }
 
   [Fact]
@@ -25,11 +38,21 @@ public class AzureSettingsTests
     {
       TenantId = "tenantId",
       ClientId = "clientId",
-      ClientSecret = "clientSecret"
+      ClientSecret = "clientSecret",
+      OnspringActiveGroups = ["group1", "group2"],
+      GroupFilters = [
+        new GroupFilter { Property = "property1", Pattern = "pattern1" },
+        new GroupFilter { Property = "property2", Pattern = "pattern2" }
+      ]
     };
 
     settings.TenantId.Should().Be("tenantId");
     settings.ClientId.Should().Be("clientId");
     settings.ClientSecret.Should().Be("clientSecret");
+    settings.OnspringActiveGroups.Should().BeEquivalentTo(["group1", "group2"]);
+    settings.GroupFilters.Should().BeEquivalentTo([
+      new GroupFilter { Property = "property1", Pattern = "pattern1" },
+      new GroupFilter { Property = "property2", Pattern = "pattern2" }
+    ]);
   }
 }

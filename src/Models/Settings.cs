@@ -49,8 +49,8 @@ public class Settings : ISettings
 
   public AzureSettings Azure { get; init; } = new AzureSettings();
   public OnspringSettings Onspring { get; init; } = new OnspringSettings();
-  public Dictionary<int, string> GroupsFieldMappings { get; init; } = new Dictionary<int, string>();
-  public Dictionary<int, string> UsersFieldMappings { get; init; } = new Dictionary<int, string>();
+  public Dictionary<int, string> GroupsFieldMappings { get; init; } = [];
+  public Dictionary<int, string> UsersFieldMappings { get; init; } = [];
 
   public Settings(IOptions<AppOptions> options)
   {

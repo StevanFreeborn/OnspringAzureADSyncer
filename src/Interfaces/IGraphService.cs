@@ -1,3 +1,5 @@
+using Group = Microsoft.Graph.Models.Group;
+
 namespace OnspringAzureADSyncer.Interfaces;
 
 public interface IGraphService
