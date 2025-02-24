@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.4.0"></a>
+## [1.4.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.4.0) (2025-02-24)
+
+### Features
+
+* add ability to define group filters ([9930e3a](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/9930e3a77a1afe4bc229c126babfba87ad775618))
+
+### Bug Fixes
+
+* ensure we fetch the data for group properties that are in the group filters array so we can property filter based on those values even if they are not specified in the mappings ([69ebcba](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/69ebcba8c8fe2074774e6d3932b39ec7e73f83e6))
+
 <a name="1.3.0"></a>
 ## [1.3.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.3.0) (2025-02-23)
 
