@@ -1,21 +1,16 @@
+using Group = Microsoft.Graph.Models.Group;
+
 namespace OnspringAzureADSyncer.Services;
 
-public class GraphService : IGraphService
+public class GraphService(
+  ILogger logger,
+  ISettings settings,
+  IMsGraph msGraph
+) : IGraphService
 {
-  private readonly ILogger _logger;
-  private readonly ISettings _settings;
-  private readonly IMsGraph _msGraph;
-
-  public GraphService(
-    ILogger logger,
-    ISettings settings,
-    IMsGraph msGraph
-  )
-  {
-    _logger = logger;
-    _settings = settings;
-    _msGraph = msGraph;
-  }
+  private readonly ILogger _logger = logger;
+  private readonly ISettings _settings = settings;
+  private readonly IMsGraph _msGraph = msGraph;
 
   public async Task<List<Group>> GetUserGroups(User azureUser)
   {

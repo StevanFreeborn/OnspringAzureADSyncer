@@ -1,14 +1,14 @@
-namespace OnspringAzureADSyncer.Interfaces
+namespace OnspringAzureADSyncer.Interfaces;
+
+public interface IProcessor
 {
-  public interface IProcessor
-  {
-    Task SyncUsers();
-    Task SyncGroups();
-    bool FieldMappingsAreValid();
-    Task GetOnspringUserFields();
-    Task GetOnspringGroupFields();
-    void SetDefaultGroupsFieldMappings();
-    void SetDefaultUsersFieldMappings();
-    Task<bool> VerifyConnections();
-  }
+  Task SyncUsers();
+  Task SyncGroups();
+  bool FieldMappingsAreValid();
+  Task GetOnspringUserFields();
+  Task GetOnspringGroupFields();
+  void SetDefaultGroupsFieldMappings();
+  void SetDefaultUsersFieldMappings();
+  Task<bool> VerifyConnections();
+  bool HasValidGroupFilters();
 }

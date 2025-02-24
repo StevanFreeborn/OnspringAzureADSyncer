@@ -1,21 +1,16 @@
+using Group = Microsoft.Graph.Models.Group;
+
 namespace OnspringAzureADSyncer.Services;
 
-public class OnspringService : IOnspringService
+public class OnspringService(
+  ILogger logger,
+  ISettings settings,
+  IOnspringClient onspringClient
+  ) : IOnspringService
 {
-  private readonly ILogger _logger;
-  private readonly ISettings _settings;
-  private readonly IOnspringClient _onspringClient;
-
-  public OnspringService(
-    ILogger logger,
-    ISettings settings,
-    IOnspringClient onspringClient
-  )
-  {
-    _logger = logger;
-    _settings = settings;
-    _onspringClient = onspringClient;
-  }
+  private readonly ILogger _logger = logger;
+  private readonly ISettings _settings = settings;
+  private readonly IOnspringClient _onspringClient = onspringClient;
 
   public async Task<SaveRecordResponse?> UpdateUser(
     User azureUser,
@@ -491,7 +486,7 @@ public class OnspringService : IOnspringService
     var usersStatus = GetUsersStatus(
       azureUser,
       onspringUser,
-      usersGroupMappings.Keys.ToList()
+      [.. usersGroupMappings.Keys]
     );
 
     var updatedOnspringUser = BuildUpdatedRecord(

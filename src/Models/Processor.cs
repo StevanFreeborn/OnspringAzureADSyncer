@@ -1,24 +1,20 @@
+using System.Globalization;
+
+using Group = Microsoft.Graph.Models.Group;
+
 namespace OnspringAzureADSyncer.Models;
 
-public class Processor : IProcessor
+public class Processor(
+  ILogger logger,
+  ISettings settings,
+  IOnspringService onspringService,
+  IGraphService graphService
+) : IProcessor
 {
-  private readonly ILogger _logger;
-  private readonly ISettings _settings;
-  private readonly IOnspringService _onspringService;
-  private readonly IGraphService _graphService;
-
-  public Processor(
-    ILogger logger,
-    ISettings settings,
-    IOnspringService onspringService,
-    IGraphService graphService
-  )
-  {
-    _logger = logger;
-    _settings = settings;
-    _onspringService = onspringService;
-    _graphService = graphService;
-  }
+  private readonly ILogger _logger = logger;
+  private readonly ISettings _settings = settings;
+  private readonly IOnspringService _onspringService = onspringService;
+  private readonly IGraphService _graphService = graphService;
 
   public async Task SyncUsers()
   {
@@ -54,17 +50,12 @@ public class Processor : IProcessor
       pageNumberProcessing++;
 
       var usersListFields = _settings
-      .Onspring
-      .UsersFields
-      .Where(f => f is ListField)
-      .Cast<ListField>()
-      .ToList();
+        .Onspring
+        .UsersFields
+        .OfType<ListField>()
+        .ToList();
 
-      await SyncListValues(
-        usersListFields,
-        _settings.UsersFieldMappings,
-        azureUsers
-      );
+      await SyncListValues(usersListFields, _settings.UsersFieldMappings, azureUsers);
 
       var options = new ProgressBarOptions
       {
@@ -87,7 +78,6 @@ public class Processor : IProcessor
           {
             await SyncUser(azureUser);
             progressBar.Tick($"Processed Azure User: {azureUser.Id}");
-
           }
         );
 
@@ -137,17 +127,12 @@ public class Processor : IProcessor
       pageNumberProcessing++;
 
       var groupsListFields = _settings
-      .Onspring
-      .GroupsFields
-      .Where(f => f is ListField)
-      .Cast<ListField>()
-      .ToList();
+        .Onspring
+        .GroupsFields
+        .OfType<ListField>()
+        .ToList();
 
-      await SyncListValues(
-        groupsListFields,
-        _settings.GroupsFieldMappings,
-        azureGroups
-      );
+      await SyncListValues(groupsListFields, _settings.GroupsFieldMappings, azureGroups);
 
       var options = new ProgressBarOptions
       {
@@ -188,9 +173,9 @@ public class Processor : IProcessor
   public bool FieldMappingsAreValid()
   {
     return HasValidAzureProperties() &&
-    HasValidOnspringFields() &&
-    HasRequiredOnspringFields() &&
-    HasValidFieldTypeToPropertyTypeMappings();
+      HasValidOnspringFields() &&
+      HasRequiredOnspringFields() &&
+      HasValidFieldTypeToPropertyTypeMappings();
   }
 
   public void SetDefaultUsersFieldMappings()
@@ -198,11 +183,9 @@ public class Processor : IProcessor
     foreach (var kvp in Settings.DefaultUsersFieldMappings)
     {
       var onspringField = _settings
-      .Onspring
-      .UsersFields
-      .FirstOrDefault(
-        f => f.Name == kvp.Value
-      );
+        .Onspring
+        .UsersFields
+        .FirstOrDefault(f => f.Name == kvp.Value);
 
       var fieldId = onspringField?.Id ?? 0;
 
@@ -246,11 +229,8 @@ public class Processor : IProcessor
       }
 
       _settings
-      .UsersFieldMappings
-      .Add(
-        fieldId,
-        kvp.Key
-      );
+        .UsersFieldMappings
+        .Add(fieldId, kvp.Key);
     }
 
     _logger.Debug(
@@ -291,12 +271,7 @@ public class Processor : IProcessor
         continue;
       }
 
-      _settings
-        .GroupsFieldMappings
-        .Add(
-          fieldId,
-          kvp.Key
-        );
+      _settings.GroupsFieldMappings.Add(fieldId, kvp.Key);
     }
 
     _logger.Debug(
@@ -342,12 +317,12 @@ public class Processor : IProcessor
   {
 
     var listFieldIds = listFields
-    .Select(f => f.Id)
-    .ToList();
+      .Select(f => f.Id)
+      .ToList();
 
     var propertiesMappedToListFields = fieldMappings
-    .Where(kvp => listFieldIds.Contains(kvp.Key))
-    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      .Where(kvp => listFieldIds.Contains(kvp.Key))
+      .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
     var newListValues = new List<KeyValuePair<int, string>>();
 
@@ -390,9 +365,7 @@ public class Processor : IProcessor
 
         foreach (var possibleNewListValue in possibleNewListValues)
         {
-          if (
-            TryGetNewListValue(field, possibleNewListValue, out var newListValue)
-          )
+          if (TryGetNewListValue(field, possibleNewListValue, out var newListValue))
           {
             newListValues.Add(newListValue);
           }
@@ -400,11 +373,7 @@ public class Processor : IProcessor
       }
     }
 
-    newListValues = newListValues
-    .DistinctBy(
-      kvp => kvp.Value.ToLower()
-    )
-    .ToList();
+    newListValues = [.. newListValues.DistinctBy(kvp => kvp.Value.ToLower(CultureInfo.InvariantCulture))];
 
     foreach (var newListValue in newListValues)
     {
@@ -446,10 +415,8 @@ public class Processor : IProcessor
 
     var existingListValues = listField.Values;
     var isNewListValue = existingListValues
-    .Select(v => v.Name.ToLower())
-    .Contains(
-      possibleNewListValue.ToLower()
-    ) is false;
+      .Select(static v => v.Name.ToLower(CultureInfo.InvariantCulture))
+      .Contains(possibleNewListValue.ToLower(CultureInfo.InvariantCulture)) is false;
 
     if (isNewListValue is false)
     {
@@ -841,9 +808,22 @@ public class Processor : IProcessor
   {
     _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
-    // TODO: If we allow other azure
-    // properties to be mapped as the group namespace Name
-    // we need to change this
+    foreach (var filter in _settings.Azure.GroupFilters)
+    {
+      var isMatch = filter.IsMatch(azureGroup);
+
+      if (isMatch is false)
+      {
+        _logger.Debug(
+          "Azure Group {@AzureGroup} does not match filter: {@Filter}",
+          azureGroup,
+          filter
+        );
+
+        return;
+      }
+    }
+
     var onspringGroup = await _onspringService.GetGroup(azureGroup);
 
     if (onspringGroup is null)
@@ -898,7 +878,10 @@ public class Processor : IProcessor
         onspringGroup
       );
 
-      return; } _logger.Debug(
+      return;
+    }
+
+    _logger.Debug(
       "Onspring Group {@OnspringGroup} updated: {@Response}",
       onspringGroup,
       updateResponse
@@ -923,10 +906,30 @@ public class Processor : IProcessor
 
     foreach (var azureUserGroup in azureUserGroups)
     {
-      if (
-        azureUserGroup is null ||
-        azureUserGroup.Id is null
-      )
+      if (azureUserGroup is null || azureUserGroup.Id is null)
+      {
+        continue;
+      }
+
+      var isMatch = true;
+
+      foreach (var filter in _settings.Azure.GroupFilters)
+      {
+        isMatch = filter.IsMatch(azureUserGroup);
+
+        if (isMatch is false)
+        {
+          _logger.Debug(
+            "Azure User Group {@AzureUserGroup} does not match filter: {@Filter}",
+            azureUserGroup,
+            filter
+          );
+
+          break;
+        }
+      }
+
+      if (isMatch is false)
       {
         continue;
       }
@@ -993,5 +996,20 @@ public class Processor : IProcessor
 
     _settings.Onspring.UserActiveStatusListValue = activeListValue.Id;
     _settings.Onspring.UserInactiveStatusListValue = inactiveListValue.Id;
+  }
+
+  public bool HasValidGroupFilters()
+  {
+    foreach (var filter in _settings.Azure.GroupFilters)
+    {
+      if (filter.IsValid() is false)
+      {
+        _logger.Error("Invalid Group Filter: {@Filter}", filter);
+
+        return false;
+      }
+    }
+
+    return true;
   }
 }

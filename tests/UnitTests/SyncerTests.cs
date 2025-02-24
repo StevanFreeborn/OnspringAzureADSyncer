@@ -15,15 +15,10 @@ public class SyncerTests
   public async Task Run_WhenCalledAndConnectionCanNotBeMadeToEitherAzureOrOnspring_ItShouldReturnNonZeroValue()
   {
     _processorMock
-    .Setup(
-      p => p.VerifyConnections().Result
-    )
-    .Returns(false);
+      .Setup(static p => p.VerifyConnections())
+      .ReturnsAsync(false);
 
-    var syncer = new Syncer(
-      _loggerMock.Object,
-      _processorMock.Object
-    );
+    var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
     var result = await syncer.Run();
 
@@ -34,21 +29,18 @@ public class SyncerTests
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldReturnZero()
   {
     _processorMock
-    .Setup(
-      p => p.VerifyConnections().Result
-    )
-    .Returns(true);
+      .Setup(static p => p.HasValidGroupFilters())
+      .Returns(true);
 
     _processorMock
-    .Setup(
-      p => p.FieldMappingsAreValid()
-    )
-    .Returns(true);
+      .Setup(static p => p.VerifyConnections())
+      .ReturnsAsync(true);
 
-    var syncer = new Syncer(
-      _loggerMock.Object,
-      _processorMock.Object
-    );
+    _processorMock
+      .Setup(static p => p.FieldMappingsAreValid())
+      .Returns(true);
+
+    var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
     var result = await syncer.Run();
 
@@ -59,51 +51,39 @@ public class SyncerTests
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldSetDefaultFieldMappings()
   {
     _processorMock
-    .Setup(
-      p => p.VerifyConnections().Result
-    )
-    .Returns(
-      true
-    );
+      .Setup(static p => p.HasValidGroupFilters())
+      .Returns(true);
 
-    var syncer = new Syncer(
-      _loggerMock.Object,
-      _processorMock.Object
-    );
+    _processorMock
+      .Setup(static p => p.VerifyConnections())
+      .ReturnsAsync(true);
+
+    var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
     await syncer.Run();
 
-    _processorMock.Verify(
-      p => p.SetDefaultGroupsFieldMappings(),
-      Times.Once
-    );
+    _processorMock.Verify(static p => p.SetDefaultGroupsFieldMappings(), Times.Once);
   }
 
   [Fact]
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldSyncGroups()
   {
     _processorMock
-    .Setup(
-      p => p.VerifyConnections().Result
-    )
-    .Returns(true);
+      .Setup(static p => p.HasValidGroupFilters())
+      .Returns(true);
 
     _processorMock
-    .Setup(
-      p => p.FieldMappingsAreValid()
-    )
-    .Returns(true);
+      .Setup(static p => p.VerifyConnections())
+      .ReturnsAsync(true);
 
-    var syncer = new Syncer(
-      _loggerMock.Object,
-      _processorMock.Object
-    );
+    _processorMock
+      .Setup(static p => p.FieldMappingsAreValid())
+      .Returns(true);
+
+    var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
     await syncer.Run();
 
-    _processorMock.Verify(
-      p => p.SyncGroups(),
-      Times.Once
-    );
+    _processorMock.Verify(static p => p.SyncGroups(), Times.Once);
   }
 }
