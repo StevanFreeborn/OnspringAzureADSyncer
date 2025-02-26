@@ -32,12 +32,6 @@ public class AzureUserDestructuringPolicy(ISettings settings) : IAzureUserDestru
     foreach (var prop in props)
     {
       var propValue = prop.GetValue(value);
-
-      if (propValue is null)
-      {
-        continue;
-      }
-
       var logEventPropertyValue = propertyValueFactory.CreatePropertyValue(propValue, true);
       logEventProperties.Add(new LogEventProperty(prop.Name, logEventPropertyValue));
     }
