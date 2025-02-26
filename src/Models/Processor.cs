@@ -215,6 +215,16 @@ public class Processor(
         SetStatusListValues(statusListField);
       }
 
+      if (
+        onspringField is not null &&
+        onspringField.Name is OnspringSettings.UsersUserTierField &&
+        onspringField is ListField userTierListField
+      )
+      {
+        SetUserTierListValues(userTierListField);
+        _settings.Onspring.UsersUserTierFieldId = fieldId;
+      }
+
       // if the Onspring field is already mapped
       // to an Azure User property, skip it
       if (_settings.UsersFieldMappings.ContainsKey(fieldId))
@@ -996,6 +1006,66 @@ public class Processor(
 
     _settings.Onspring.UserActiveStatusListValue = activeListValue.Id;
     _settings.Onspring.UserInactiveStatusListValue = inactiveListValue.Id;
+  }
+
+  internal void SetUserTierListValues(ListField userTierListField)
+  {
+    var fullUserListValue = userTierListField
+        .Values
+        .FirstOrDefault(
+          static v =>
+            v.Name is OnspringSettings.UsersFullUserTierListValueName
+        );
+
+    var liteUserListValue = userTierListField
+      .Values
+      .FirstOrDefault(
+        static v =>
+          v.Name is OnspringSettings.UsersInactiveStatusListValueName
+      );
+
+    var portalUserListValue = userTierListField
+      .Values
+      .FirstOrDefault(
+        static v =>
+          v.Name is OnspringSettings.UsersPortalUserTierListValueName
+      );
+
+    if (fullUserListValue is null)
+    {
+      _logger.Fatal(
+        "Unable to find list value {Name} in field {Field} in Onspring",
+        OnspringSettings.UsersFullUserTierListValueName,
+        userTierListField.Name
+      );
+
+      throw new ApplicationException(
+        $"Unable to find list value {OnspringSettings.UsersFullUserTierListValueName} in field {userTierListField.Name} in Onspring"
+      );
+    }
+
+    if (liteUserListValue is null)
+    {
+      _logger.Debug(
+        "Unable to find list value {Name} in field {Field} in Onspring",
+        OnspringSettings.UsersLiteUserTierListValueName,
+        userTierListField.Name
+      );
+    }
+
+    if (portalUserListValue is null)
+    {
+      _logger.Debug(
+        "Unable to find list value {Name} in field {Field} in Onspring",
+        OnspringSettings.UsersPortalUserTierListValueName,
+        userTierListField.Name
+      );
+    }
+
+    // TODO: Maybe only set the value that is configured?
+    _settings.Onspring.UserFullUserTierListValue = fullUserListValue.Id;
+    _settings.Onspring.UserLiteUserTierListValue = liteUserListValue?.Id ?? Guid.Empty;
+    _settings.Onspring.UserPortalUserTierListValue = portalUserListValue?.Id ?? Guid.Empty;
   }
 
   public bool HasValidGroupFilters()
