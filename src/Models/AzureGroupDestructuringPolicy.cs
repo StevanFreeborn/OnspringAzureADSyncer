@@ -3,14 +3,9 @@ using Group = Microsoft.Graph.Models.Group;
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
-public class AzureGroupDestructuringPolicy : IAzureGroupDestructuringPolicy
+public class AzureGroupDestructuringPolicy(ISettings settings) : IAzureGroupDestructuringPolicy
 {
-  private readonly ISettings _settings;
-
-  public AzureGroupDestructuringPolicy(ISettings settings)
-  {
-    _settings = settings;
-  }
+  private readonly ISettings _settings = settings;
 
   public bool TryDestructure(
     object value,
@@ -31,13 +26,8 @@ public class AzureGroupDestructuringPolicy : IAzureGroupDestructuringPolicy
 
     var props = value
       .GetType()
-      .GetProperties(
-        BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
-      )
-      .Where(
-        p => mappedGroupProperties.Contains(p.Name) &&
-          p.GetIndexParameters().Length != 0
-      );
+      .GetProperties(BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public)
+      .Where(p => mappedGroupProperties.Contains(p.Name, StringComparer.OrdinalIgnoreCase));
 
     var logEventProperties = new List<LogEventProperty>();
 

@@ -387,6 +387,8 @@ Example log message:
 {"@t":"2023-03-13T01:56:47.2437652Z","@mt":"Setting default Groups field mappings"}
 ```
 
+_**Note:**_ Only properties that are mapped to Onspring fields will be logged for Azure Active Directory groups and users.
+
 ## Limitations
 
 - The app will not support deleting groups or users in Onspring. It will only support creating and updating groups and users.
