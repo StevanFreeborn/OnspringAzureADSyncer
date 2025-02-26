@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.4.3"></a>
+## [1.4.3](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.4.3) (2025-02-26)
+
+### Bug Fixes
+
+* include null properties in log statements and correct file name ([8cb8d73](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/8cb8d734adf04f6392deb689efbe89cd1749b7f7))
+
 <a name="1.4.2"></a>
 ## [1.4.2](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.4.2) (2025-02-26)
 
