@@ -1,14 +1,9 @@
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
-public class AzureUserDestructuringPolicy : IAzureUserDestructuringPolicy
+public class AzureUserDestructuringPolicy(ISettings settings) : IAzureUserDestructuringPolicy
 {
-  private readonly ISettings _settings;
-
-  public AzureUserDestructuringPolicy(ISettings settings)
-  {
-    _settings = settings;
-  }
+  private readonly ISettings _settings = settings;
 
   public bool TryDestructure(
     object value,
@@ -29,13 +24,8 @@ public class AzureUserDestructuringPolicy : IAzureUserDestructuringPolicy
 
     var props = value
       .GetType()
-      .GetProperties(
-        BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public
-      )
-      .Where(
-        p => mappedUserProperties.Contains(p.Name) &&
-          p.GetIndexParameters().Length != 0
-      );
+      .GetProperties(BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public)
+      .Where(p => mappedUserProperties.Contains(p.Name, StringComparer.OrdinalIgnoreCase));
 
     var logEventProperties = new List<LogEventProperty>();
 
