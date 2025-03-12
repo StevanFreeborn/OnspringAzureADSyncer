@@ -4057,7 +4057,7 @@ public class ProcessorTests
       .SetupGet(static x => x.Azure)
       .Returns(new AzureSettings());
 
-    var result = _processor.HasValidGroupFilters();
+    var result = _processor.HasValidGroupFilter();
 
     result.Should().BeTrue();
   }
@@ -4078,7 +4078,7 @@ public class ProcessorTests
         ]
       });
 
-    var result = _processor.HasValidGroupFilters();
+    var result = _processor.HasValidGroupFilter();
 
     result.Should().BeTrue();
   }
@@ -4099,7 +4099,7 @@ public class ProcessorTests
         ]
       });
 
-    var result = _processor.HasValidGroupFilters();
+    var result = _processor.HasValidGroupFilter();
 
     result.Should().BeFalse();
   }

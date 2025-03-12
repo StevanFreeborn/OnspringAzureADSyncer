@@ -13,17 +13,6 @@ public class Syncer(ILogger logger, IProcessor processor) : ISyncer
     Console.WriteLine(startMsg);
     _logger.Information(startMsg);
 
-    if (_processor.HasValidGroupFilters() is false)
-    {
-      Console.ForegroundColor = ConsoleColor.Red;
-
-      var invalidGroupFiltersMsg = "Group filters are invalid";
-      Console.WriteLine(invalidGroupFiltersMsg);
-      _logger.Fatal(invalidGroupFiltersMsg);
-
-      return 4;
-    }
-
     if (await _processor.VerifyConnections() is false)
     {
       Console.ForegroundColor = ConsoleColor.Red;
@@ -33,6 +22,20 @@ public class Syncer(ILogger logger, IProcessor processor) : ISyncer
       _logger.Fatal(connErrorMsg);
 
       return 2;
+    }
+
+    var (isGroupFilterValid, resultMessage) = await _processor.HasValidGroupFilter();
+
+    if (isGroupFilterValid is false)
+    {
+      Console.ForegroundColor = ConsoleColor.Red;
+
+      var invalidGroupFiltersMsg = "Group filter is invalid";
+      Console.WriteLine(invalidGroupFiltersMsg);
+      Console.WriteLine(resultMessage);
+      _logger.Fatal(invalidGroupFiltersMsg);
+
+      return 4;
     }
 
     Console.ForegroundColor = ConsoleColor.DarkBlue;

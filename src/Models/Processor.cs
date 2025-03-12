@@ -808,22 +808,6 @@ public class Processor(
   {
     _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
-    foreach (var filter in _settings.Azure.GroupFilters)
-    {
-      var isMatch = filter.IsMatch(azureGroup);
-
-      if (isMatch is false)
-      {
-        _logger.Debug(
-          "Azure Group {@AzureGroup} does not match filter: {@Filter}",
-          azureGroup,
-          filter
-        );
-
-        return;
-      }
-    }
-
     var onspringGroup = await _onspringService.GetGroup(azureGroup);
 
     if (onspringGroup is null)
@@ -911,29 +895,6 @@ public class Processor(
         continue;
       }
 
-      var isMatch = true;
-
-      foreach (var filter in _settings.Azure.GroupFilters)
-      {
-        isMatch = filter.IsMatch(azureUserGroup);
-
-        if (isMatch is false)
-        {
-          _logger.Debug(
-            "Azure User Group {@AzureUserGroup} does not match filter: {@Filter}",
-            azureUserGroup,
-            filter
-          );
-
-          break;
-        }
-      }
-
-      if (isMatch is false)
-      {
-        continue;
-      }
-
       var onspringGroup = await _onspringService.GetGroup(azureUserGroup);
 
       if (onspringGroup is null)
@@ -998,18 +959,8 @@ public class Processor(
     _settings.Onspring.UserInactiveStatusListValue = inactiveListValue.Id;
   }
 
-  public bool HasValidGroupFilters()
+  public async Task<(bool IsSuccessful, string ResultMessage)> HasValidGroupFilter()
   {
-    foreach (var filter in _settings.Azure.GroupFilters)
-    {
-      if (filter.IsValid() is false)
-      {
-        _logger.Error("Invalid Group Filter: {@Filter}", filter);
-
-        return false;
-      }
-    }
-
-    return true;
+    return await _graphService.CanGetGroups(_settings.Azure.GroupFilter);
   }
 }
