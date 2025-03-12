@@ -87,7 +87,7 @@ public class GraphService(
   {
     try
     {
-      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings, [.. _settings.Azure.GroupFilters]);
+      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings);
 
       if (
         initialGroups == null ||
@@ -126,16 +126,17 @@ public class GraphService(
 
   public async Task<bool> IsConnected()
   {
-    return await CanGetUsers() && await CanGetGroups();
+    var (isSuccessful, _) = await CanGetGroups();
+    return await CanGetUsers() && isSuccessful;
   }
 
-  public async Task<bool> CanGetGroups()
+  public async Task<(bool IsSuccessful, string ResultMessage)> CanGetGroups(string? groupFilter = null)
   {
     try
     {
-      var groups = await _msGraph.GetGroups();
+      var groups = await _msGraph.GetGroups(groupFilter);
 
-      return true;
+      return (true, string.Empty);
     }
     catch (Exception ex)
     {
@@ -145,7 +146,7 @@ public class GraphService(
         ex.Message
       );
 
-      return false;
+      return (false, ex.Message);
     }
   }
 

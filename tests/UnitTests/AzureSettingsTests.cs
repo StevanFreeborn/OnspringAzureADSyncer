@@ -28,7 +28,7 @@ public class AzureSettingsTests
     settings.OnspringActiveGroups.Should().BeEmpty();
     settings.UsersProperties.Should().BeEquivalentTo(typeof(User).GetProperties());
     settings.GroupsProperties.Should().BeEquivalentTo(typeof(Group).GetProperties());
-    settings.GroupFilters.Should().BeEmpty();
+    settings.GroupFilter.Should().BeEmpty();
   }
 
   [Fact]
@@ -40,19 +40,13 @@ public class AzureSettingsTests
       ClientId = "clientId",
       ClientSecret = "clientSecret",
       OnspringActiveGroups = ["group1", "group2"],
-      GroupFilters = [
-        new GroupFilter { Property = "property1", Pattern = "pattern1" },
-        new GroupFilter { Property = "property2", Pattern = "pattern2" }
-      ]
+      GroupFilter = "displayName eq 'Onspring Users'"
     };
 
     settings.TenantId.Should().Be("tenantId");
     settings.ClientId.Should().Be("clientId");
     settings.ClientSecret.Should().Be("clientSecret");
     settings.OnspringActiveGroups.Should().BeEquivalentTo(["group1", "group2"]);
-    settings.GroupFilters.Should().BeEquivalentTo([
-      new GroupFilter { Property = "property1", Pattern = "pattern1" },
-      new GroupFilter { Property = "property2", Pattern = "pattern2" }
-    ]);
+    settings.GroupFilter.Should().Be("displayName eq 'Onspring Users'");
   }
 }

@@ -29,7 +29,7 @@ public class SyncerTests
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldReturnZero()
   {
     _processorMock
-      .Setup(static p => p.HasValidGroupFilters())
+      .Setup(static p => p.HasValidGroupFilter())
       .Returns(true);
 
     _processorMock
@@ -51,7 +51,7 @@ public class SyncerTests
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldSetDefaultFieldMappings()
   {
     _processorMock
-      .Setup(static p => p.HasValidGroupFilters())
+      .Setup(static p => p.HasValidGroupFilter())
       .Returns(true);
 
     _processorMock
@@ -69,7 +69,7 @@ public class SyncerTests
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldSyncGroups()
   {
     _processorMock
-      .Setup(static p => p.HasValidGroupFilters())
+      .Setup(static p => p.HasValidGroupFilter())
       .Returns(true);
 
     _processorMock

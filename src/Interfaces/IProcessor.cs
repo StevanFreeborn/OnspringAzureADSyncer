@@ -10,5 +10,5 @@ public interface IProcessor
   void SetDefaultGroupsFieldMappings();
   void SetDefaultUsersFieldMappings();
   Task<bool> VerifyConnections();
-  bool HasValidGroupFilters();
+  Task<(bool IsSuccessful, string ResultMessage)> HasValidGroupFilter();
 }

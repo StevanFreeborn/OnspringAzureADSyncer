@@ -25,45 +25,34 @@ public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
 
   public GraphServiceClient GraphServiceClient { get; init; } = graphServiceClient;
 
-  public async Task<GroupCollectionResponse?> GetGroupsForIterator(
-    Dictionary<int, string> groupFieldMappings,
-    List<GroupFilter> groupFilters
-  )
+  public async Task<GroupCollectionResponse?> GetGroupsForIterator(Dictionary<int, string> groupFieldMappings, string? groupFilter = null)
   {
-    List<string> properties = [
-      .. groupFieldMappings.Values,
-      .. groupFilters.Select(filter => filter.Property)
-    ];
-
     return await GraphServiceClient
-    .Groups
-    .GetAsync(
-      config =>
-      config
-      .QueryParameters
-      .Select = [.. properties.Distinct()]
+      .Groups
+      .GetAsync(config =>
+      {
+        config.QueryParameters.Select = [.. groupFieldMappings.Values];
+        config.QueryParameters.Filter = groupFilter;
+      }
     );
   }
 
-  public async Task<GroupCollectionResponse?> GetGroups()
+  public async Task<GroupCollectionResponse?> GetGroups(string? groupFilter = null)
   {
-    return await GraphServiceClient.Groups.GetAsync(
-      static config =>
-      {
-        config.QueryParameters.Count = true;
-        config.Headers.Add("ConsistencyLevel", "eventual");
-      }
-    );
+    return await GraphServiceClient.Groups.GetAsync(config =>
+    {
+      config.QueryParameters.Filter = groupFilter;
+      config.QueryParameters.Count = true;
+      config.Headers.Add("ConsistencyLevel", "eventual");
+    });
   }
 
   public async Task<UserCollectionResponse?> GetUsers()
   {
-    return await GraphServiceClient.Users.GetAsync(
-      static config =>
-      {
-        config.QueryParameters.Count = true;
-        config.Headers.Add("ConsistencyLevel", "eventual");
-      }
-    );
+    return await GraphServiceClient.Users.GetAsync(static config =>
+    {
+      config.QueryParameters.Count = true;
+      config.Headers.Add("ConsistencyLevel", "eventual");
+    });
   }
 }
