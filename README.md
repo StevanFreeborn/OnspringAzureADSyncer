@@ -29,7 +29,7 @@ _**Note:**_ This is an unofficial Onspring integration. It was not built in cons
   - [Activating and Deactivating Users](#activating-and-deactivating-users)
   - [Custom Mappings](#custom-mappings)
   - [Validating Mappings](#validating-mappings)
-  - [Group Filters](#group-filters)
+  - [Group Filter](#group-filter)
 - [Options](#options)
 - [Output](#output)
   - [Log](#log)
@@ -51,13 +51,13 @@ The OnspringAzureADSyncer app is meant to help fill this gap and provide Onsprin
 
 ✅ Allow Azure Active Directory to serve as the system of record for managing users and groups.
 
-✅ Synchronize all users and groups in Azure Active Directory with Onspring.
+✅ Synchronize groups and their members in Azure Active Directory with Onspring.
 
 ✅ Activate and deactivate Onspring users based on group membership in specific Azure Active Directory groups.
 
-✅ Map Azure Active Directory user properties to Onspring user fields.
-
 ✅ Map Azure Active Directory group properties to Onspring group fields.
+
+✅ Map Azure Active Directory user properties to Onspring user fields.
 
 ## Requirements
 
@@ -313,9 +313,9 @@ Prior to the app actually attempting to sync groups or users it will validate th
 | `DateTimeOffset`    | `Text`              |
 | `DateTimeOffset`    | `Date/Time`         |
 
-### Group Filters
+### Group Filter
 
-The app can be configured to filter the groups that are synced from Azure Active Directory to Onspring by adding the `GroupFilters` property to the `Azure` section of the configuration file. The `GroupFilters` property should be an array of objects that contain a `Property` and `Pattern` property. The `Property` value should be the name of the property on the Azure Active Directory group that you want to filter on and the `Pattern` value should be a regular expression that the value of the property should match. See below for an example:
+The app can be configured to filter the groups that are synced from Azure Active Directory to Onspring by adding the `GroupFilter` property to the `Azure` section of the configuration file. The `GroupFilter` property should be a string that is a valid OData filter. It will be passed as the `$filter` query param when retreiving groups from the Microsoft Graph API. You can find more informationa about valid filters [here](https://learn.microsoft.com/en-us/graph/filter-query-parameter?tabs=http)
 
 ```json
 {
@@ -324,26 +324,15 @@ The app can be configured to filter the groups that are synced from Azure Active
     "TenantId": "00000000-0000-0000-0000-000000000000",
     "ClientId": "0a000aa0-1b11-2222-3c33-444444d44d44",
     "ClientSecret": "00000~00000--000000000-00000000000000000",
-    "GroupFilters": [
-      {
-        "Property": "displayName",
-        "Pattern": ".*-Onspring$"
-      }
-    ]
+    "GroupFilter": "displayName eq 'My Group'"
   },
   ...
 }
 ```
 
-_**Note:**_ These filters are ANDed together. So a group must match all the filters to be synced to Onspring.
+_**Note:**_ The app will only sync groups from Azure Active Directory to Onspring that match the filter you've set. If you have not set a filter the app will sync all groups from Azure Active Directory to Onspring.
 
-_**Note:**_ The `Property` value is case insensitive, but it should be a property of type `String` on the Azure Active Directory group.
-
-_**Note:**_ The `Pattern` value is a regular expression that will be used to match the value of the property on the Azure Active Directory group. The regular expression should be a valid .NET regular expression pattern.
-
-_**Note:**_ The app will only sync groups from Azure Active Directory to Onspring that match the filters you've set. If you have not set any filters the app will sync all groups from Azure Active Directory to Onspring.
-
-_**Note:**_ Prior to running the syncer will validate the group filters to ensure the property is a valid property on the Azure Active Directory group with the type string and that the pattern is a valid regular expression. Note the regular expression uses the .NET regular expression engine. See the [Microsoft .NET Regular Expression Language](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference) for more information.
+_**Note:**_ The app will also only sync users from Azure Active Directory to Onspring that are members of groups that match the filter you've set. If you have not set a filter than the app will sync all members of all groups from Azure Active Directory to Onspring.
 
 ## Options
 
