@@ -30,7 +30,7 @@ public class SyncerTests
   {
     _processorMock
       .Setup(static p => p.HasValidGroupFilter())
-      .Returns(true);
+      .ReturnsAsync((true, string.Empty));
 
     _processorMock
       .Setup(static p => p.VerifyConnections())
@@ -39,6 +39,10 @@ public class SyncerTests
     _processorMock
       .Setup(static p => p.FieldMappingsAreValid())
       .Returns(true);
+
+    _processorMock
+      .Setup(static p => p.SyncGroups())
+      .ReturnsAsync([]);
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
@@ -52,11 +56,15 @@ public class SyncerTests
   {
     _processorMock
       .Setup(static p => p.HasValidGroupFilter())
-      .Returns(true);
+      .ReturnsAsync((true, string.Empty));
 
     _processorMock
       .Setup(static p => p.VerifyConnections())
       .ReturnsAsync(true);
+
+    _processorMock
+      .Setup(static p => p.SyncGroups())
+      .ReturnsAsync([]);
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
@@ -70,7 +78,7 @@ public class SyncerTests
   {
     _processorMock
       .Setup(static p => p.HasValidGroupFilter())
-      .Returns(true);
+      .ReturnsAsync((true, string.Empty));
 
     _processorMock
       .Setup(static p => p.VerifyConnections())
@@ -79,6 +87,10 @@ public class SyncerTests
     _processorMock
       .Setup(static p => p.FieldMappingsAreValid())
       .Returns(true);
+
+    _processorMock
+      .Setup(static p => p.SyncGroups())
+      .ReturnsAsync([]);
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
