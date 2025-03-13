@@ -16,6 +16,92 @@ public class Processor(
   private readonly IOnspringService _onspringService = onspringService;
   private readonly IGraphService _graphService = graphService;
 
+  public async Task SyncGroupMembers(Group azureGroup)
+  {
+    var groupMembers = new List<User>();
+    var pageSize = 50;
+
+    if (azureGroup is null || azureGroup.Id is null)
+    {
+      _logger.Warning("Azure AD Group is null or has no Id");
+      return;
+    }
+
+    var groupMembersIterator = await _graphService.GetGroupMembersIterator(azureGroup.Id, groupMembers, pageSize);
+
+    if (groupMembersIterator is null)
+    {
+      _logger.Warning("Unable to get group members from Azure AD for group {GroupId}", azureGroup.Id);
+      return;
+    }
+
+    var pageNumberProcessing = 0;
+
+    do
+    {
+      if (groupMembersIterator.State == PagingState.Paused)
+      {
+        await groupMembersIterator.ResumeAsync();
+      }
+
+      if (groupMembersIterator.State == PagingState.NotStarted)
+      {
+        await groupMembersIterator.IterateAsync();
+      }
+
+      if (groupMembers.Count == 0)
+      {
+        _logger.Warning("No group members found in Azure AD for group {GroupId}", azureGroup.Id);
+        continue;
+      }
+
+      pageNumberProcessing++;
+
+
+      var usersListFields = _settings
+        .Onspring
+        .UsersFields
+        .OfType<ListField>()
+        .ToList();
+
+      await SyncListValues(usersListFields, _settings.UsersFieldMappings, groupMembers);
+
+      var options = new ProgressBarOptions
+      {
+        ForegroundColor = ConsoleColor.DarkBlue,
+        ProgressCharacter = '─',
+        ShowEstimatedDuration = false,
+      };
+
+      using (
+        var progressBar = new ProgressBar(
+          groupMembers.Count,
+          $"Starting processing Azure AD Group Members for Group {azureGroup.Id}: page {pageNumberProcessing}",
+          options
+        )
+      )
+      {
+        await Parallel.ForEachAsync(
+          groupMembers,
+          async (groupMember, token) =>
+          {
+            await SyncUser(groupMember);
+            progressBar.Tick($"Processed Azure AD Group Member: {groupMember.Id}");
+          }
+        );
+
+        progressBar.Message = $"Finished processing Azure AD Group Members for Group{azureGroup.Id}: page {pageNumberProcessing}";
+      }
+
+      // clear the list before
+      // the next iteration
+      // to avoid processing a group member
+      // multiple times
+      groupMembers.Clear();
+
+    } while (groupMembersIterator.State != PagingState.Complete);
+  }
+
   public async Task SyncUsers()
   {
     var azureUsers = new List<User>();
@@ -93,16 +179,17 @@ public class Processor(
     } while (userIterator.State != PagingState.Complete);
   }
 
-  public async Task SyncGroups()
+  public async Task<List<Group>> SyncGroups()
   {
+    var allGroups = new List<Group>();
     var azureGroups = new List<Group>();
     var pageSize = 50;
     var groupIterator = await _graphService.GetGroupsIterator(azureGroups, pageSize);
 
     if (groupIterator is null)
     {
-      _logger.Warning("No groups found in Azure AD");
-      return;
+      _logger.Warning("Unable to get groups from Azure AD");
+      return allGroups;
     }
 
     var pageNumberProcessing = 0;
@@ -121,6 +208,7 @@ public class Processor(
 
       if (azureGroups.Count == 0)
       {
+        _logger.Warning("No groups found in Azure AD for page {PageNumber}", pageNumberProcessing);
         continue;
       }
 
@@ -165,9 +253,12 @@ public class Processor(
       // the next iteration
       // to avoid processing a group
       // multiple times
+      allGroups.AddRange(azureGroups);
       azureGroups.Clear();
 
     } while (groupIterator.State != PagingState.Complete);
+
+    return allGroups;
   }
 
   public bool FieldMappingsAreValid()
@@ -808,22 +899,6 @@ public class Processor(
   {
     _logger.Debug("Processing Azure AD Group: {@AzureGroup}", azureGroup);
 
-    foreach (var filter in _settings.Azure.GroupFilters)
-    {
-      var isMatch = filter.IsMatch(azureGroup);
-
-      if (isMatch is false)
-      {
-        _logger.Debug(
-          "Azure Group {@AzureGroup} does not match filter: {@Filter}",
-          azureGroup,
-          filter
-        );
-
-        return;
-      }
-    }
-
     var onspringGroup = await _onspringService.GetGroup(azureGroup);
 
     if (onspringGroup is null)
@@ -911,29 +986,6 @@ public class Processor(
         continue;
       }
 
-      var isMatch = true;
-
-      foreach (var filter in _settings.Azure.GroupFilters)
-      {
-        isMatch = filter.IsMatch(azureUserGroup);
-
-        if (isMatch is false)
-        {
-          _logger.Debug(
-            "Azure User Group {@AzureUserGroup} does not match filter: {@Filter}",
-            azureUserGroup,
-            filter
-          );
-
-          break;
-        }
-      }
-
-      if (isMatch is false)
-      {
-        continue;
-      }
-
       var onspringGroup = await _onspringService.GetGroup(azureUserGroup);
 
       if (onspringGroup is null)
@@ -998,18 +1050,8 @@ public class Processor(
     _settings.Onspring.UserInactiveStatusListValue = inactiveListValue.Id;
   }
 
-  public bool HasValidGroupFilters()
+  public async Task<(bool IsSuccessful, string ResultMessage)> HasValidGroupFilter()
   {
-    foreach (var filter in _settings.Azure.GroupFilters)
-    {
-      if (filter.IsValid() is false)
-      {
-        _logger.Error("Invalid Group Filter: {@Filter}", filter);
-
-        return false;
-      }
-    }
-
-    return true;
+    return await _graphService.CanGetGroups(_settings.Azure.GroupFilter);
   }
 }

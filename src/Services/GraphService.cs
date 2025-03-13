@@ -12,6 +12,48 @@ public class GraphService(
   private readonly ISettings _settings = settings;
   private readonly IMsGraph _msGraph = msGraph;
 
+  public async Task<PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>?> GetGroupMembersIterator(string groupId, List<User> groupMembers, int pageSize)
+  {
+    try
+    {
+      var initialGroupMembers = await _msGraph.GetGroupMembersForIterator(groupId, _settings.UsersFieldMappings);
+
+      if (initialGroupMembers is null || initialGroupMembers.Value is null)
+      {
+        _logger.Warning("No group members found in Azure AD for group {GroupId}", groupId);
+        return null;
+      }
+
+      var groupMembersIterator = PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>
+        .CreatePageIterator(
+          _msGraph.GraphServiceClient,
+          initialGroupMembers,
+          (u) =>
+          {
+            if (u is User user)
+            {
+              groupMembers.Add(user);
+            }
+
+            return groupMembers.Count < pageSize;
+          }
+        );
+
+      return groupMembersIterator;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to connect to Azure AD to get group members for group {GroupId}: {Message}",
+        groupId,
+        ex.Message
+      );
+
+      return null;
+    }
+  }
+
   public async Task<List<Group>> GetUserGroups(User azureUser)
   {
     try
@@ -49,25 +91,22 @@ public class GraphService(
     {
       var initialUsers = await _msGraph.GetUsersForIterator(_settings.UsersFieldMappings);
 
-      if (
-        initialUsers == null ||
-        initialUsers.Value == null
-      )
+      if (initialUsers is null || initialUsers.Value is null)
       {
         _logger.Warning("No users found in Azure AD");
         return null;
       }
 
       var usersIterator = PageIterator<User, UserCollectionResponse>
-      .CreatePageIterator(
-        _msGraph.GraphServiceClient,
-        initialUsers,
-        (u) =>
-        {
-          azureUsers.Add(u);
-          return azureUsers.Count < pageSize;
-        }
-      );
+        .CreatePageIterator(
+          _msGraph.GraphServiceClient,
+          initialUsers,
+          (u) =>
+          {
+            azureUsers.Add(u);
+            return azureUsers.Count < pageSize;
+          }
+        );
 
       return usersIterator;
     }
@@ -87,12 +126,9 @@ public class GraphService(
   {
     try
     {
-      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings, [.. _settings.Azure.GroupFilters]);
+      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings, _settings.Azure.GroupFilter);
 
-      if (
-        initialGroups == null ||
-        initialGroups.Value == null
-      )
+      if (initialGroups is null || initialGroups.Value is null)
       {
         _logger.Warning("No groups found in Azure AD");
         return null;
@@ -100,15 +136,15 @@ public class GraphService(
 
 
       var groupsIterator = PageIterator<Group, GroupCollectionResponse>
-      .CreatePageIterator(
-        _msGraph.GraphServiceClient,
-        initialGroups,
-        (g) =>
-        {
-          groups.Add(g);
-          return groups.Count < pageSize;
-        }
-      );
+        .CreatePageIterator(
+          _msGraph.GraphServiceClient,
+          initialGroups,
+          (g) =>
+          {
+            groups.Add(g);
+            return groups.Count < pageSize;
+          }
+        );
 
       return groupsIterator;
     }
@@ -126,16 +162,17 @@ public class GraphService(
 
   public async Task<bool> IsConnected()
   {
-    return await CanGetUsers() && await CanGetGroups();
+    var (isSuccessful, _) = await CanGetGroups();
+    return await CanGetUsers() && isSuccessful;
   }
 
-  public async Task<bool> CanGetGroups()
+  public async Task<(bool IsSuccessful, string ResultMessage)> CanGetGroups(string? groupFilter = null)
   {
     try
     {
-      var groups = await _msGraph.GetGroups();
+      var groups = await _msGraph.GetGroups(groupFilter);
 
-      return true;
+      return (true, string.Empty);
     }
     catch (Exception ex)
     {
@@ -145,7 +182,7 @@ public class GraphService(
         ex.Message
       );
 
-      return false;
+      return (false, ex.Message);
     }
   }
 
