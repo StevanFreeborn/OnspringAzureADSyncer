@@ -12,6 +12,51 @@ public class GraphService(
   private readonly ISettings _settings = settings;
   private readonly IMsGraph _msGraph = msGraph;
 
+  public async Task<PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>?> GetGroupMembersIterator(string groupId, List<User> groupMembers, int pageSize)
+  {
+    try
+    {
+      var initialGroupMembers = await _msGraph.GetGroupMembersForIterator(groupId, _settings.UsersFieldMappings);
+
+      if (
+        initialGroupMembers == null ||
+        initialGroupMembers.Value == null
+      )
+      {
+        _logger.Warning("No group members found in Azure AD for group {GroupId}", groupId);
+        return null;
+      }
+
+      var groupMembersIterator = PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>
+      .CreatePageIterator(
+        _msGraph.GraphServiceClient,
+        initialGroupMembers,
+        (u) =>
+        {
+          if (u is User user)
+          {
+            groupMembers.Add(user);
+          }
+
+          return groupMembers.Count < pageSize;
+        }
+      );
+
+      return groupMembersIterator;
+    }
+    catch (Exception ex)
+    {
+      _logger.Error(
+        ex,
+        "Unable to connect to Azure AD to get group members for group {GroupId}: {Message}",
+        groupId,
+        ex.Message
+      );
+
+      return null;
+    }
+  }
+
   public async Task<List<Group>> GetUserGroups(User azureUser)
   {
     try
@@ -87,7 +132,7 @@ public class GraphService(
   {
     try
     {
-      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings);
+      var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings, _settings.Azure.GroupFilter);
 
       if (
         initialGroups == null ||

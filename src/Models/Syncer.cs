@@ -85,13 +85,16 @@ public class Syncer(ILogger logger, IProcessor processor) : ISyncer
     Console.WriteLine(syncGroupsMsg);
     _logger.Information(syncGroupsMsg);
 
-    await _processor.SyncGroups();
+    var syncedGroups = await _processor.SyncGroups();
 
-    var syncUsersMsg = "Syncing users";
-    Console.WriteLine(syncUsersMsg);
-    _logger.Information(syncUsersMsg);
+    var syncGroupMembersMsg = "Syncing group members";
+    Console.WriteLine(syncGroupMembersMsg);
+    _logger.Information(syncGroupMembersMsg);
 
-    await _processor.SyncUsers();
+    foreach (var group in syncedGroups)
+    {
+      await _processor.SyncGroupMembers(group);
+    }
 
     var exitMsg = "Syncer finished";
     Console.WriteLine(exitMsg);

@@ -8,19 +8,23 @@ public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
     return await GraphServiceClient
       .Users[userId]
       .MemberOf
-      .GetAsync();
+      .GetAsync(static config =>
+      {
+        config.QueryParameters.Count = true;
+        config.Headers.Add("ConsistencyLevel", "eventual");
+      });
   }
 
   public async Task<UserCollectionResponse?> GetUsersForIterator(Dictionary<int, string> usersFieldMappings)
   {
     return await GraphServiceClient
-    .Users
-    .GetAsync(
-      config =>
-      config
-      .QueryParameters
-      .Select = [.. usersFieldMappings.Values]
-    );
+      .Users
+      .GetAsync(config =>
+      {
+        config.QueryParameters.Select = [.. usersFieldMappings.Values];
+        config.QueryParameters.Count = true;
+        config.Headers.Add("ConsistencyLevel", "eventual");
+      });
   }
 
   public GraphServiceClient GraphServiceClient { get; init; } = graphServiceClient;
@@ -33,6 +37,8 @@ public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
       {
         config.QueryParameters.Select = [.. groupFieldMappings.Values];
         config.QueryParameters.Filter = groupFilter;
+        config.QueryParameters.Count = true;
+        config.Headers.Add("ConsistencyLevel", "eventual");
       }
     );
   }
@@ -54,5 +60,18 @@ public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
       config.QueryParameters.Count = true;
       config.Headers.Add("ConsistencyLevel", "eventual");
     });
+  }
+
+  public Task<DirectoryObjectCollectionResponse?> GetGroupMembersForIterator(string groupId, Dictionary<int, string> usersFieldMappings)
+  {
+    return GraphServiceClient
+      .Groups[groupId]
+      .Members
+      .GetAsync(config =>
+      {
+        config.QueryParameters.Select = [.. usersFieldMappings.Values];
+        config.QueryParameters.Count = true;
+        config.Headers.Add("ConsistencyLevel", "eventual");
+      });
   }
 }

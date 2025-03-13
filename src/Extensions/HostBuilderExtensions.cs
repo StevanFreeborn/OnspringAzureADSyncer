@@ -55,7 +55,7 @@ public static class HostBuilderExtensions
         var logPath = Path.Combine(
           AppContext.BaseDirectory,
           $"{DateTime.Now:yyyy_MM_dd_HHmmss}_output",
-          "log.txt"
+          "log.json"
         );
 
         config
