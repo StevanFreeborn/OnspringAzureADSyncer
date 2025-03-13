@@ -1,5 +1,3 @@
-using GroupFilter = OnspringAzureADSyncer.Models.GroupFilter;
-
 namespace OnspringAzureADSyncerTests.UnitTests;
 
 public class ProcessorTests
@@ -803,135 +801,6 @@ public class ProcessorTests
 
     _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
     _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Exactly(2));
-  }
-
-  [Fact]
-  public async Task GetUsersGroupMappings_WhenCalledGroupIsFoundButDoesNotMatchFilter_ItdShouldNotAddTheGroupToTheMappings()
-  {
-    var groupFields = new List<Field>
-    {
-      new()
-      {
-        Id = 1,
-        AppId = 1,
-        Name = "Record Id",
-        Type = FieldType.AutoNumber,
-        Status = FieldStatus.Enabled,
-        IsRequired = true,
-        IsUnique = true,
-      },
-    };
-
-    _settingsMock
-      .SetupGet(static x => x.Azure)
-      .Returns(new AzureSettings()
-      {
-        GroupFilters = [
-          new()
-          {
-            Property = "displayName",
-            Pattern = "Onspring",
-          },
-        ],
-      });
-
-    _onspringServiceMock
-      .Setup(static x => x.GetGroupFields())
-      .ReturnsAsync(groupFields);
-
-    var azureGroups = new List<Group>
-    {
-      new()
-      {
-        Id = "1",
-        DisplayName = "Group 1",
-        Description = "Group 1 Description",
-      },
-    };
-
-    var onspringGroup = new ResultRecord
-    {
-      AppId = 1,
-      RecordId = 1,
-      FieldData = [],
-    };
-
-    _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
-      .ReturnsAsync(onspringGroup);
-
-    var usersGroupMappings = await _processor.GetUsersGroupMappings(azureGroups);
-
-    usersGroupMappings.Should().BeEmpty();
-
-    _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
-    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Never);
-  }
-
-  [Fact]
-  public async Task GetUsersGroupMappings_WhenCalledGroupIsFoundAndItDoesMatchFilters_ItShouldAddTheGroupToTheMappings()
-  {
-    var groupFields = new List<Field>
-    {
-      new()
-      {
-        Id = 1,
-        AppId = 1,
-        Name = "Record Id",
-        Type = FieldType.AutoNumber,
-        Status = FieldStatus.Enabled,
-        IsRequired = true,
-        IsUnique = true,
-      },
-    };
-
-    _settingsMock
-      .SetupGet(static x => x.Azure)
-      .Returns(new AzureSettings()
-      {
-        GroupFilters = [
-          new()
-          {
-            Property = "displayName",
-            Pattern = "Group 1",
-          },
-        ],
-      });
-
-    _onspringServiceMock
-      .Setup(static x => x.GetGroupFields())
-      .ReturnsAsync(groupFields);
-
-    var azureGroups = new List<Group>
-    {
-      new()
-      {
-        Id = "1",
-        DisplayName = "Group 1",
-        Description = "Group 1 Description",
-      },
-    };
-
-    var onspringGroup = new ResultRecord
-    {
-      AppId = 1,
-      RecordId = 1,
-      FieldData = [],
-    };
-
-    _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
-      .ReturnsAsync(onspringGroup);
-
-    var usersGroupMappings = await _processor.GetUsersGroupMappings(azureGroups);
-
-    usersGroupMappings.Should().NotBeEmpty();
-    usersGroupMappings.Should().HaveCount(1);
-    usersGroupMappings.Should().ContainKey("1");
-    usersGroupMappings["1"].Should().Be(1);
-
-    _onspringServiceMock.Verify(static x => x.GetGroupFields(), Times.Once);
-    _onspringServiceMock.Verify(static x => x.GetGroup(It.IsAny<Group>()), Times.Once);
   }
 
   [Fact]
@@ -3009,7 +2878,7 @@ public class ProcessorTests
 
     // mock to return collection of groups
     msGraphMock
-      .Setup(static x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>(), It.IsAny<List<GroupFilter>>()))
+      .Setup(static x => x.GetGroupsForIterator(It.IsAny<Dictionary<int, string>>(), string.Empty))
       .ReturnsAsync(azureGroupCollection);
 
     // mock graph service client for msGraphMock
@@ -3247,100 +3116,6 @@ public class ProcessorTests
     _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
     _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Once);
     _loggerMock.Verify(static x => x.Warning(It.IsAny<string>(), It.IsAny<ResultRecord>()), Times.Once);
-  }
-
-  [Fact]
-  public async Task SyncGroup_WhenCalledAndGroupIsFoundButDoesNotMatchGroupFilter_ItShouldNotSyncGroupToOnspring()
-  {
-    var azureGroup = new Group
-    {
-      Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
-      Description = "Test Group 1",
-    };
-
-    var resultRecord = new ResultRecord
-    {
-      AppId = 1,
-      RecordId = 1,
-      FieldData = [
-        new StringFieldValue(1, "98e58dab-9f2c-4216-bc91-70d7dabe227e"),
-        new StringFieldValue(2, "Group that needs updating"),
-      ]
-    };
-
-    _settingsMock
-      .SetupGet(static x => x.Azure)
-      .Returns(new AzureSettings()
-      {
-        GroupFilters = [
-          new()
-          {
-            Property = "Description",
-            Pattern = "Onspring",
-          }
-        ],
-      });
-
-    _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
-      .ReturnsAsync(resultRecord);
-
-    await _processor.SyncGroup(azureGroup);
-
-    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
-    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Never);
-  }
-
-  [Fact]
-  public async Task SyncGroup_WhenCalledAndGroupIsFoundAndDoesMatchGroupFilter_ItShouldSyncGroupToOnspring()
-  {
-    var azureGroup = new Group
-    {
-      Id = "98e58dab-9f2c-4216-bc91-70d7dabe227e",
-      Description = "Test Group 1",
-    };
-
-    var resultRecord = new ResultRecord
-    {
-      AppId = 1,
-      RecordId = 1,
-      FieldData = [
-        new StringFieldValue(1, "98e58dab-9f2c-4216-bc91-70d7dabe227e"),
-        new StringFieldValue(2, "Group that needs updating"),
-      ]
-    };
-
-    var saveRecordResponse = new SaveRecordResponse
-    {
-      Id = 1,
-      Warnings = []
-    };
-
-    _settingsMock
-      .SetupGet(static x => x.Azure)
-      .Returns(new AzureSettings()
-      {
-        GroupFilters = [
-          new()
-          {
-            Property = "Description",
-            Pattern = "Test",
-          }
-        ],
-      });
-
-    _onspringServiceMock
-      .Setup(static x => x.GetGroup(It.IsAny<Group>()))
-      .ReturnsAsync(resultRecord);
-
-    _onspringServiceMock
-      .Setup(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()))
-      .ReturnsAsync(saveRecordResponse);
-
-    await _processor.SyncGroup(azureGroup);
-
-    _onspringServiceMock.Verify(static x => x.CreateGroup(It.IsAny<Group>()), Times.Never);
-    _onspringServiceMock.Verify(static x => x.UpdateGroup(It.IsAny<Group>(), It.IsAny<ResultRecord>()), Times.Once);
   }
 
   [Fact]
@@ -4051,56 +3826,56 @@ public class ProcessorTests
   }
 
   [Fact]
-  public void HasValidGroupFilters_WhenCalledAndNoGroupFiltersArePresent_ItShouldReturnTrue()
+  public async Task HasValidGroupFilters_WhenCalledAndNoGroupFiltersArePresent_ItShouldReturnTrue()
   {
     _settingsMock
       .SetupGet(static x => x.Azure)
       .Returns(new AzureSettings());
 
-    var result = _processor.HasValidGroupFilter();
+    _graphServiceMock
+      .Setup(static x => x.CanGetGroups(It.IsAny<string>()))
+      .ReturnsAsync((true, string.Empty));
 
-    result.Should().BeTrue();
+    var (isSuccessful, _) = await _processor.HasValidGroupFilter();
+
+    isSuccessful.Should().BeTrue();
   }
 
   [Fact]
-  public void HasValidGroupFilters_WhenCalledAndGroupFiltersArePresent_ItShouldReturnTrue()
+  public async Task HasValidGroupFilters_WhenCalledAndGroupFiltersArePresent_ItShouldReturnTrue()
   {
     _settingsMock
       .SetupGet(static x => x.Azure)
       .Returns(new AzureSettings
       {
-        GroupFilters = [
-          new GroupFilter
-          {
-            Property = "displayName",
-            Pattern = "Test Group"
-          }
-        ]
+        GroupFilter = "displayName eq 'Test Group'"
       });
 
-    var result = _processor.HasValidGroupFilter();
+    _graphServiceMock
+      .Setup(static x => x.CanGetGroups(It.IsAny<string>()))
+      .ReturnsAsync((true, string.Empty));
 
-    result.Should().BeTrue();
+    var (isSuccesful, _) = await _processor.HasValidGroupFilter();
+
+    isSuccesful.Should().BeTrue();
   }
 
   [Fact]
-  public void HasValidGroupFilters_WhenCalledAndGroupFiltersHasInvalidFilter_ItShouldReturnFalse()
+  public async Task HasValidGroupFilters_WhenCalledAndGroupFiltersHasInvalidFilter_ItShouldReturnFalse()
   {
     _settingsMock
       .SetupGet(static x => x.Azure)
       .Returns(new AzureSettings
       {
-        GroupFilters = [
-          new GroupFilter
-          {
-            Property = "invalidProperty",
-            Pattern = "Test Group"
-          }
-        ]
+        GroupFilter = "invalid filter"
       });
 
-    var result = _processor.HasValidGroupFilter();
+    _graphServiceMock
+      .Setup(static x => x.CanGetGroups(It.IsAny<string>()))
+      .ReturnsAsync((false, "Invalid filter"));
 
-    result.Should().BeFalse();
+    var (isSuccesful, _) = await _processor.HasValidGroupFilter();
+
+    isSuccesful.Should().BeFalse();
   }
 }

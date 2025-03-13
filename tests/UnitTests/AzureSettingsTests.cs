@@ -1,5 +1,3 @@
-using GroupFilter = OnspringAzureADSyncer.Models.GroupFilter;
-
 namespace OnspringAzureADSyncerTests.UnitTests;
 
 public class AzureSettingsTests
