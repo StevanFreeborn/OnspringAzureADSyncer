@@ -19,5 +19,5 @@ public class AzureSettings
   public string[] OnspringActiveGroups { get; init; } = [];
   public PropertyInfo[] UsersProperties { get; } = typeof(User).GetProperties();
   public PropertyInfo[] GroupsProperties { get; } = typeof(Group).GetProperties();
-  public GroupFilter[] GroupFilters { get; init; } = [];
+  public string GroupFilter { get; init; } = string.Empty;
 }

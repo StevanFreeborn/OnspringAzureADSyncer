@@ -24,19 +24,10 @@ public class AzureGroupDestructuringPolicy(ISettings settings) : IAzureGroupDest
       .Values
       .ToList();
 
-    var groupFilterProperties = _settings
-      .Azure
-      .GroupFilters
-      .Select(f => f.Property)
-      .ToList();
-
-    List<string> groupProperties = [.. groupFilterProperties, .. mappedGroupProperties];
-    var distinctGroupProperties = groupProperties.Distinct();
-
     var props = value
       .GetType()
       .GetProperties(BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public)
-      .Where(p => distinctGroupProperties.Contains(p.Name, StringComparer.OrdinalIgnoreCase));
+      .Where(p => mappedGroupProperties.Contains(p.Name, StringComparer.OrdinalIgnoreCase));
 
     var logEventProperties = new List<LogEventProperty>();
 
