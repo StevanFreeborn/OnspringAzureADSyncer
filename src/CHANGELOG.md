@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="2.0.0"></a>
+## [2.0.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.0.0) (2025-03-13)
+
+### Features
+
+* accept group filter as odata $filter query string ([e901cd2](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/e901cd2e4cdd9f3c100b5c96af78caf3d34ba088))
+* use group filter to retrieve groups and only retrieve members of groups included by that filter ([06d2724](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/06d2724f76a82ea5fb5323d4f77225638816387c))
+
+### Bug Fixes
+
+* remove group filter ([b62a9d7](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/b62a9d76a5abc5d1261b5470eaddca651ae33575))
+
+### Breaking Changes
+
+* accept group filter as odata $filter query string ([e901cd2](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/e901cd2e4cdd9f3c100b5c96af78caf3d34ba088))
+
 <a name="1.4.3"></a>
 ## [1.4.3](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v1.4.3) (2025-02-26)
 
