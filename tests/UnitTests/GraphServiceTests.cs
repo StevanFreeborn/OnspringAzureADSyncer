@@ -397,4 +397,64 @@ public class GraphServiceTests
     result.Should().BeNull();
     _msGraphMock.Verify(static x => x.GetUsersForIterator(It.IsAny<Dictionary<int, string>>()), Times.Once);
   }
+
+  [Fact]
+  public async Task GetGroupMembersIterator_WhenExceptionIsThrow_ItShouldReturnNull()
+  {
+    _msGraphMock
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Throws(new Exception());
+
+    var result = await _graphService.GetGroupMembersIterator("1", [], 10);
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task GetGroupMembersIterator_WhenCalledAndInitialGroupsAreNull_ItShouldReturnNull()
+  {
+    _msGraphMock
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(null as DirectoryObjectCollectionResponse);
+
+    var result = await _graphService.GetGroupMembersIterator("1", [], 10);
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task GetGroupMembersIterator_WhenCalledAndInitialGroupsValueIsNull_ItShouldReturnNull()
+  {
+    _msGraphMock
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(new DirectoryObjectCollectionResponse());
+
+    var result = await _graphService.GetGroupMembersIterator("1", [], 10);
+
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task GetGroupMembersIterator_WhenCalledAndInitialGroupsReturned_ItShouldReturnPageIterator()
+  {
+    var collection = new DirectoryObjectCollectionResponse
+    {
+      Value = [
+        new User
+        {
+          Id = "1",
+          UserPrincipalName = "User 1"
+        },
+      ]
+    };
+
+    _msGraphMock
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .ReturnsAsync(collection);
+
+    var result = await _graphService.GetGroupMembersIterator("1", [], 10);
+
+    result.Should().NotBeNull();
+    result.Should().BeOfType<PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>>();
+  }
 }
