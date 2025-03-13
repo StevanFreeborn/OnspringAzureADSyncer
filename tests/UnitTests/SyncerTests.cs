@@ -26,6 +26,24 @@ public class SyncerTests
   }
 
   [Fact]
+  public async Task Run_WhenCalledAndGroupFilterIsInvalid_ItShouldReturnNonZeroValue()
+  {
+    _processorMock
+      .Setup(static p => p.VerifyConnections())
+      .ReturnsAsync(true);
+
+    _processorMock
+      .Setup(static p => p.HasValidGroupFilter())
+      .ReturnsAsync((false, "Invalid group filter"));
+
+    var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
+
+    var result = await syncer.Run();
+
+    result.Should().NotBe(0);
+  }
+
+  [Fact]
   public async Task Run_WhenCalledAndConnectionCanBeMadeToAzureAndOnspringAndFieldMappingsAreValid_ItShouldReturnZero()
   {
     _processorMock
@@ -90,12 +108,17 @@ public class SyncerTests
 
     _processorMock
       .Setup(static p => p.SyncGroups())
-      .ReturnsAsync([]);
+      .ReturnsAsync([new Group()]);
+
+    _processorMock
+      .Setup(static p => p.SyncGroupMembers(It.IsAny<Group>()))
+      .Returns(Task.CompletedTask);
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
     await syncer.Run();
 
     _processorMock.Verify(static p => p.SyncGroups(), Times.Once);
+    _processorMock.Verify(static p => p.SyncGroupMembers(It.IsAny<Group>()), Times.Once);
   }
 }

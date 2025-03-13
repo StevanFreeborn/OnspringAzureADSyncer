@@ -57,6 +57,15 @@ public class Processor(
 
       pageNumberProcessing++;
 
+
+      var usersListFields = _settings
+        .Onspring
+        .UsersFields
+        .OfType<ListField>()
+        .ToList();
+
+      await SyncListValues(usersListFields, _settings.UsersFieldMappings, groupMembers);
+
       var options = new ProgressBarOptions
       {
         ForegroundColor = ConsoleColor.DarkBlue,

@@ -18,29 +18,26 @@ public class GraphService(
     {
       var initialGroupMembers = await _msGraph.GetGroupMembersForIterator(groupId, _settings.UsersFieldMappings);
 
-      if (
-        initialGroupMembers == null ||
-        initialGroupMembers.Value == null
-      )
+      if (initialGroupMembers is null || initialGroupMembers.Value is null)
       {
         _logger.Warning("No group members found in Azure AD for group {GroupId}", groupId);
         return null;
       }
 
       var groupMembersIterator = PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>
-      .CreatePageIterator(
-        _msGraph.GraphServiceClient,
-        initialGroupMembers,
-        (u) =>
-        {
-          if (u is User user)
+        .CreatePageIterator(
+          _msGraph.GraphServiceClient,
+          initialGroupMembers,
+          (u) =>
           {
-            groupMembers.Add(user);
-          }
+            if (u is User user)
+            {
+              groupMembers.Add(user);
+            }
 
-          return groupMembers.Count < pageSize;
-        }
-      );
+            return groupMembers.Count < pageSize;
+          }
+        );
 
       return groupMembersIterator;
     }
@@ -94,25 +91,22 @@ public class GraphService(
     {
       var initialUsers = await _msGraph.GetUsersForIterator(_settings.UsersFieldMappings);
 
-      if (
-        initialUsers == null ||
-        initialUsers.Value == null
-      )
+      if (initialUsers is null || initialUsers.Value is null)
       {
         _logger.Warning("No users found in Azure AD");
         return null;
       }
 
       var usersIterator = PageIterator<User, UserCollectionResponse>
-      .CreatePageIterator(
-        _msGraph.GraphServiceClient,
-        initialUsers,
-        (u) =>
-        {
-          azureUsers.Add(u);
-          return azureUsers.Count < pageSize;
-        }
-      );
+        .CreatePageIterator(
+          _msGraph.GraphServiceClient,
+          initialUsers,
+          (u) =>
+          {
+            azureUsers.Add(u);
+            return azureUsers.Count < pageSize;
+          }
+        );
 
       return usersIterator;
     }
@@ -134,10 +128,7 @@ public class GraphService(
     {
       var initialGroups = await _msGraph.GetGroupsForIterator(_settings.GroupsFieldMappings, _settings.Azure.GroupFilter);
 
-      if (
-        initialGroups == null ||
-        initialGroups.Value == null
-      )
+      if (initialGroups is null || initialGroups.Value is null)
       {
         _logger.Warning("No groups found in Azure AD");
         return null;
@@ -145,15 +136,15 @@ public class GraphService(
 
 
       var groupsIterator = PageIterator<Group, GroupCollectionResponse>
-      .CreatePageIterator(
-        _msGraph.GraphServiceClient,
-        initialGroups,
-        (g) =>
-        {
-          groups.Add(g);
-          return groups.Count < pageSize;
-        }
-      );
+        .CreatePageIterator(
+          _msGraph.GraphServiceClient,
+          initialGroups,
+          (g) =>
+          {
+            groups.Add(g);
+            return groups.Count < pageSize;
+          }
+        );
 
       return groupsIterator;
     }
