@@ -9,9 +9,10 @@ public class Syncer(ILogger logger, IProcessor processor) : ISyncer
   {
     Console.ForegroundColor = ConsoleColor.DarkBlue;
 
-    var startMsg = "Starting syncer";
-    Console.WriteLine(startMsg);
-    _logger.Information(startMsg);
+    var version = Assembly.GetExecutingAssembly().GetName().Version;
+
+    Console.WriteLine("Starting syncer {0}.{1}.{2}", version?.Major, version?.Minor, version?.Build);
+    _logger.Information("Starting syncer {Major}.{Minor}.{Build}", version?.Major, version?.Minor, version?.Build);
 
     if (await _processor.VerifyConnections() is false)
     {
