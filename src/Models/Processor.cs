@@ -90,7 +90,7 @@ public class Processor(
           }
         );
 
-        progressBar.Message = $"Finished processing Azure AD Group Members for Group{azureGroup.Id}: page {pageNumberProcessing}";
+        progressBar.Message = $"Finished processing Azure AD Group Members for Group {azureGroup.Id}: page {pageNumberProcessing}";
       }
 
       // clear the list before
