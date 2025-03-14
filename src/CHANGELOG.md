@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="2.1.0"></a>
+## [2.1.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.1.0) (2025-03-14)
+
+### Features
+
+* add version to starting message ([7886e45](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/7886e45891d660fcc88ceb92b11d35c82a973792))
+
+### Bug Fixes
+
+* add missing whitespace ([ca8d6b3](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/ca8d6b3c3c61dd840d3f243bf0c12b4bc8515da2))
+
 <a name="2.0.0"></a>
 ## [2.0.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.0.0) (2025-03-13)
 
