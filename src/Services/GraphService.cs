@@ -16,7 +16,8 @@ public class GraphService(
   {
     try
     {
-      var initialGroupMembers = await _msGraph.GetGroupMembersForIterator(groupId, _settings.UsersFieldMappings);
+      var memberProperties = _settings.GetMappedUserPropertiesAsCamelCase();
+      var initialGroupMembers = await _msGraph.GetGroupMembersForIterator(groupId, memberProperties);
 
       if (initialGroupMembers is null || initialGroupMembers.Value is null)
       {

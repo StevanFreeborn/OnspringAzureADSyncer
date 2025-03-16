@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace OnspringAzureADSyncer.Models;
 
 public class Settings : ISettings
@@ -63,5 +65,27 @@ public class Settings : ISettings
     .Build()
     .GetSection(SettingsSection)
     .Bind(this);
+  }
+
+  public List<string> GetMappedUserPropertiesAsCamelCase()
+  {
+    var userProperties = Azure.UsersProperties
+      .Select(static property => property.Name)
+      .ToList();
+
+    var mappedUserProperties = UsersFieldMappings.Values.ToList();
+
+    var properties = userProperties
+      .Where(property => mappedUserProperties.Contains(property, StringComparer.OrdinalIgnoreCase))
+      .ToList();
+
+    return [.. properties.Select(ToCamelCase)];
+
+    static string ToCamelCase(string property)
+    {
+      var firstChar = property[0];
+      var rest = property[1..];
+      return $"{char.ToLower(firstChar, CultureInfo.InvariantCulture)}{rest}";
+    }
   }
 }
