@@ -19,19 +19,19 @@ public class SettingsTests
   public void Settings_ItShouldHaveDefaultGroupsFieldMappingsBasedOnConstantPropertiesOfAzureSettingsAndOnspringSettings()
   {
     Settings
-    .DefaultGroupsFieldMappings
-    .Should()
-    .BeEquivalentTo(new Dictionary<string, string>
-    {
+      .DefaultGroupsFieldMappings
+      .Should()
+      .BeEquivalentTo(new Dictionary<string, string>
       {
-        AzureSettings.GroupsNameKey,
-        OnspringSettings.GroupsNameField
-      },
-      {
-        AzureSettings.GroupsDescriptionKey,
-        OnspringSettings.GroupsDescriptionField
-      }
-    });
+        {
+          AzureSettings.GroupsNameKey,
+          OnspringSettings.GroupsNameField
+        },
+        {
+          AzureSettings.GroupsDescriptionKey,
+          OnspringSettings.GroupsDescriptionField
+        }
+      });
   }
 
   [Fact]
@@ -44,12 +44,12 @@ public class SettingsTests
     );
 
     _appOptionsMock
-    .SetupGet(x => x.Value)
-    .Returns(new AppOptions
-    {
-      ConfigFile = new FileInfo(filePath),
-      LogLevel = LogEventLevel.Information
-    });
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
+      {
+        ConfigFile = new FileInfo(filePath),
+        LogLevel = LogEventLevel.Information
+      });
 
     var settings = new Settings(_appOptionsMock.Object);
     settings.Azure.Should().NotBeNull();
@@ -70,12 +70,12 @@ public class SettingsTests
     );
 
     _appOptionsMock
-    .SetupGet(x => x.Value)
-    .Returns(new AppOptions
-    {
-      ConfigFile = new FileInfo(filePath),
-      LogLevel = LogEventLevel.Information
-    });
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
+      {
+        ConfigFile = new FileInfo(filePath),
+        LogLevel = LogEventLevel.Information
+      });
 
     var azureSettings = new AzureSettings
     {
@@ -128,5 +128,55 @@ public class SettingsTests
     settings.Onspring.Should().Be(onspringSettings);
     settings.GroupsFieldMappings.Should().BeEquivalentTo(groupFieldMappings);
     settings.UsersFieldMappings.Should().BeEquivalentTo(usersFieldMappings);
+  }
+
+  [Fact]
+  public void GetMappedUserPropertiesAsCamelCase_WhenCalled_ItShouldReturnMappedPropertiesAsCamelCase()
+  {
+    var filePath = Path.Combine(
+      Directory.GetCurrentDirectory(),
+      "testData",
+      "testconfig.json"
+    );
+
+    _appOptionsMock
+      .SetupGet(static x => x.Value)
+      .Returns(new AppOptions
+      {
+        ConfigFile = new FileInfo(filePath),
+        LogLevel = LogEventLevel.Information
+      });
+
+    var settings = new Settings(_appOptionsMock.Object)
+    {
+      UsersFieldMappings = new Dictionary<int, string>
+      {
+        {
+          1,
+          "id"
+        },
+        {
+          2,
+          "DisplayName"
+        },
+        {
+          3,
+          "description"
+        },
+        {
+          4,
+          "streetaddress"
+        }
+      }
+    };
+
+    var mappedProperties = settings.GetMappedUserPropertiesAsCamelCase();
+
+    mappedProperties.Should().BeEquivalentTo(new List<string>
+    {
+      "id",
+      "displayName",
+      "streetAddress"
+    });
   }
 }
