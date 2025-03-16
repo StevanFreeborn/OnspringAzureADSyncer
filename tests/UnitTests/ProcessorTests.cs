@@ -3994,7 +3994,7 @@ public class ProcessorTests
 
     // mock to return collection of users
     msGraphMock
-      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<List<string>>()))
       .ReturnsAsync(azureUsersCollection);
 
     // mock graph service client for msGraphMock
@@ -4197,7 +4197,7 @@ public class ProcessorTests
 
     // mock to return collection of users
     msGraphMock
-      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<List<string>>()))
       .ReturnsAsync(azureUsersCollection);
 
     // mock graph service client for msGraphMock
