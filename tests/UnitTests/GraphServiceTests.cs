@@ -402,7 +402,7 @@ public class GraphServiceTests
   public async Task GetGroupMembersIterator_WhenExceptionIsThrow_ItShouldReturnNull()
   {
     _msGraphMock
-      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<List<string>>()))
       .Throws(new Exception());
 
     var result = await _graphService.GetGroupMembersIterator("1", [], 10);
@@ -414,7 +414,7 @@ public class GraphServiceTests
   public async Task GetGroupMembersIterator_WhenCalledAndInitialGroupsAreNull_ItShouldReturnNull()
   {
     _msGraphMock
-      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<List<string>>()))
       .ReturnsAsync(null as DirectoryObjectCollectionResponse);
 
     var result = await _graphService.GetGroupMembersIterator("1", [], 10);
@@ -426,7 +426,7 @@ public class GraphServiceTests
   public async Task GetGroupMembersIterator_WhenCalledAndInitialGroupsValueIsNull_ItShouldReturnNull()
   {
     _msGraphMock
-      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<List<string>>()))
       .ReturnsAsync(new DirectoryObjectCollectionResponse());
 
     var result = await _graphService.GetGroupMembersIterator("1", [], 10);
@@ -449,7 +449,7 @@ public class GraphServiceTests
     };
 
     _msGraphMock
-      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<Dictionary<int, string>>()))
+      .Setup(static x => x.GetGroupMembersForIterator(It.IsAny<string>(), It.IsAny<List<string>>()))
       .ReturnsAsync(collection);
 
     var result = await _graphService.GetGroupMembersIterator("1", [], 10);

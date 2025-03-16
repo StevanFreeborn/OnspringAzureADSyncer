@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
@@ -62,14 +64,14 @@ public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
     });
   }
 
-  public Task<DirectoryObjectCollectionResponse?> GetGroupMembersForIterator(string groupId, Dictionary<int, string> usersFieldMappings)
+  public Task<DirectoryObjectCollectionResponse?> GetGroupMembersForIterator(string groupId, List<string> userProperties)
   {
     return GraphServiceClient
       .Groups[groupId]
       .Members
       .GetAsync(config =>
       {
-        config.QueryParameters.Select = [.. usersFieldMappings.Values];
+        config.QueryParameters.Select = [.. userProperties];
         config.QueryParameters.Count = true;
         config.Headers.Add("ConsistencyLevel", "eventual");
       });
