@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="2.1.1"></a>
+## [2.1.1](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.1.1) (2025-03-16)
+
+### Bug Fixes
+
+* enforce member properties are sent to MS Graph API with camelcase ([9a34aaa](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/9a34aaa6fb641247592aa763b4e0148432c7f7eb))
+
 <a name="2.1.0"></a>
 ## [2.1.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.1.0) (2025-03-14)
 
