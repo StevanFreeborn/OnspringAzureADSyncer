@@ -3890,7 +3890,7 @@ public class ProcessorTests
       .Setup(static x => x.GetGroupMembersIterator(It.IsAny<string>(), It.IsAny<List<User>>(), It.IsAny<int>()))
       .ReturnsAsync(null as PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>);
 
-    await _processor.SyncGroupMembers(null!);
+    await _processor.SyncGroupMembers(null!, []);
 
     _graphServiceMock.Verify(static x => x.GetGroupMembersIterator(It.IsAny<string>(), It.IsAny<List<User>>(), It.IsAny<int>()), Times.Never);
     _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Never);
@@ -3909,7 +3909,7 @@ public class ProcessorTests
       .Setup(static x => x.GetGroupMembersIterator(It.IsAny<string>(), It.IsAny<List<User>>(), It.IsAny<int>()))
       .ReturnsAsync(null as PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>);
 
-    await _processor.SyncGroupMembers(new Group());
+    await _processor.SyncGroupMembers(new Group(), []);
 
     _graphServiceMock.Verify(static x => x.GetGroupMembersIterator(It.IsAny<string>(), It.IsAny<List<User>>(), It.IsAny<int>()), Times.Never);
     _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Never);
@@ -3928,7 +3928,7 @@ public class ProcessorTests
       .Setup(static x => x.GetGroupMembersIterator(It.IsAny<string>(), It.IsAny<List<User>>(), It.IsAny<int>()))
       .ReturnsAsync(null as PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>);
 
-    await _processor.SyncGroupMembers(new Group() { Id = Guid.NewGuid().ToString() });
+    await _processor.SyncGroupMembers(new Group() { Id = Guid.NewGuid().ToString() }, []);
 
     _graphServiceMock.Verify(static x => x.GetGroupMembersIterator(It.IsAny<string>(), It.IsAny<List<User>>(), It.IsAny<int>()), Times.Once);
     _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Never);
@@ -4132,7 +4132,7 @@ public class ProcessorTests
       graphService
     );
 
-    await processor.SyncGroupMembers(new Group() { Id = Guid.NewGuid().ToString() });
+    await processor.SyncGroupMembers(new Group() { Id = Guid.NewGuid().ToString() }, []);
 
     _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Exactly(2));
     _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Once);
@@ -4346,7 +4346,7 @@ public class ProcessorTests
       graphService
     );
 
-    await processor.SyncGroupMembers(new Group() { Id = Guid.NewGuid().ToString() });
+    await processor.SyncGroupMembers(new Group() { Id = Guid.NewGuid().ToString() }, []);
 
     _onspringServiceMock.Verify(static x => x.GetUser(It.IsAny<User>()), Times.Exactly(2));
     _onspringServiceMock.Verify(static x => x.CreateUser(It.IsAny<User>(), It.IsAny<Dictionary<string, int>>()), Times.Once);

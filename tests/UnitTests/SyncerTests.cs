@@ -111,14 +111,14 @@ public class SyncerTests
       .ReturnsAsync([new Group()]);
 
     _processorMock
-      .Setup(static p => p.SyncGroupMembers(It.IsAny<Group>()))
-      .Returns(Task.CompletedTask);
+      .Setup(static p => p.SyncGroupMembers(It.IsAny<Group>(), It.IsAny<HashSet<string>>()))
+      .ReturnsAsync([]);
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
 
     await syncer.Run();
 
     _processorMock.Verify(static p => p.SyncGroups(), Times.Once);
-    _processorMock.Verify(static p => p.SyncGroupMembers(It.IsAny<Group>()), Times.Once);
+    _processorMock.Verify(static p => p.SyncGroupMembers(It.IsAny<Group>(), It.IsAny<HashSet<string>>()), Times.Once);
   }
 }
