@@ -16,15 +16,16 @@ public class Processor(
   private readonly IOnspringService _onspringService = onspringService;
   private readonly IGraphService _graphService = graphService;
 
-  public async Task SyncGroupMembers(Group azureGroup)
+  public async Task<List<string>> SyncGroupMembers(Group azureGroup, HashSet<string> membersToSkip)
   {
+    var membersSyncd = new List<string>();
     var groupMembers = new List<User>();
     var pageSize = 50;
 
     if (azureGroup is null || azureGroup.Id is null)
     {
       _logger.Warning("Azure AD Group is null or has no Id");
-      return;
+      return membersSyncd;
     }
 
     var groupMembersIterator = await _graphService.GetGroupMembersIterator(azureGroup.Id, groupMembers, pageSize);
@@ -32,7 +33,7 @@ public class Processor(
     if (groupMembersIterator is null)
     {
       _logger.Warning("Unable to get group members from Azure AD for group {GroupId}", azureGroup.Id);
-      return;
+      return membersSyncd;
     }
 
     var pageNumberProcessing = 0;
@@ -85,12 +86,27 @@ public class Processor(
           groupMembers,
           async (groupMember, token) =>
           {
-            await SyncUser(groupMember);
+            if (groupMember.Id is not null && membersToSkip.Contains(groupMember.Id))
+            {
+              return;
+            }
+
+            await SyncGroupMember(groupMember);
             progressBar.Tick($"Processed Azure AD Group Member: {groupMember.Id}");
           }
         );
 
         progressBar.Message = $"Finished processing Azure AD Group Members for Group {azureGroup.Id}: page {pageNumberProcessing}";
+      }
+
+      foreach (var groupMember in groupMembers)
+      {
+        if (groupMember.Id is null)
+        {
+          continue;
+        }
+
+        membersSyncd.Add(groupMember.Id);
       }
 
       // clear the list before
@@ -100,6 +116,8 @@ public class Processor(
       groupMembers.Clear();
 
     } while (groupMembersIterator.State != PagingState.Complete);
+
+    return membersSyncd;
   }
 
   public async Task SyncUsers()
@@ -798,6 +816,101 @@ public class Processor(
     }
 
     return hasValidAzureGroupProperties && hasValidAzureUserProperties;
+  }
+
+  internal async Task SyncGroupMember(User groupMember)
+  {
+    _logger.Debug(
+      "Syncing Azure User: {@AzureUser}",
+      groupMember
+    );
+
+    var azureUserGroups = await _graphService.GetUserGroups(groupMember);
+
+    if (azureUserGroups.Count == 0)
+    {
+      _logger.Warning(
+        "No groups found for Azure User: {@AzureUser}",
+        groupMember
+      );
+    }
+
+    var usersGroupMappings = await GetUsersGroupMappings(azureUserGroups);
+
+    var onspringUser = await _onspringService.GetUser(groupMember);
+
+    if (onspringUser is null)
+    {
+      _logger.Debug(
+        "Azure User not found in Onspring: {@AzureUser}",
+        groupMember
+      );
+
+      _logger.Debug(
+        "Attempting to create Azure User in Onspring: {@AzureUser}",
+        groupMember
+      );
+
+      var createResponse = await _onspringService.CreateUser(
+        groupMember,
+        usersGroupMappings
+      );
+
+      if (createResponse is null)
+      {
+        _logger.Warning(
+          "Unable to create Azure User in Onspring: {@AzureUser}",
+          groupMember
+        );
+
+        return;
+      }
+
+      _logger.Debug(
+        "Azure User {@AzureUser} created in Onspring: {@Response}",
+        groupMember,
+        createResponse
+      );
+
+      return;
+    }
+
+    _logger.Debug(
+      "Azure User found in Onspring: {@OnspringUser}",
+      onspringUser
+    );
+
+    _logger.Debug(
+      "Attempting to update Azure User in Onspring: {@AzureUser}",
+      groupMember
+    );
+
+    var updateResponse = await _onspringService.UpdateUser(
+      groupMember,
+      onspringUser,
+      usersGroupMappings
+    );
+
+    if (updateResponse is null)
+    {
+      _logger.Warning(
+        "Onspring User {@OnspringUser} not updated",
+        onspringUser
+      );
+
+      return;
+    }
+
+    _logger.Debug(
+      "Onspring User {@OnspringUser} updated: {@Response}",
+      onspringUser,
+      updateResponse
+    );
+
+    _logger.Debug(
+      "Finished processing Azure User: {@AzureUser}",
+      groupMember
+    );
   }
 
   internal async Task SyncUser(User azureUser)
