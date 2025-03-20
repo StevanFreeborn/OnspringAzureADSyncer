@@ -4,7 +4,7 @@
     <AssemblyTitle>OnspringAzureADSyncer</AssemblyTitle>
     <Product>OnspringAzureADSyncer</Product>
     <Description>An app that wil sync groups and users between an Azure AD tenant and an Onspring instance</Description>
-    <Version>2.1.1</Version>
+    <Version>2.2.0</Version>
     <Authors>Stevan Freeborn</Authors>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
