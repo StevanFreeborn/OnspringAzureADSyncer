@@ -262,7 +262,7 @@ public class GraphServiceTests
     };
 
     _msGraphMock
-      .Setup(static x => x.GetUserGroups(It.IsAny<string>()))
+      .Setup(static x => x.GetUserGroups(It.IsAny<string>(), default))
       .ReturnsAsync(null as DirectoryObjectCollectionResponse);
 
     var result = await _graphService.GetUserGroups(user);
@@ -270,7 +270,7 @@ public class GraphServiceTests
     result.Should().NotBeNull();
     result.Should().BeEmpty();
 
-    _msGraphMock.Verify(static x => x.GetUserGroups(It.IsAny<string>()), Times.Once);
+    _msGraphMock.Verify(static x => x.GetUserGroups(It.IsAny<string>(), default), Times.Once);
   }
 
   [Fact]
@@ -299,7 +299,7 @@ public class GraphServiceTests
     };
 
     _msGraphMock
-      .Setup(static x => x.GetUserGroups(It.IsAny<string>()))
+      .Setup(static x => x.GetUserGroups(It.IsAny<string>(), default))
       .ReturnsAsync(groups);
 
     var result = await _graphService.GetUserGroups(user);
@@ -308,7 +308,7 @@ public class GraphServiceTests
     result.Should().NotBeEmpty();
     result.Should().HaveCount(2);
 
-    _msGraphMock.Verify(static x => x.GetUserGroups(It.IsAny<string>()), Times.Once);
+    _msGraphMock.Verify(static x => x.GetUserGroups(It.IsAny<string>(), default), Times.Once);
   }
 
   [Fact]
@@ -321,7 +321,7 @@ public class GraphServiceTests
     };
 
     _msGraphMock
-      .Setup(static x => x.GetUserGroups(It.IsAny<string>()))
+      .Setup(static x => x.GetUserGroups(It.IsAny<string>(), default))
       .ThrowsAsync(new Exception());
 
     var result = await _graphService.GetUserGroups(user);
@@ -329,7 +329,7 @@ public class GraphServiceTests
     result.Should().NotBeNull();
     result.Should().BeEmpty();
 
-    _msGraphMock.Verify(static x => x.GetUserGroups(It.IsAny<string>()), Times.Once);
+    _msGraphMock.Verify(static x => x.GetUserGroups(It.IsAny<string>(), default), Times.Once);
   }
 
   [Fact]

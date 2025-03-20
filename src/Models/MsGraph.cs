@@ -1,17 +1,22 @@
-using System.Globalization;
+using Group = Microsoft.Graph.Models.Group;
 
 namespace OnspringAzureADSyncer.Models;
 
 [ExcludeFromCodeCoverage]
 public class MsGraph(GraphServiceClient graphServiceClient) : IMsGraph
 {
-  public async Task<DirectoryObjectCollectionResponse?> GetUserGroups(string? userId)
+  public async Task<DirectoryObjectCollectionResponse?> GetUserGroups(string? userId, List<Group>? syncdGroups = null)
   {
     return await GraphServiceClient
       .Users[userId]
       .MemberOf
-      .GetAsync(static config =>
+      .GetAsync(config =>
       {
+        if (syncdGroups is not null)
+        {
+          config.QueryParameters.Filter = $"id in ({string.Join(",", syncdGroups.Select(g => $"'{g.Id}'"))})";
+        }
+
         config.QueryParameters.Count = true;
         config.Headers.Add("ConsistencyLevel", "eventual");
       });
