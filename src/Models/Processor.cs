@@ -16,7 +16,7 @@ public class Processor(
   private readonly IOnspringService _onspringService = onspringService;
   private readonly IGraphService _graphService = graphService;
 
-  public async Task<List<string>> SyncGroupMembers(Group azureGroup, HashSet<string> membersToSkip)
+  public async Task<List<string>> SyncGroupMembers(Group azureGroup, HashSet<string> membersToSkip, List<Group> syncdGroups)
   {
     var membersSyncd = new List<string>();
     var groupMembers = new List<User>();
@@ -88,10 +88,12 @@ public class Processor(
           {
             if (groupMember.Id is not null && membersToSkip.Contains(groupMember.Id))
             {
+              progressBar.Tick($"Skipping Azure AD Group Member because they were already syncd: {groupMember.Id}");
+              _logger.Debug("Skipping Azure AD Group Member because they were already syncd: {@AzureGroupMember}", groupMember);
               return;
             }
 
-            await SyncGroupMember(groupMember);
+            await SyncGroupMember(groupMember, syncdGroups);
             progressBar.Tick($"Processed Azure AD Group Member: {groupMember.Id}");
           }
         );
@@ -818,14 +820,14 @@ public class Processor(
     return hasValidAzureGroupProperties && hasValidAzureUserProperties;
   }
 
-  internal async Task SyncGroupMember(User groupMember)
+  internal async Task SyncGroupMember(User groupMember, List<Group> syncdGroups)
   {
     _logger.Debug(
       "Syncing Azure User: {@AzureUser}",
       groupMember
     );
 
-    var azureUserGroups = await _graphService.GetUserGroups(groupMember);
+    var azureUserGroups = await _graphService.GetUserGroups(groupMember, syncdGroups);
 
     if (azureUserGroups.Count == 0)
     {

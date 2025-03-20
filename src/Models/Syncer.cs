@@ -97,10 +97,11 @@ public class Syncer(ILogger logger, IProcessor processor) : ISyncer
     // and skip them when syncing subsequent
     // ones
     var membersSyncd = new HashSet<string>();
+    var syncedGroupIds = new List<string>();
 
     foreach (var group in syncedGroups)
     {
-      var groupMembersSyncd = await _processor.SyncGroupMembers(group, membersSyncd);
+      var groupMembersSyncd = await _processor.SyncGroupMembers(group, membersSyncd, syncedGroups);
       membersSyncd.UnionWith(groupMembersSyncd);
     }
 
