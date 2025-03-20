@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="2.2.0"></a>
+## [2.2.0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.2.0) (2025-03-20)
+
+### Features
+
+* avoid processing users twice ([ce3402b](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/ce3402bfc37fc85cb47f33299e58ef825aff636f))
+* reduce number of requests when syncing users ([583f6a0](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/583f6a05f18fae5cddf1f892038a66807c837356))
+
 <a name="2.1.1"></a>
 ## [2.1.1](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.1.1) (2025-03-16)
 
