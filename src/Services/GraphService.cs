@@ -55,11 +55,11 @@ public class GraphService(
     }
   }
 
-  public async Task<List<Group>> GetUserGroups(User azureUser)
+  public async Task<List<Group>> GetUserGroups(User azureUser, List<Group>? syncdGroups = null)
   {
     try
     {
-      var groups = await _msGraph.GetUserGroups(azureUser.Id);
+      var groups = await _msGraph.GetUserGroups(azureUser.Id, syncdGroups);
 
       if (groups is null || groups.Value is null)
       {
