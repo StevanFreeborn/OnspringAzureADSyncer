@@ -4,7 +4,7 @@ namespace OnspringAzureADSyncer.Interfaces;
 
 public interface IProcessor
 {
-  Task<List<string>> SyncGroupMembers(Group azureGroup, HashSet<string> membersToSkip);
+  Task<List<string>> SyncGroupMembers(Group azureGroup, HashSet<string> membersToSkip, List<Group> syncdGroups);
   Task SyncUsers();
   Task<List<Group>> SyncGroups();
   bool FieldMappingsAreValid();

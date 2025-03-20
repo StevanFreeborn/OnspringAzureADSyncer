@@ -111,7 +111,7 @@ public class SyncerTests
       .ReturnsAsync([new Group()]);
 
     _processorMock
-      .Setup(static p => p.SyncGroupMembers(It.IsAny<Group>(), It.IsAny<HashSet<string>>()))
+      .Setup(static p => p.SyncGroupMembers(It.IsAny<Group>(), It.IsAny<HashSet<string>>(), It.IsAny<List<Group>>()))
       .ReturnsAsync([]);
 
     var syncer = new Syncer(_loggerMock.Object, _processorMock.Object);
@@ -119,6 +119,6 @@ public class SyncerTests
     await syncer.Run();
 
     _processorMock.Verify(static p => p.SyncGroups(), Times.Once);
-    _processorMock.Verify(static p => p.SyncGroupMembers(It.IsAny<Group>(), It.IsAny<HashSet<string>>()), Times.Once);
+    _processorMock.Verify(static p => p.SyncGroupMembers(It.IsAny<Group>(), It.IsAny<HashSet<string>>(), It.IsAny<List<Group>>()), Times.Once);
   }
 }

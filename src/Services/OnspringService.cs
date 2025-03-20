@@ -722,7 +722,7 @@ public class OnspringService(
       {
         _logger.Debug(
           "Field {FieldId} does not need to be updated. Onspring Record: {@OnspringRecord}. Azure AD Object: {@AzureObject}",
-          kvp.Value,
+          kvp.Key,
           onspringRecord,
           azureObject
         );
@@ -732,7 +732,7 @@ public class OnspringService(
 
       _logger.Debug(
         "Field {FieldId} needs to be updated. Onspring value: {CurrentValue}. Azure AD value: {NewValue}",
-        kvp.Value,
+        kvp.Key,
         onspringRecordValue,
         azureObjectValue
       );
@@ -741,8 +741,8 @@ public class OnspringService(
       {
         _logger.Debug(
           "Unable to find value for field {FieldId} for property {Property} on: {@AzureObject}",
-          kvp.Value,
           kvp.Key,
+          kvp.Value,
           azureObject
         );
 
@@ -823,8 +823,8 @@ public class OnspringService(
       {
         _logger.Debug(
           "Unable to find value for field {FieldId} for property {Property} on: {@AzureObject}",
-          kvp.Value,
           kvp.Key,
+          kvp.Value,
           azureObject
         );
         continue;
