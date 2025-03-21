@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Group = Microsoft.Graph.Models.Group;
 
 namespace OnspringAzureADSyncer.Services;
@@ -713,12 +715,7 @@ public class OnspringService(
         .FirstOrDefault(f => f.FieldId == kvp.Key)
         ?.GetValue();
 
-      if (
-        ValuesAreEqual(
-        onspringRecordValue,
-        azureObjectValue
-        )
-      )
+      if (ValuesAreEqual(onspringRecordValue, azureObjectValue))
       {
         _logger.Debug(
           "Field {FieldId} does not need to be updated. Onspring Record: {@OnspringRecord}. Azure AD Object: {@AzureObject}",
@@ -784,9 +781,7 @@ public class OnspringService(
 
       if (onspringRecordValue is List<string> onspringRecordList)
       {
-        return onspringRecordList.All(
-          azObjList.Contains
-        );
+        return onspringRecordList.All(azObjList.Contains);
       }
     }
 
@@ -806,7 +801,7 @@ public class OnspringService(
 
     foreach (var kvp in fieldMappings)
     {
-      var fieldValue = azureObject
+      var azureObjectValue = azureObject
         .GetType()
         .GetProperty(
           kvp.Value,
@@ -819,7 +814,7 @@ public class OnspringService(
         continue;
       }
 
-      if (fieldValue is null)
+      if (azureObjectValue is null)
       {
         _logger.Debug(
           "Unable to find value for field {FieldId} for property {Property} on: {@AzureObject}",
@@ -830,7 +825,7 @@ public class OnspringService(
         continue;
       }
 
-      var recordFieldValue = GetRecordFieldValue(kvp.Key, fieldValue);
+      var recordFieldValue = GetRecordFieldValue(kvp.Key, azureObjectValue);
       newRecord.FieldData.Add(recordFieldValue);
     }
 
@@ -844,10 +839,7 @@ public class OnspringService(
       fieldId == 0;
   }
 
-  internal RecordFieldValue GetRecordFieldValue(
-    int fieldId,
-    object fieldValue
-  )
+  internal RecordFieldValue GetRecordFieldValue(int fieldId, object fieldValue)
   {
     var groupFields = _settings.Onspring.GroupsFields;
     var userFields = _settings.Onspring.UsersFields;
@@ -857,53 +849,32 @@ public class OnspringService(
 
     if (field is null)
     {
-      return new StringFieldValue(
-        0,
-        JsonConvert.SerializeObject(fieldValue)
-      );
+      return new StringFieldValue(0, JsonConvert.SerializeObject(fieldValue));
     }
 
-    if (
-      valueType == typeof(string)
-    )
+    if (valueType == typeof(string))
     {
       var stringValue = fieldValue as string;
 
       return field.Type switch
       {
-        FieldType.List => GetListValue(
-          field as ListField,
-          stringValue
-        ),
-        _ => new StringFieldValue(
-          fieldId,
-          stringValue
-        ),
+        FieldType.List => GetListValue(field as ListField, stringValue),
+        _ => new StringFieldValue(fieldId, stringValue),
       };
     }
 
-    if (
-      valueType == typeof(bool)
-    )
+    if (valueType == typeof(bool))
     {
       var boolValue = fieldValue as bool?;
 
       return field.Type switch
       {
-        FieldType.List => GetListValue(
-          field as ListField,
-          boolValue.ToString()
-        ),
-        _ => new StringFieldValue(
-          fieldId,
-          boolValue.ToString()
-        ),
+        FieldType.List => GetListValue(field as ListField, boolValue.ToString()),
+        _ => new StringFieldValue(fieldId, boolValue.ToString()),
       };
     }
 
-    if (
-      valueType == typeof(DateTime)
-    )
+    if (valueType == typeof(DateTime))
     {
       var dateTimeValue = (DateTime) fieldValue;
 
@@ -911,18 +882,13 @@ public class OnspringService(
       {
         FieldType.Text => new StringFieldValue(
           fieldId,
-          dateTimeValue.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          dateTimeValue.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)
         ),
-        _ => new DateFieldValue(
-          fieldId,
-          dateTimeValue.ToUniversalTime()
-        ),
+        _ => new DateFieldValue(fieldId, dateTimeValue.ToUniversalTime()),
       };
     }
 
-    if (
-      valueType == typeof(DateTimeOffset)
-    )
+    if (valueType == typeof(DateTimeOffset))
     {
       var dateTimeOffsetValue = (DateTimeOffset) fieldValue;
 
@@ -930,43 +896,24 @@ public class OnspringService(
       {
         FieldType.Text => new StringFieldValue(
           fieldId,
-          dateTimeOffsetValue.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")
+          dateTimeOffsetValue.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)
         ),
-        _ => new DateFieldValue(
-          fieldId,
-          dateTimeOffsetValue.UtcDateTime
-        ),
+        _ => new DateFieldValue(fieldId, dateTimeOffsetValue.UtcDateTime),
       };
     }
 
-    if (
-      valueType == typeof(List<string>)
-    )
+    if (valueType == typeof(List<string>))
     {
       var stringListValue = fieldValue as List<string>;
 
       return field.Type switch
       {
-        FieldType.List => GetListValues(
-          field as ListField,
-          stringListValue
-        ),
-        _ => new StringFieldValue(
-          fieldId,
-          string.Join(
-            ",",
-            stringListValue!
-          )
-        ),
+        FieldType.List => GetListValues(field as ListField, stringListValue),
+        _ => new StringFieldValue(fieldId, string.Join(",", stringListValue!)),
       };
     }
 
-    return new StringFieldValue(
-      fieldId,
-      JsonConvert.SerializeObject(
-        fieldValue
-      )
-    );
+    return new StringFieldValue(fieldId, JsonConvert.SerializeObject(fieldValue));
   }
 
   internal static StringListFieldValue GetListValues(
@@ -976,58 +923,35 @@ public class OnspringService(
   {
     if (field is null || values is null)
     {
-      return new StringListFieldValue(
-        0,
-        new List<string>()
-      );
+      return new StringListFieldValue(0, []);
     }
 
     var listValueIds = new List<string>();
 
     foreach (var value in values)
     {
-      var listValue = GetListValue(
-        field,
-        value
-      );
+      var listValue = GetListValue(field, value);
 
       listValueIds.Add(listValue.Value);
     }
 
-    return new StringListFieldValue(
-      field.Id,
-      listValueIds
-    );
+    return new StringListFieldValue(field.Id, listValueIds);
   }
 
-  internal static StringFieldValue GetListValue(
-    ListField? field,
-    string? value
-  )
+  internal static StringFieldValue GetListValue(ListField? field, string? value)
   {
     if (field is null || value is null)
     {
-      return new StringFieldValue(
-        0,
-        string.Empty
-      );
+      return new StringFieldValue(0, string.Empty);
     }
 
     var listValues = field.Values.ToList();
     var listValue = listValues
-    .FirstOrDefault(
-      v => v.Name.ToLower() == value.ToLower()
-    );
+      .FirstOrDefault(v => v.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
 
     return listValue is null
-      ? new StringFieldValue(
-        field.Id,
-        string.Empty
-      )
-      : new StringFieldValue(
-      field.Id,
-      listValue.Id.ToString()
-    );
+      ? new StringFieldValue(field.Id, string.Empty)
+      : new StringFieldValue(field.Id, listValue.Id.ToString());
   }
 
   public async Task<SaveListItemResponse?> AddListValue(
