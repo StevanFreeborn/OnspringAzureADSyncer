@@ -563,6 +563,28 @@ public class OnspringService(
         .FirstOrDefault(f => f.FieldId == kvp.Key)
         ?.GetValue();
 
+      // TODO: Check if the Onspring field
+      // is the phone number field and if so
+      // we want to remove any non-numeric
+      // characters from the values
+      // and check for equality that way
+      var phoneNumberField = _settings.Onspring
+        .UsersFields
+        .FirstOrDefault(f => f.Name.Equals(OnspringSettings.UsersPhoneNumberField, StringComparison.OrdinalIgnoreCase));
+
+      if (kvp.Key == phoneNumberField?.Id)
+      {
+        if (onspringRecordValue is string onspringPhoneNumber)
+        {
+          var onspringDigits = onspringPhoneNumber.Where(char.IsDigit).ToString();
+          
+          if (azureObjectValue is List<string> azurePhoneNumbers)
+          {
+
+          }
+        }
+      }
+
       if (ValuesAreEqual(onspringRecordValue, azureObjectValue))
       {
         _logger.Debug(
@@ -626,9 +648,13 @@ public class OnspringService(
 
       if (onspringRecordValue is List<string> onspringRecordList)
       {
-        return onspringRecordList.All(
-          azObjList.Contains
-        );
+        return onspringRecordList.All(azObjList.Contains);
+      }
+
+      if (onspringRecordValue is string onspringRecordString)
+      {
+        var azObjString = string.Join(",", azObjList);
+        return onspringRecordString.Equals(azObjString, StringComparison.OrdinalIgnoreCase);
       }
     }
 

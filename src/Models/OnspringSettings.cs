@@ -10,6 +10,7 @@ public class OnspringSettings
   public const string UsersEmailField = "Email Address";
   public const string UsersStatusField = "Status";
   public const string UsersGroupsField = "Groups";
+  public const string UsersPhoneNumberField = "Phone Number";
   public const string UsersActiveStatusListValueName = "Active";
   public const string UsersInactiveStatusListValueName = "Inactive";
   public readonly string[] UserRequiredFields = new[]
