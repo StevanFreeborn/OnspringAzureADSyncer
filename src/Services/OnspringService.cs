@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Group = Microsoft.Graph.Models.Group;
 
 namespace OnspringAzureADSyncer.Services;
@@ -12,19 +14,11 @@ public class OnspringService(
   private readonly ISettings _settings = settings;
   private readonly IOnspringClient _onspringClient = onspringClient;
 
-  public async Task<SaveRecordResponse?> UpdateUser(
-    User azureUser,
-    ResultRecord onspringUser,
-    Dictionary<string, int> usersGroupMappings
-  )
+  public async Task<SaveRecordResponse?> UpdateUser(User azureUser, ResultRecord onspringUser, Dictionary<string, int> usersGroupMappings)
   {
     try
     {
-      var updateRecord = BuildUpdatedOnspringUserRecord(
-        azureUser,
-        onspringUser,
-        usersGroupMappings
-      );
+      var updateRecord = BuildUpdatedOnspringUserRecord(azureUser, onspringUser, usersGroupMappings);
 
       if (updateRecord.FieldData.Count == 0)
       {
@@ -37,9 +31,7 @@ public class OnspringService(
         return null;
       }
 
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.SaveRecordAsync(updateRecord)
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.SaveRecordAsync(updateRecord));
 
       if (res.IsSuccessful is false)
       {
@@ -74,17 +66,11 @@ public class OnspringService(
     }
   }
 
-  public async Task<SaveRecordResponse?> CreateUser(
-    User azureUser,
-    Dictionary<string, int> usersGroupMappings
-  )
+  public async Task<SaveRecordResponse?> CreateUser(User azureUser, Dictionary<string, int> usersGroupMappings)
   {
     try
     {
-      var newUserRecord = BuildNewOnspringUserRecord(
-        azureUser,
-        usersGroupMappings
-      );
+      var newUserRecord = BuildNewOnspringUserRecord(azureUser, usersGroupMappings);
 
       if (newUserRecord.FieldData.Count == 0)
       {
@@ -95,9 +81,7 @@ public class OnspringService(
         return null;
       }
 
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.SaveRecordAsync(newUserRecord)
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.SaveRecordAsync(newUserRecord));
 
       if (res.IsSuccessful is false)
       {
@@ -158,10 +142,7 @@ public class OnspringService(
         DataFormat = DataFormat.Formatted
       };
 
-      var res = await ExecuteRequest(
-        async () =>
-          await _onspringClient.QueryRecordsAsync(request)
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.QueryRecordsAsync(request));
 
       if (res.IsSuccessful is false)
       {
@@ -188,15 +169,10 @@ public class OnspringService(
 
   public async Task<List<Field>> GetUserFields()
   {
-    return await GetAllFieldsForApp(
-      _settings.Onspring.UsersAppId
-    );
+    return await GetAllFieldsForApp(_settings.Onspring.UsersAppId);
   }
 
-  public async Task<SaveRecordResponse?> UpdateGroup(
-    Group azureGroup,
-    ResultRecord onspringGroup
-  )
+  public async Task<SaveRecordResponse?> UpdateGroup(Group azureGroup, ResultRecord onspringGroup)
   {
     try
     {
@@ -213,9 +189,7 @@ public class OnspringService(
         return null;
       }
 
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.SaveRecordAsync(updateRecord)
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.SaveRecordAsync(updateRecord));
 
       if (res.IsSuccessful is false)
       {
@@ -250,30 +224,29 @@ public class OnspringService(
     }
   }
 
-  public async Task<SaveRecordResponse?> CreateGroup(Group azureGroup)
+  public async Task<SaveRecordResponse?> CreateGroup(Group group)
   {
     try
     {
-      var newGroupRecord = BuildNewOnspringGroupRecord(azureGroup);
+      var newGroupRecord = BuildNewOnspringGroupRecord(group);
 
       if (newGroupRecord.FieldData.Count == 0)
       {
         _logger.Warning(
           "Unable to find any values for fields for group: {@Group}",
-          azureGroup
+          group
         );
+
         return null;
       }
 
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.SaveRecordAsync(newGroupRecord)
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.SaveRecordAsync(newGroupRecord));
 
       if (res.IsSuccessful is false)
       {
         _logger.Error(
           "Unable to create group in Onspring: {@Group}. {@Response}",
-          azureGroup,
+          group,
           res
         );
 
@@ -282,7 +255,7 @@ public class OnspringService(
 
       _logger.Debug(
         "Group {@AzureGroup} created in Onspring: {@Response}",
-        azureGroup,
+        group,
         res
       );
 
@@ -293,7 +266,7 @@ public class OnspringService(
       _logger.Error(
         ex,
         "Unable to create group in Onspring: {@AzureGroup}",
-        azureGroup
+        group
       );
 
       return null;
@@ -329,10 +302,7 @@ public class OnspringService(
         DataFormat = DataFormat.Formatted
       };
 
-      var res = await ExecuteRequest(
-        async () =>
-          await _onspringClient.QueryRecordsAsync(request)
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.QueryRecordsAsync(request));
 
       if (res.IsSuccessful is false)
       {
@@ -340,6 +310,7 @@ public class OnspringService(
           "Unable to get group from Onspring: {@Response}",
           res
         );
+
         return null;
       }
 
@@ -359,9 +330,7 @@ public class OnspringService(
 
   public async Task<List<Field>> GetGroupFields()
   {
-    return await GetAllFieldsForApp(
-      _settings.Onspring.GroupsAppId
-    );
+    return await GetAllFieldsForApp(_settings.Onspring.GroupsAppId);
   }
 
   public async Task<bool> IsConnected()
@@ -373,12 +342,7 @@ public class OnspringService(
   {
     try
     {
-      var res = await ExecuteRequest(
-        async () =>
-          await _onspringClient.GetAppAsync(
-            _settings.Onspring.UsersAppId
-          )
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.GetAppAsync(_settings.Onspring.UsersAppId));
 
       if (res.IsSuccessful is false)
       {
@@ -401,12 +365,7 @@ public class OnspringService(
   {
     try
     {
-      var res = await ExecuteRequest(
-        async () =>
-          await _onspringClient.GetAppAsync(
-            _settings.Onspring.GroupsAppId
-          )
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.GetAppAsync(_settings.Onspring.GroupsAppId));
 
       if (res.IsSuccessful is false)
       {
@@ -436,12 +395,7 @@ public class OnspringService(
     {
       try
       {
-        var res = await ExecuteRequest(
-          async () => await _onspringClient.GetFieldsForAppAsync(
-            appId,
-            pagingRequest
-          )
-        );
+        var res = await ExecuteRequest(async () => await _onspringClient.GetFieldsForAppAsync(appId, pagingRequest));
 
         if (res.IsSuccessful is true)
         {
@@ -477,133 +431,64 @@ public class OnspringService(
     return fields;
   }
 
-  internal ResultRecord BuildUpdatedOnspringUserRecord(
-    User azureUser,
-    ResultRecord onspringUser,
-    Dictionary<string, int> usersGroupMappings
-  )
+  internal ResultRecord BuildUpdatedOnspringUserRecord(User azureUser, ResultRecord onspringUser, Dictionary<string, int> usersGroupMappings)
   {
-    var usersStatus = GetUsersStatus(
-      azureUser,
-      onspringUser,
-      [.. usersGroupMappings.Keys]
-    );
+    var usersStatus = GetUsersStatus(azureUser, onspringUser, [.. usersGroupMappings.Keys]);
 
-    var updatedOnspringUser = BuildUpdatedRecord(
-      azureUser,
-      onspringUser,
-      _settings.UsersFieldMappings
-    );
+    var updatedOnspringUser = BuildUpdatedRecord(azureUser, onspringUser, _settings.UsersFieldMappings);
 
     if (usersStatus is not null)
     {
-      updatedOnspringUser
-      .FieldData.Add(
-        usersStatus
-      );
+      updatedOnspringUser.FieldData.Add(usersStatus);
     }
 
     var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
 
-    var newUsersGroupFieldValue = new IntegerListFieldValue(
-      groupsFieldId,
-      usersGroupMappings.Values.ToList()
-    );
+    var newUsersGroupFieldValue = new IntegerListFieldValue(groupsFieldId, [.. usersGroupMappings.Values]);
 
-    var existingUsersGroups = onspringUser
-    .FieldData
-    .FirstOrDefault(
-      f => f.FieldId == groupsFieldId
-    ) as IntegerListFieldValue;
+    var existingUsersGroups = onspringUser.FieldData.FirstOrDefault(f => f.FieldId == groupsFieldId) as IntegerListFieldValue;
 
-    if (
-      existingUsersGroups is null &&
-      usersGroupMappings.Any() is true
-    )
+    if (existingUsersGroups is null && usersGroupMappings.Count != 0)
     {
-      updatedOnspringUser
-      .FieldData
-      .Add(
-        newUsersGroupFieldValue
-      );
-
+      updatedOnspringUser.FieldData.Add(newUsersGroupFieldValue);
       return updatedOnspringUser;
     }
-
-    var usersGroupsNeedUpdated =
-      existingUsersGroups is not null &&
-      existingUsersGroups
-      .Value
-      .Any(
-        v => usersGroupMappings.ContainsValue(v) is false
-      );
+    
+    var usersGroupsNeedUpdated = existingUsersGroups is not null && existingUsersGroups.Value
+      .ToHashSet()
+      .SetEquals(newUsersGroupFieldValue.Value.ToHashSet()) is false;
 
     if (usersGroupsNeedUpdated is true)
     {
-      updatedOnspringUser
-      .FieldData
-      .Add(
-        newUsersGroupFieldValue
-      );
+      updatedOnspringUser.FieldData.Add(newUsersGroupFieldValue);
     }
 
     return updatedOnspringUser;
   }
 
-  internal ResultRecord BuildNewOnspringUserRecord(
-    User azureUser,
-    Dictionary<string, int> usersGroupMappings
-  )
+  internal ResultRecord BuildNewOnspringUserRecord(User azureUser, Dictionary<string, int> usersGroupMappings)
   {
-    var usersStatus = GetUsersStatus(
-      azureUser,
-      null,
-      usersGroupMappings.Keys.ToList()
-    );
-
-    var newOnspringUser = BuildNewRecord(
-      azureUser,
-      _settings.UsersFieldMappings,
-      _settings.Onspring.UsersAppId
-    );
-
+    var usersStatus = GetUsersStatus(azureUser, null, [.. usersGroupMappings.Keys]);
+    var newOnspringUser = BuildNewRecord(azureUser, _settings.UsersFieldMappings, _settings.Onspring.UsersAppId);
     var groupsFieldId = _settings.Onspring.UsersGroupsFieldId;
 
-    if (usersGroupMappings.Any() is true)
+    if (usersGroupMappings.Count != 0)
     {
-      var usersGroupsFieldValue = new IntegerListFieldValue(
-        groupsFieldId,
-        usersGroupMappings.Values.ToList()
-      );
-
-      newOnspringUser
-      .FieldData
-      .Add(
-        usersGroupsFieldValue
-      );
+      var usersGroupsFieldValue = new IntegerListFieldValue(groupsFieldId, [.. usersGroupMappings.Values]);
+      newOnspringUser.FieldData.Add(usersGroupsFieldValue);
     }
 
     if (usersStatus is not null)
     {
-      newOnspringUser
-      .FieldData
-      .Add(
-        usersStatus
-      );
+      newOnspringUser.FieldData.Add(usersStatus);
     }
 
     return newOnspringUser;
   }
 
-  internal RecordFieldValue? GetUsersStatus(
-    User azureUser,
-    ResultRecord? onspringUser,
-    List<string> usersGroupIds
-  )
+  internal RecordFieldValue? GetUsersStatus(User azureUser, ResultRecord? onspringUser, List<string> usersGroupIds)
   {
-    if (
-      azureUser.AccountEnabled is null
-    )
+    if (azureUser.AccountEnabled is null)
     {
       return null;
     }
@@ -612,80 +497,45 @@ public class OnspringService(
     var statusValue = _settings.Onspring.UserInactiveStatusListValue;
     var statusValueName = OnspringSettings.UsersInactiveStatusListValueName;
 
-    var userHasActiveGroup = usersGroupIds.Any(
-      g => _settings.Azure.OnspringActiveGroups.Contains(g)
-    );
+    var userHasActiveGroup = usersGroupIds.Any(g => _settings.Azure.OnspringActiveGroups.Contains(g));
 
-    if (
-      azureUser.AccountEnabled is true &&
-      userHasActiveGroup is true
-    )
+    if (azureUser.AccountEnabled is true && userHasActiveGroup is true)
     {
       statusValue = _settings.Onspring.UserActiveStatusListValue;
       statusValueName = OnspringSettings.UsersActiveStatusListValueName;
     }
 
-    if (
-      onspringUser is null
-    )
+    if (onspringUser is null)
     {
-      return new StringFieldValue(
-        statusFieldId,
-        statusValue.ToString()
-      );
+      return new StringFieldValue(statusFieldId, statusValue.ToString());
     }
 
-    var existingStatusValue = onspringUser
-    .FieldData
-    .FirstOrDefault(
-      f => f.FieldId == statusFieldId
-    );
+    var existingStatusValue = onspringUser.FieldData.FirstOrDefault(f => f.FieldId == statusFieldId);
 
     if (existingStatusValue is null)
     {
-      return new StringFieldValue(
-        statusFieldId,
-        statusValue.ToString()
-      );
+      return new StringFieldValue(statusFieldId, statusValue.ToString());
     }
 
-    if (existingStatusValue.AsString().ToLower() == statusValueName.ToLower())
+    if (existingStatusValue.AsString().Equals(statusValueName, StringComparison.OrdinalIgnoreCase))
     {
       return null;
     }
 
-    return new StringFieldValue(
-      statusFieldId,
-      statusValue.ToString()
-    );
+    return new StringFieldValue(statusFieldId, statusValue.ToString());
   }
 
-  internal ResultRecord BuildUpdatedOnspringGroupRecord(
-    Group azureGroup,
-    ResultRecord onspringGroup
-  )
+  internal ResultRecord BuildUpdatedOnspringGroupRecord(Group azureGroup, ResultRecord onspringGroup)
   {
-    return BuildUpdatedRecord(
-      azureGroup,
-      onspringGroup,
-      _settings.GroupsFieldMappings
-    );
+    return BuildUpdatedRecord(azureGroup, onspringGroup, _settings.GroupsFieldMappings);
   }
 
   internal ResultRecord BuildNewOnspringGroupRecord(Group azureGroup)
   {
-    return BuildNewRecord(
-      azureGroup,
-      _settings.GroupsFieldMappings,
-      _settings.Onspring.GroupsAppId
-    );
+    return BuildNewRecord(azureGroup, _settings.GroupsFieldMappings, _settings.Onspring.GroupsAppId);
   }
 
-  internal ResultRecord BuildUpdatedRecord(
-    object azureObject,
-    ResultRecord onspringRecord,
-    Dictionary<int, string> fieldMappings
-  )
+  internal ResultRecord BuildUpdatedRecord(object azureObject, ResultRecord onspringRecord, Dictionary<int, string> fieldMappings)
   {
     var updateRecord = new ResultRecord
     {
@@ -713,12 +563,7 @@ public class OnspringService(
         .FirstOrDefault(f => f.FieldId == kvp.Key)
         ?.GetValue();
 
-      if (
-        ValuesAreEqual(
-        onspringRecordValue,
-        azureObjectValue
-        )
-      )
+      if (ValuesAreEqual(onspringRecordValue, azureObjectValue))
       {
         _logger.Debug(
           "Field {FieldId} does not need to be updated. Onspring Record: {@OnspringRecord}. Azure AD Object: {@AzureObject}",
@@ -765,10 +610,7 @@ public class OnspringService(
   // to determine if values need to be added and to remove html
   // tags from the multi-line text fields. the trade off of this being
   // date values are always going to be different.
-  internal static bool ValuesAreEqual(
-    object? onspringRecordValue,
-    object? azureObjectValue
-  )
+  internal static bool ValuesAreEqual(object? onspringRecordValue, object? azureObjectValue)
   {
     if (onspringRecordValue is null && azureObjectValue is null)
     {
@@ -793,11 +635,7 @@ public class OnspringService(
     return onspringRecordValue?.Equals(azureObjectValue) ?? false;
   }
 
-  internal ResultRecord BuildNewRecord(
-    object azureObject,
-    Dictionary<int, string> fieldMappings,
-    int appId
-  )
+  internal ResultRecord BuildNewRecord(object azureObject, Dictionary<int, string> fieldMappings, int appId)
   {
     var newRecord = new ResultRecord
     {
@@ -844,10 +682,7 @@ public class OnspringService(
       fieldId == 0;
   }
 
-  internal RecordFieldValue GetRecordFieldValue(
-    int fieldId,
-    object fieldValue
-  )
+  internal RecordFieldValue GetRecordFieldValue(int fieldId, object fieldValue)
   {
     var groupFields = _settings.Onspring.GroupsFields;
     var userFields = _settings.Onspring.UsersFields;
@@ -857,183 +692,102 @@ public class OnspringService(
 
     if (field is null)
     {
-      return new StringFieldValue(
-        0,
-        JsonConvert.SerializeObject(fieldValue)
-      );
+      return new StringFieldValue(0, JsonConvert.SerializeObject(fieldValue));
     }
 
-    if (
-      valueType == typeof(string)
-    )
+    if (valueType == typeof(string))
     {
       var stringValue = fieldValue as string;
 
       return field.Type switch
       {
-        FieldType.List => GetListValue(
-          field as ListField,
-          stringValue
-        ),
-        _ => new StringFieldValue(
-          fieldId,
-          stringValue
-        ),
+        FieldType.List => GetListValue(field as ListField, stringValue),
+        _ => new StringFieldValue(fieldId, stringValue),
       };
     }
 
-    if (
-      valueType == typeof(bool)
-    )
+    if (valueType == typeof(bool))
     {
       var boolValue = fieldValue as bool?;
 
       return field.Type switch
       {
-        FieldType.List => GetListValue(
-          field as ListField,
-          boolValue.ToString()
-        ),
-        _ => new StringFieldValue(
-          fieldId,
-          boolValue.ToString()
-        ),
+        FieldType.List => GetListValue(field as ListField, boolValue.ToString()),
+        _ => new StringFieldValue(fieldId, boolValue.ToString()),
       };
     }
 
-    if (
-      valueType == typeof(DateTime)
-    )
+    if (valueType == typeof(DateTime))
     {
       var dateTimeValue = (DateTime) fieldValue;
 
       return field.Type switch
       {
-        FieldType.Text => new StringFieldValue(
-          fieldId,
-          dateTimeValue.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-        ),
-        _ => new DateFieldValue(
-          fieldId,
-          dateTimeValue.ToUniversalTime()
-        ),
+        FieldType.Text => new StringFieldValue(fieldId, dateTimeValue.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ" , CultureInfo.InvariantCulture)),
+        _ => new DateFieldValue(fieldId, dateTimeValue.ToUniversalTime()),
       };
     }
 
-    if (
-      valueType == typeof(DateTimeOffset)
-    )
+    if (valueType == typeof(DateTimeOffset))
     {
       var dateTimeOffsetValue = (DateTimeOffset) fieldValue;
 
       return field.Type switch
       {
-        FieldType.Text => new StringFieldValue(
-          fieldId,
-          dateTimeOffsetValue.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")
-        ),
-        _ => new DateFieldValue(
-          fieldId,
-          dateTimeOffsetValue.UtcDateTime
-        ),
+        FieldType.Text => new StringFieldValue(fieldId, dateTimeOffsetValue.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
+        _ => new DateFieldValue(fieldId, dateTimeOffsetValue.UtcDateTime),
       };
     }
 
-    if (
-      valueType == typeof(List<string>)
-    )
+    if (valueType == typeof(List<string>))
     {
       var stringListValue = fieldValue as List<string>;
 
       return field.Type switch
       {
-        FieldType.List => GetListValues(
-          field as ListField,
-          stringListValue
-        ),
-        _ => new StringFieldValue(
-          fieldId,
-          string.Join(
-            ",",
-            stringListValue!
-          )
-        ),
+        FieldType.List => GetListValues(field as ListField, stringListValue),
+        _ => new StringFieldValue(fieldId, string.Join(",", stringListValue ?? [])),
       };
     }
 
-    return new StringFieldValue(
-      fieldId,
-      JsonConvert.SerializeObject(
-        fieldValue
-      )
-    );
+    return new StringFieldValue(fieldId, JsonConvert.SerializeObject(fieldValue));
   }
 
-  internal static StringListFieldValue GetListValues(
-    ListField? field,
-    List<string>? values
-  )
+  internal static StringListFieldValue GetListValues(ListField? field, List<string>? values)
   {
     if (field is null || values is null)
     {
-      return new StringListFieldValue(
-        0,
-        new List<string>()
-      );
+      return new StringListFieldValue(0, []);
     }
 
     var listValueIds = new List<string>();
 
     foreach (var value in values)
     {
-      var listValue = GetListValue(
-        field,
-        value
-      );
+      var listValue = GetListValue(field, value);
 
       listValueIds.Add(listValue.Value);
     }
 
-    return new StringListFieldValue(
-      field.Id,
-      listValueIds
-    );
+    return new StringListFieldValue(field.Id, listValueIds);
   }
 
-  internal static StringFieldValue GetListValue(
-    ListField? field,
-    string? value
-  )
+  internal static StringFieldValue GetListValue(ListField? field, string? value)
   {
     if (field is null || value is null)
     {
-      return new StringFieldValue(
-        0,
-        string.Empty
-      );
+      return new StringFieldValue(0, string.Empty);
     }
 
     var listValues = field.Values.ToList();
-    var listValue = listValues
-    .FirstOrDefault(
-      v => v.Name.ToLower() == value.ToLower()
-    );
+    var listValue = listValues.FirstOrDefault(v => v.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
 
     return listValue is null
-      ? new StringFieldValue(
-        field.Id,
-        string.Empty
-      )
-      : new StringFieldValue(
-      field.Id,
-      listValue.Id.ToString()
-    );
+      ? new StringFieldValue(field.Id, string.Empty)
+      : new StringFieldValue(field.Id, listValue.Id.ToString());
   }
 
-  public async Task<SaveListItemResponse?> AddListValue(
-    int listId,
-    string listValueName
-  )
+  public async Task<SaveListItemResponse?> AddListValue(int listId, string listValueName)
   {
     try
     {
@@ -1043,11 +797,7 @@ public class OnspringService(
         Name = listValueName
       };
 
-      var res = await ExecuteRequest(
-        async () => await _onspringClient.SaveListItemAsync(
-          saveListItemRequest
-        )
-      );
+      var res = await ExecuteRequest(async () => await _onspringClient.SaveListItemAsync(saveListItemRequest));
 
       if (res.IsSuccessful is false)
       {
@@ -1078,10 +828,7 @@ public class OnspringService(
   }
 
   [ExcludeFromCodeCoverage]
-  private async Task<ApiResponse<T>> ExecuteRequest<T>(
-    Func<Task<ApiResponse<T>>> func,
-    int retry = 1
-  )
+  private async Task<ApiResponse<T>> ExecuteRequest<T>(Func<Task<ApiResponse<T>>> func, int retry = 1)
   {
     ApiResponse<T> response;
     var retryLimit = 3;
@@ -1115,7 +862,7 @@ public class OnspringService(
         await Wait(retry);
       } while (retry <= retryLimit);
     }
-    catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+    catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
     {
       _logger.Error(
         ex,
