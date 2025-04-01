@@ -92,10 +92,6 @@ public class Syncer(ILogger logger, IProcessor processor) : ISyncer
     Console.WriteLine(syncGroupMembersMsg);
     _logger.Information(syncGroupMembersMsg);
 
-    // TODO: Keep track of users that have
-    // been sycn'd by previous groups
-    // and skip them when syncing subsequent
-    // ones
     var membersSyncd = new HashSet<string>();
     var syncedGroupIds = new List<string>();
 
