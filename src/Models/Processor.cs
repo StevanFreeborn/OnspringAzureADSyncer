@@ -441,47 +441,52 @@ public class Processor(
     {
       var field = listFields.FirstOrDefault(f => f.Id == kvp.Key);
 
-      foreach (var azureObject in azureObjects)
+      if (field?.Id == _settings.Onspring.UsersStatusFieldId)
       {
-        if (azureObject is null)
+        continue;
+      }
+
+      foreach (var azureObject in azureObjects)
         {
-          continue;
-        }
-
-        var propertyValue = azureObject
-          .GetType()
-          .GetProperty(
-            kvp.Value,
-            BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance
-          )
-          ?.GetValue(azureObject);
-
-        var possibleNewListValues = new List<string?>();
-
-        if (propertyValue is null)
-        {
-          continue;
-        }
-
-        if (propertyValue is List<string> propertyValueList)
-        {
-          possibleNewListValues.AddRange(propertyValueList);
-        }
-        else
-        {
-          var propertyValueString = propertyValue.ToString();
-
-          possibleNewListValues.Add(propertyValueString);
-        }
-
-        foreach (var possibleNewListValue in possibleNewListValues)
-        {
-          if (TryGetNewListValue(field, possibleNewListValue, out var newListValue))
+          if (azureObject is null)
           {
-            newListValues.Add(newListValue);
+            continue;
+          }
+
+          var propertyValue = azureObject
+            .GetType()
+            .GetProperty(
+              kvp.Value,
+              BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance
+            )
+            ?.GetValue(azureObject);
+
+          var possibleNewListValues = new List<string?>();
+
+          if (propertyValue is null)
+          {
+            continue;
+          }
+
+          if (propertyValue is List<string> propertyValueList)
+          {
+            possibleNewListValues.AddRange(propertyValueList);
+          }
+          else
+          {
+            var propertyValueString = propertyValue.ToString();
+
+            possibleNewListValues.Add(propertyValueString);
+          }
+
+          foreach (var possibleNewListValue in possibleNewListValues)
+          {
+            if (TryGetNewListValue(field, possibleNewListValue, out var newListValue))
+            {
+              newListValues.Add(newListValue);
+            }
           }
         }
-      }
     }
 
     newListValues = [.. newListValues.DistinctBy(kvp => kvp.Value.ToLower(CultureInfo.InvariantCulture))];
@@ -514,7 +519,6 @@ public class Processor(
     out KeyValuePair<int, string> newListValue
   )
   {
-
     if (
       possibleNewListValue is null ||
       listField is null
