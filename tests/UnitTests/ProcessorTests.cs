@@ -2372,6 +2372,12 @@ public class ProcessorTests
   }
 
   [Fact]
+  public Task SyncListValues_WhenCalled_ItShouldAddPropertyValuesToUserStatusFieldList()
+  {
+    throw new NotImplementedException();
+  }
+
+  [Fact]
   public async Task SyncListValues_WhenCalledAndNewValuesAreFoundForGroupsListFields_ItShouldAddTheListValuesAndUpdateGroupFields()
   {
     var onspringSettings = new OnspringSettings();
