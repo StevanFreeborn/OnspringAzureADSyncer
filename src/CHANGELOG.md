@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="2.2.2"></a>
+## [2.2.2](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.2.2) (2025-08-19)
+
+### Bug Fixes
+
+* address status value issue ([27ea86a](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/commit/27ea86acb5b5c716e5938dede2ee5dc3824f56c6))
+
 <a name="2.2.1"></a>
 ## [2.2.1](https://www.github.com/StevanFreeborn/OnspringAzureADSyncer/releases/tag/v2.2.1) (2025-04-01)
 
