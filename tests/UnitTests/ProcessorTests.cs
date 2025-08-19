@@ -2372,9 +2372,105 @@ public class ProcessorTests
   }
 
   [Fact]
-  public Task SyncListValues_WhenCalled_ItShouldAddPropertyValuesToUserStatusFieldList()
+  public async Task SyncListValues_WhenCalled_ItShouldAddPropertyValuesToUserStatusFieldList()
   {
-    throw new NotImplementedException();
+    var userStatusFieldId = 1;
+
+    var onspringSettings = new OnspringSettings()
+    {
+      UsersStatusFieldId = userStatusFieldId,
+    };
+
+    _settingsMock
+      .SetupGet(static x => x.Onspring)
+      .Returns(onspringSettings);
+
+    _settingsMock
+      .SetupGet(static x => x.Azure)
+      .Returns(new AzureSettings());
+
+    var listFields = new List<ListField>
+    {
+      new()
+      {
+        Id = userStatusFieldId,
+        AppId = 1,
+        Name = "List Field",
+        Type = FieldType.List,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+        Multiplicity = Multiplicity.MultiSelect,
+        ListId = 1,
+        Values = [
+          new ListValue
+          {
+            Id = Guid.NewGuid(),
+            Name = "Active"
+          }
+        ],
+      },
+    };
+
+    var fieldMappings = new Dictionary<int, string>
+    {
+      { userStatusFieldId, "accountEnabled" },
+    };
+
+    var groups = new List<User?>
+    {
+      new()
+      {
+        Id = "user id",
+        DisplayName = "user Id",
+        AccountEnabled = false,
+      },
+    };
+
+    var updatedListFields = new List<Field>
+    {
+      new ListField()
+      {
+        Id = userStatusFieldId,
+        AppId = 1,
+        Name = "List Field",
+        Type = FieldType.List,
+        Status = FieldStatus.Enabled,
+        IsRequired = true,
+        IsUnique = true,
+        Multiplicity = Multiplicity.MultiSelect,
+        ListId = 1,
+        Values = [
+          new ListValue
+          {
+            Id = Guid.NewGuid(),
+            Name = "group type 1"
+          }
+        ],
+      },
+    };
+
+    _onspringServiceMock
+      .Setup(static x => x.AddListValue(It.IsAny<int>(), It.IsAny<string>()))
+      .ReturnsAsync(new SaveListItemResponse(Guid.NewGuid()));
+
+    _onspringServiceMock
+      .Setup(static x => x.GetGroupFields())
+      .ReturnsAsync(updatedListFields);
+
+    await _processor.SyncListValues(
+      listFields,
+      fieldMappings,
+      groups
+    );
+
+    _onspringServiceMock.Verify(
+      static x => x.AddListValue(
+        It.IsAny<int>(),
+        It.IsAny<string>()
+      ),
+      Times.Never
+    );
   }
 
   [Fact]
